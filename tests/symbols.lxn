@@ -1,0 +1,11 @@
+string a(int aa) { return aa; }
+
+void b() { int k = 3 + 3; }
+
+int c() {
+	return "strinnnng";
+}
+
+int d() { 	
+	double a3 = c();
+}

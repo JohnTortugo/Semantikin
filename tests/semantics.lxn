@@ -1,0 +1,23 @@
+string a(int aa) { return aa; }
+
+int b() { return "divino"; }
+
+void strcpy(string tgt, string src) {
+
+}
+
+int c(int x, int y) {
+	int matrix[3][2][4.5];
+	
+	matrix[3][2][4] = 3 * a( b() );
+	
+	string str;
+	
+	strcpy(str, "divino");
+	
+	//str = "divino";
+	
+	//matrix();
+	
+	int k = a + 3;
+}

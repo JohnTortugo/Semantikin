@@ -232,7 +232,7 @@ void AstToDotVisitor::visit(Parser::CodeBlock* block) {
 	}
 }
 
-void AstToDotVisitor::visit(const Parser::StringExpr* str) {
+void AstToDotVisitor::visit(Parser::StringExpr* str) {
 	/* The main node information. */
 	string value = escapeStr(str->getValue());
 	value = (value.length() > 10) ? value.substr(0, 10)  + "...\\\"" : value;
@@ -241,17 +241,17 @@ void AstToDotVisitor::visit(const Parser::StringExpr* str) {
 
 }
 
-void AstToDotVisitor::visit(const Parser::FloatExpr* flt) {
+void AstToDotVisitor::visit(Parser::FloatExpr* flt) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << flt << "\" [shape=rect, label=\"" << flt->getValue() << "\"];" << endl;
 }
 
-void AstToDotVisitor::visit(const Parser::IntegerExpr* integer) {
+void AstToDotVisitor::visit(Parser::IntegerExpr* integer) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << integer << "\" [shape=rect, label=\"" << integer->getValue() << "\"];" << endl;
 }
 
-void AstToDotVisitor::visit(const Parser::IdentifierExpr* id) {
+void AstToDotVisitor::visit(Parser::IdentifierExpr* id) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << id << "\" [shape=octagon, label=\"" << id->getValue() << "\"];" << endl;
 
@@ -283,7 +283,7 @@ void AstToDotVisitor::visit(const Parser::IdentifierExpr* id) {
 
 }
 
-void AstToDotVisitor::visit(const Parser::FunctionCall* funCall) {
+void AstToDotVisitor::visit(Parser::FunctionCall* funCall) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << funCall << "\" [shape=record, label=\"{FunCall|Name:" << funCall->getName() << "|Arguments}\"];" << endl;
 
@@ -304,7 +304,7 @@ void AstToDotVisitor::visit(const Parser::FunctionCall* funCall) {
 	}
 }
 
-void AstToDotVisitor::visit(const Parser::UnaryExpr* unary) {
+void AstToDotVisitor::visit(Parser::UnaryExpr* unary) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << unary << "\" [shape=triangle, label=\"" << translateUnop(unary->getType()) << "\"];" << endl;
 
@@ -315,7 +315,7 @@ void AstToDotVisitor::visit(const Parser::UnaryExpr* unary) {
 	unary->getExp()->accept(this);
 }
 
-void AstToDotVisitor::visit(const Parser::BinaryExpr* binop) {
+void AstToDotVisitor::visit(Parser::BinaryExpr* binop) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << binop << "\" [shape=triangle, label=\"" << translateBinop(binop->getType()) << "\"];" << endl;
 

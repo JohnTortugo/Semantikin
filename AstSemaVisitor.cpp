@@ -5,16 +5,29 @@
 
 /* 1. adicionar declarações.										// OK
  * 2. verificar uso de simbolos inexistentes.						// ok
- * 3. checagem de tipos.
- * 4. checagem de semantica:
- * 		4.1 indexacao com ponto flutuante.
+ * 3. checagem de tipos.											// ok
+ * 4. checagem de semantica:										// ok
+ * 		4.1 indexacao com ponto flutuante.							// ok
  * 		4.2 usando variável como chamada de função.					// ok
  * 		4.3 usando função como variável.							// ok
- * 		4.4 tipo de argumentos
+ * 		4.4 tipo de argumentos										// ok
  * 		4.5 quantidade correta de argumentos.						// ok
+ *
+ * 	5. size of array dimensions must be integers contants.
  */
 
 using namespace Parser;
+
+#ifndef CHECK_TYPE
+	#define CHECK_TYPE(_exp_, _tp_) ((_exp_)->exprType() == (Parser::_tp_))
+#endif
+
+#ifndef IS_SUBTYPE
+	#define IS_SUBTYPE(tp1, tp2)	((tp1 == tp2) ||										\
+									((tp1 != Parser::STRING && tp2 != Parser::STRING) && 	\
+									(tp1 != Parser::VOID && tp2 != Parser::VOID) && 		\
+									(tp1 <= tp2)))
+#endif
 
 void AstSemaVisitor::visit(Parser::CompilationUnit* module) {
 	cout << "Going to carry semantic analyze brow." << endl;
@@ -170,6 +183,18 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 			varSize = variableSize(typeWidth(type), (*it)->getDimsExpr());
 		}
 
+		if ((*it)->getInitializer() != nullptr) {
+			Expression* initializer = (*it)->getInitializer();
+
+			initializer->accept(this);
+
+			if ( !IS_SUBTYPE(initializer->exprType(), translateType(type)) ) {
+				cout << "Error in semantic analysis." << endl;
+				cout << "\tThe initializer of the variable \"" << name << "\" is not a subtype of \"" << type << "\"." << endl;
+				exit(-1);
+			}
+		}
+
 		shared_ptr<Parser::STLocalVarDecl> param(new Parser::STLocalVarDecl(name, translateType(type), varSize, this->currentOffset, dims));
 		this->currentSymbTable->add(param);
 
@@ -257,19 +282,19 @@ void AstSemaVisitor::visit(Parser::CodeBlock* block) {
 	cout << endl << endl << endl;
 }
 
-void AstSemaVisitor::visit(const Parser::StringExpr* str) {
-
+void AstSemaVisitor::visit(Parser::StringExpr* str) {
+	str->exprType(Parser::STRING);
 }
 
-void AstSemaVisitor::visit(const Parser::FloatExpr* flt) {
-
+void AstSemaVisitor::visit(Parser::FloatExpr* flt) {
+	flt->exprType(Parser::FLOAT);
 }
 
-void AstSemaVisitor::visit(const Parser::IntegerExpr* integer) {
-
+void AstSemaVisitor::visit(Parser::IntegerExpr* integer) {
+	integer->exprType(Parser::INT);
 }
 
-void AstSemaVisitor::visit(const Parser::IdentifierExpr* id) {
+void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 	string name = id->getValue();
 	shared_ptr<SymbolTableEntry> decl = this->currentSymbTable->lookup(name);
 	list<shared_ptr<Parser::Expression>>* dims = id->getDimsExprs();
@@ -296,45 +321,6 @@ void AstSemaVisitor::visit(const Parser::IdentifierExpr* id) {
 		exit(-1);
 	}
 
-	/* Check if the expressions used to index the array are all constants. */
-//	if (dims != nullptr) {
-//		list<shared_ptr<Parser::Expression>>::iterator it = dims->begin();
-//		IntegerExpr* integer;
-//		IdentifierExpr* ident;
-//		FunctionCall* func;
-//
-//		while (it != dims->end()) {
-//			if (integer = dynamic_cast<IntegerExpr*>(it->get())) {
-//				/* OK. */
-//			}
-//			else if (ident = dynamic_cast<IdentifierExpr*>(it->get())) {
-//				STVariableDeclaration* decl = dynamic_cast<STVariableDeclaration*>(this->currentSymbTable->lookup(ident->getValue()).get());
-//
-//				if (decl->getType() != Parser::INT) {
-//					cout << "Error in semantic analysis." << endl;
-//					cout << "\tArray variables (e.g., \"" << name << "\") must be indexed using integer values." << endl;
-//					exit(-1);
-//				}
-//			}
-//			else if (func = dynamic_cast<FunctionCall*>(it->get())) {
-//				STFunctionDeclaration* decl = dynamic_cast<STFunctionDeclaration*>(this->currentSymbTable->lookup(ident->getValue()).get());
-//
-//				if (decl->getReturnType() != Parser::INT) {
-//					cout << "Error in semantic analysis." << endl;
-//					cout << "\tArray variables (e.g., \"" << name << "\") must be indexed using integer values." << endl;
-//					exit(-1);
-//				}
-//			}
-//			else {
-//				cout << "Error in semantic analysis." << endl;
-//				cout << "\tArray variables (e.g., \"" << name << "\") must be indexed using integer values." << endl;
-//				exit(-1);
-//			}
-//
-//			it++;
-//		}
-//	}
-
 	/* Continue visiting. */
 	if (dims != nullptr) {
 		list<shared_ptr<Parser::Expression>>::iterator it = dims->begin();
@@ -342,10 +328,22 @@ void AstSemaVisitor::visit(const Parser::IdentifierExpr* id) {
 			(*it)->accept(this);
 			it++;
 		}
+
+		/* Check if the expressions used to index the array are all constants. */
+		for (it = dims->begin(); it != dims->end(); it++) {
+			if ( ! CHECK_TYPE((*it), INT) ) {
+				cout << "Error in semantic analysis." << endl;
+				cout << "\tYou must index arrays using integer values.." << endl;
+				exit(-1);
+			}
+		}
 	}
+
+	/* This reference to a variable has the type of the variable. */
+	id->exprType(varDecl->getType());
 }
 
-void AstSemaVisitor::visit(const Parser::FunctionCall* funCall) {
+void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 	string name = funCall->getName();
 	shared_ptr<SymbolTableEntry> decl 					= this->currentSymbTable->lookup(name);
 	list<shared_ptr<Parser::Expression>>* arguments 	= funCall->getArguments();
@@ -358,6 +356,7 @@ void AstSemaVisitor::visit(const Parser::FunctionCall* funCall) {
 		exit(-1);
 	}
 
+	/* Check if there is a *function* definition. */
 	STFunctionDeclaration *funDecl = dynamic_cast<STFunctionDeclaration*>(decl.get());
 	if (funDecl == nullptr) {
 		cout << "Error in semantic analysis." << endl;
@@ -365,14 +364,13 @@ void AstSemaVisitor::visit(const Parser::FunctionCall* funCall) {
 		exit(-1);
 	}
 
+	/* Check number of parameters. */
 	if (funDecl->getParams()->size() != funCall->getArguments()->size()) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tIncorrect number of parameters were passed to function \"" << name << "\"." << endl;
 		cout << "\t" << funDecl->getParams()->size() << " were expected, but " << arguments->size() << " was passed." << endl;
 		exit(-1);
 	}
-
-	/* Need to check the type of the parameters. */
 
 	/* Continue visiting. */
 	if (arguments != nullptr) {
@@ -382,17 +380,71 @@ void AstSemaVisitor::visit(const Parser::FunctionCall* funCall) {
 			it++;
 		}
 	}
+
+	/* Need to check the type of the parameters. */
+	if (arguments != nullptr) {
+		list<shared_ptr<Parser::Expression>>::iterator it = arguments->begin();
+		const vector<pair<NativeType, int>>* parameters = funDecl->getParams();
+
+		for (int i=0; it != arguments->end(); it++, i++) {
+			Parser::Expression* exp = it->get();
+
+			/* If the argument is not a subtype of the parameter type it is an error. */
+			if ( ! IS_SUBTYPE(exp->exprType(), (*parameters)[i].first) ) {
+				cout << "Error in semantic analysis." << endl;
+				cout << "\tThe " << (i+1) << "'th parameter of the function \"" << funDecl->getName() << "\" is a \"" << typeName((*parameters)[i].first) << "\"";
+				cout << " but an \"" << typeName(exp->exprType()) << "\" was informed." << endl;
+				exit(-1);
+			}
+		}
+	}
+
+	/* The type of the function call is the function return type. */
+	funCall->exprType(funDecl->getReturnType());
 }
 
-void AstSemaVisitor::visit(const Parser::UnaryExpr* unary) {
+void AstSemaVisitor::visit(Parser::UnaryExpr* unary) {
 	/* Continue visiting */
 	unary->getExp()->accept(this);
+
+	/* Arithmetic expressions are allowed only between numerical types. */
+	if (unary->getExp()->exprType() == Parser::STRING) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
+		exit(-1);
+	}
+
+	unary->exprType(unary->getExp()->exprType());
 }
 
-void AstSemaVisitor::visit(const Parser::BinaryExpr* binop) {
+void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 	/* Continue visiting. */
 	binop->getExp1()->accept(this);
 	binop->getExp2()->accept(this);
+
+	Expression* exp1 = binop->getExp1();
+	Expression* exp2 = binop->getExp2();
+
+	/* Arithmetic expressions are allowed only between numerical types. */
+	if (exp1->exprType() == Parser::STRING || exp2->exprType() == Parser::STRING) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
+		exit(-1);
+	}
+
+	/* Same type: no problem. */
+	if (exp1->exprType() == exp2->exprType()) {
+		binop->exprType(exp1->exprType());
+	}
+	else if ((CHECK_TYPE(exp1, INT) && CHECK_TYPE(exp2, FLOAT)) || (CHECK_TYPE(exp1, FLOAT) && CHECK_TYPE(exp2, INT))) {
+		binop->exprType(Parser::FLOAT);
+	}
+	else if ((CHECK_TYPE(exp1, INT) && CHECK_TYPE(exp2, DOUBLE)) || (CHECK_TYPE(exp1, DOUBLE) && CHECK_TYPE(exp2, INT))) {
+		binop->exprType(Parser::DOUBLE);
+	}
+	else if ((CHECK_TYPE(exp1, FLOAT) && CHECK_TYPE(exp2, DOUBLE)) || (CHECK_TYPE(exp1, DOUBLE) && CHECK_TYPE(exp2, FLOAT))) {
+		binop->exprType(Parser::DOUBLE);
+	}
 }
 
 void AstSemaVisitor::addNativeFunctions(shared_ptr<Parser::SymbolTable> table) {
@@ -427,6 +479,15 @@ bool AstSemaVisitor::isValidType(string name) {
 	else if (name == "string") return true;
 	else if (name == "void") return true;
 	else return false;
+}
+
+string AstSemaVisitor::typeName(Parser::NativeType type) {
+	if (type == Parser::INT) return "int";
+	else if (type == Parser::FLOAT) return "float";
+	else if (type == Parser::DOUBLE) return "double";
+	else if (type == Parser::STRING) return "string";
+	else if (type == Parser::VOID) return "void";
+	else throw -1;
 }
 
 NativeType AstSemaVisitor::translateType(string name) {

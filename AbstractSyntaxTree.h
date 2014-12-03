@@ -29,7 +29,15 @@ namespace Parser {
 
 	class Statement : public AstNode {};
 
-	class Expression : public Statement {};
+	class Expression : public Statement {
+	protected:
+		NativeType _expType;
+
+	public:
+		NativeType exprType() const { return _expType; }
+
+		void exprType(NativeType _etype) { _expType = _etype; }
+	};
 
 	class BinaryExpr : public Expression {
 	public:
