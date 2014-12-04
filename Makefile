@@ -7,5 +7,8 @@ all:
 	#dot -Tpng Semantikin.dot -o Semantikin.png
 	#geeqie &
 	
+test:
+	./Semantikin tests/semantics.lxn
+	
 clean:
 	rm Semantikin Parsin.tab.cc Parsin.tab.hh Parsin.output location.hh position.hh stack.hh lex.yy.cc Semantikin.dot Semantiking.png

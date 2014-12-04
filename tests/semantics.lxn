@@ -9,7 +9,7 @@ void strcpy(string tgt, string src) {
 int c(int x, int y) {
 	int matrix[3][2][4.5];
 	
-	matrix[3][2][4] = 3 * a( b() );
+	//matrix[3][2][4] = 3 * a( b() );
 	
 	string str;
 	
@@ -19,5 +19,35 @@ int c(int x, int y) {
 	
 	//matrix();
 	
-	int k = a + 3;
+	//int k = a(3) + 3;
+	
+	//int k = b(3,3,3,3,3,3) + 2;
+}
+
+int dfun() {
+	int i;
+	float f;
+	double d;
+	string s;
+	
+	int i1=0, i2=0, i3, i4[3][2];
+	float f1=0, f2=0, f3, f4[3][3][4], f5=0;
+	double d1=0, d2, d3, d4, d5[3][2], d6[3][2], d7[8], d8=0;
+	string s1 = "divino";
+
+	int iiiii = i1 + i2 + i3 + i + 3*i3 + 2*i1;
+	float fffff = f * f * f / f + f - f * f1 * f2 - f3 + f5 + f4[1][2][3];
+	double ddddd = d1 * d2 * d3 * d4 * d8 + d5[1][1] + d6[2][2] + d7[7];
+
+//	string ssssss = "divino" + "pai";
+	string sssss = "asdf";
+//	string ssss2 = a(a(a(3)));	
+}
+
+void empty(int matrix[15][10], double vet[10]) {
+	int vetor[30];
+
+	empty(matrix, matrix[1]);
+
+	double vai = matrix[3][3] * vet[3];
 }

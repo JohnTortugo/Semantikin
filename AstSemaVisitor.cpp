@@ -13,7 +13,8 @@
  * 		4.4 tipo de argumentos										// ok
  * 		4.5 quantidade correta de argumentos.						// ok
  *
- * 	5. size of array dimensions must be integers contants.
+ * 	5. size of array dimensions must be integers contants.			// ok
+ * 	6. check (non-)existence of return statements and its type.
  */
 
 using namespace Parser;
@@ -313,12 +314,29 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 		exit(-1);
 	}
 
-	/* If the symbol declaration tells it is a matrix then we need the right number of dimensions. */
+	/* Begin: Check matrix and variables indexing constraints. */
 	STVariableDeclaration* varDecl = dynamic_cast<STVariableDeclaration*>(decl.get());
-	if ((varDecl->getNumDims() > 0 && dims == nullptr) || (varDecl->getNumDims() != dims->size())) {
+
+	/* Specified indices for acessing scalar variable. */
+	if (varDecl->getNumDims() == 0 && dims != nullptr && dims->size() > 0) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tVariable \"" << name << "\" cannot be indexed as an array." << endl;
+		exit(-1);
+	}
+
+	/* It was specified more dimensions than necessary. */
+	if (varDecl->getNumDims() < dims->size()) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tMismatch in the number of dimensions used to access the symbol \"" << name << "\"." << endl;
 		exit(-1);
+	}
+
+	/* Just the initial indices were specified, fill the remainder wit [0]. */
+	if ((varDecl->getNumDims() > 0 && dims == nullptr) || (varDecl->getNumDims() > dims->size())) {
+		int remainder = (dims == nullptr) ? varDecl->getNumDims() : varDecl->getNumDims() - dims->size();
+
+		for (int i=0; i<remainder; i++)
+			dims->push_back(shared_ptr<Parser::IntegerExpr>(new Parser::IntegerExpr(0)));
 	}
 
 	/* Continue visiting. */
