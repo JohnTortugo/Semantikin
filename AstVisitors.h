@@ -72,10 +72,20 @@ public:
 
 class AstSemaVisitor : public AstNodeVisitor {
 private:
+	/* Offset of the next variable inside the frame of this function. */
 	int currentOffset;
+
+	/* Return type of the current function. */
+	Parser::NativeType currentFunRetType;
+
+	/* Number of return statements in the current function. */
+	unsigned int currentFunReturns;
+
 	std::shared_ptr<Parser::SymbolTable> currentSymbTable;
 
 public:
+	AstSemaVisitor() : currentOffset(0), currentFunRetType(Parser::VOID), currentFunReturns(0) { }
+
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);
 	void visit(const Parser::ParamDecl* module);

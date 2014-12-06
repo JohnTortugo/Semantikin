@@ -1,6 +1,6 @@
-string a(int aa) { return aa; }
+string a(string aa) { return aa; }
 
-int b() { return "divino"; }
+int b() { return 6; }
 
 void strcpy(string tgt, string src) {
 
@@ -22,6 +22,8 @@ int c(int x, int y) {
 	//int k = a(3) + 3;
 	
 	//int k = b(3,3,3,3,3,3) + 2;
+	
+	return -1;
 }
 
 int dfun() {
@@ -42,6 +44,10 @@ int dfun() {
 //	string ssssss = "divino" + "pai";
 	string sssss = "asdf";
 //	string ssss2 = a(a(a(3)));	
+
+	return 0;
+	return 3;
+	return 4;
 }
 
 void empty(int matrix[15][10], double vet[10]) {
@@ -50,4 +56,8 @@ void empty(int matrix[15][10], double vet[10]) {
 	empty(matrix, matrix[1]);
 
 	double vai = matrix[3][3] * vet[3];
+	
+	//return "divino";
+	
+	//return 3;
 }

@@ -14,7 +14,7 @@
  * 		4.5 quantidade correta de argumentos.						// ok
  *
  * 	5. size of array dimensions must be integers contants.			// ok
- * 	6. check (non-)existence of return statements and its type.
+ * 	6. check (non-)existence of return statements and its type.		// ok
  */
 
 using namespace Parser;
@@ -96,6 +96,14 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 	 * so we reset when we enter a function. */
 	this->currentOffset = 0;
 
+	/* Reset the counter of number of return statements of this function. */
+	this->currentFunReturns = 0;
+
+	/* Set the (inherited attribute) representing the return type of the
+	 * current function. The analyze of return statements with check this
+	 * type.												  		   */
+	this->currentFunRetType = translateType(type);
+
 	/* Create new symbol table for this scope. */
 	shared_ptr<SymbolTable> table(new SymbolTable(currentSymbTable));
 
@@ -112,6 +120,13 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 
 	/* Continue the visiting. */
 	function->getBody()->accept(this);
+
+	/* Check if return type and return statements make sense. */
+	if (this->currentFunRetType != Parser::VOID && this->currentFunReturns == 0) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tMissing return statement in function (\"" << name << "\") returning non-void." << endl;
+		exit(-1);
+	}
 
 	/* Reset pointer to previous symbol table. */
 	this->currentSymbTable = table->getParent();
@@ -246,8 +261,23 @@ void AstSemaVisitor::visit(const Parser::ElseIfStmt* elseIfStmt) {
 }
 
 void AstSemaVisitor::visit(const Parser::ReturnStmt* ret) {
+	if (this->currentFunRetType == Parser::VOID) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tReturn statement present in function with void return type." << endl;
+		exit(-1);
+	}
+
 	/* Continue visiting */
 	ret->getExpression()->accept(this);
+
+	if ( ! IS_SUBTYPE(ret->getExpression()->exprType(), this->currentFunRetType) ) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tThe return-statement's expression is not a subtype of the function return type." << endl;
+		exit(-1);
+	}
+
+	/* Increment number of valid return statements. */
+	this->currentFunReturns++;
 }
 
 void AstSemaVisitor::visit(Parser::CodeBlock* block) {
