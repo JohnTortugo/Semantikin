@@ -1,10 +1,12 @@
 all:
 	flex++ Lexin.l
 	bison -d Parsin.yy
-	g++ -g -std=c++0x lex.yy.cc Parsin.tab.cc Driver.cpp main.cpp AbstractSyntaxTree.cpp AstToDotVisitor.cpp SymbolTable.cpp AstSemaVisitor.cpp -o Semantikin
+	g++ -g -std=c++0x lex.yy.cc Parsin.tab.cc Driver.cpp main.cpp AbstractSyntaxTree.cpp AstToDotVisitor.cpp SymbolTable.cpp AstSemaVisitor.cpp AstTACGenVisitor.cpp IR.cpp -o Semantikin
 	
 test:
 	./Semantikin ${INPUT}
+	
+view-ast:
 	dot -Tpng Semantikin.dot -o Semantikin.png
 	geeqie &
 	

@@ -1,0 +1,103 @@
+#include "IR.h"
+
+namespace IR {
+
+	void ScalarCopy::dump(stringstream& buffer) { buffer << "? = ?;" << endl; }
+
+	void CopyFromArray::dump(stringstream& buffer) { buffer << "? = ?[?];" << endl; }
+
+	void CopyToArray::dump(stringstream& buffer) { buffer << "?[?] = ?;" << endl; }
+
+
+
+	void IAdd::dump(stringstream& buffer) { buffer << "? = ? + ?;" << endl; }
+
+	void ISub::dump(stringstream& buffer) { buffer << "? = ? - ?;" << endl; }
+
+	void IMul::dump(stringstream& buffer) { buffer << "? = ? * ?;" << endl; }
+
+	void IDiv::dump(stringstream& buffer) { buffer << "? = ? / ?;" << endl; }
+
+	void IMod::dump(stringstream& buffer) { buffer << "? = ? % ?;" << endl; }
+
+	void IInc::dump(stringstream& buffer) { buffer << "?++;" << endl; }
+
+	void IDec::dump(stringstream& buffer) { buffer << "?--;" << endl; }
+
+
+	void FAdd::dump(stringstream& buffer) { buffer << "? = ? + ?;" << endl; }
+
+	void FSub::dump(stringstream& buffer) { buffer << "? = ? - ?;" << endl; }
+
+	void FMul::dump(stringstream& buffer) { buffer << "? = ? * ?;" << endl; }
+
+	void FDiv::dump(stringstream& buffer) { buffer << "? = ? / ?;" << endl; }
+
+
+	void BinAnd::dump(stringstream& buffer) { buffer << "? = ? & ?;" << endl; }
+
+	void BinOr::dump(stringstream& buffer) { buffer << "? = ? | ?;" << endl; }
+
+	void BinXor::dump(stringstream& buffer) { buffer << "? = ? ^ ?;" << endl; }
+
+	void BinNot::dump(stringstream& buffer) { buffer << "? = !?;" << endl; }
+
+
+	void LogAnd::dump(stringstream& buffer) { buffer << "? = ? && ?;" << endl; }
+
+	void LogOr::dump(stringstream& buffer) { buffer << "? = ? || ?;" << endl; }
+
+	void LogNot::dump(stringstream& buffer) { buffer << "? = !?;" << endl; }
+
+
+	void RLesThan::dump(stringstream& buffer) { buffer << "? = ? < ?;" << endl; }
+
+	void RLesThanEqual::dump(stringstream& buffer) { buffer << "? = ? <= ?;" << endl; }
+
+	void RGreaterThan::dump(stringstream& buffer) { buffer << "? = ? > ?;" << endl; }
+
+	void RGreaterThanEqual::dump(stringstream& buffer) { buffer << "? = ? >= ?;" << endl; }
+
+	void REqual::dump(stringstream& buffer) { buffer << "? = ? == ?;" << endl; }
+
+	void RNotEqual::dump(stringstream& buffer) { buffer << "? = ? != ?;" << endl; }
+
+
+
+	void Jump::dump(stringstream& buffer) { buffer << "goto ?;" << endl; }
+
+	void CondTrueJump::dump(stringstream& buffer) { buffer << "ifTrue ? goto ?;" << endl; }
+
+	void CondFalseJump::dump(stringstream& buffer) { buffer << "ifFalse ? goto ?;" << endl; }
+
+
+
+	void Call::dump(stringstream& buffer) { buffer << "call(?, ?, ?);" << endl; }
+
+	void Return::dump(stringstream& buffer) { buffer << "return ?;" << endl; }
+
+	void Phi::dump(stringstream& buffer) { buffer << "phi();" << endl; }
+
+
+
+
+	void Function::addSymbolTable(shared_ptr<SymbolTable> st) {
+		for (auto entry : st->entries() ) {
+			this->symbolTable()->add( entry.second );
+		}
+	}
+
+	void Function::dump(stringstream& buffer) {
+		for (auto instruction : this->_instrs)
+			instruction->dump(buffer);
+
+		buffer << endl;
+	}
+
+
+
+	void Module::dump(stringstream& buffer) {
+		for (auto function : *this->functions)
+			function->dump(buffer);
+	}
+}

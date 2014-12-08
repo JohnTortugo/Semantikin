@@ -4,20 +4,20 @@
 
 namespace Parser {
 	shared_ptr<SymbolTableEntry> SymbolTable::lookup(string name) {
-		if (this->entries.find(name) == this->entries.end()) {
+		if (this->_entries.find(name) == this->_entries.end()) {
 			if (this->getParent() != nullptr)
 				return this->getParent()->lookup(name);
 			else
 				return nullptr;
 		}
 		else {
-			return this->entries.find(name)->second;
+			return this->_entries.find(name)->second;
 		}
 	}
 
 	bool SymbolTable::add(shared_ptr<SymbolTableEntry> newEntry) {
-		if (this->entries.find(newEntry->getName()) == this->entries.end()) {
-			this->entries[newEntry->getName()] = newEntry;
+		if (this->_entries.find(newEntry->getName()) == this->_entries.end()) {
+			this->_entries[newEntry->getName()] = newEntry;
 			return true;
 		}
 		else {
@@ -88,7 +88,7 @@ namespace Parser {
 			this->getParent()->dump();
 		}
 
-		map<string, shared_ptr<SymbolTableEntry>>::const_iterator it = this->entries.begin();
+		map<string, shared_ptr<SymbolTableEntry>>::const_iterator it = this->_entries.begin();
 
 		cout << "+---------------------------------------------------------------------------------------------------------------+" << endl;
 		cout << std::left;
@@ -105,7 +105,7 @@ namespace Parser {
 		cout << endl;
 		cout << "+---------------------------------------------------------------------------------------------------------------+" << endl;
 
-		while (it != this->entries.end()) {
+		while (it != this->_entries.end()) {
 			(*it).second->dump();
 			it++;
 		}

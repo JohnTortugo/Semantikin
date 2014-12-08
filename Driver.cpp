@@ -17,5 +17,6 @@ int Parser::Driver::parse(const char *filename, Parser::CompilationUnit*& module
 
    parser = new Parser::BisonParser(*scanner, *this, module);
 
-   return parser->parse();
+   /* Returns 1 if parsing went OK. */
+   return !parser->parse();
 }

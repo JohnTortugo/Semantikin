@@ -112,10 +112,10 @@ namespace Parser {
 		}
 	};
 
+	/* This represent a local variable declaration. */
 	class STLocalVarDecl : public STVariableDeclaration {
 	public:
 		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
-			/* TODO: Should add the proper validations here. */
 			this->name = _name;
 			this->type = _type;
 			this->width = _width;
@@ -128,6 +128,7 @@ namespace Parser {
 		void dump() const;
 	};
 
+	/* This represent a formal parameter declaration in a function. */
 	class STParamDecl : public STVariableDeclaration {
 	public:
 		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
@@ -144,9 +145,55 @@ namespace Parser {
 		void dump() const;
 	};
 
+	/* This entry will represent a temporary variable used in the IR. */
+	class STTempVar : public STVariableDeclaration {
+		STTempVar(string _name, NativeType _type, int _width, int _offset) {
+			this->name = _name;
+			this->type = _type;
+			this->width = _width;
+			this->offset = _offset;
+			this->numDims = 0;
+		}
+
+		string getName() const { return this->name; }
+
+		void dump() const;
+	};
+
+	/* This entry will represent a address label used in the IR. */
+	class STLabelDef : public SymbolTableEntry {
+	private:
+		int _address;
+
+	public:
+		STLabelDef(string name, int address) {
+			this->name = name;
+			this->_address = address;
+		}
+	};
+
+	/* This is used to store the constants when representing the IR. */
+	class STConstantDef : public SymbolTableEntry {
+	private:
+		/* TODO: make these fields part of a union */
+		NativeType _type;
+		int _integer;
+		float _floating;
+		double _doubling;
+		string _str;
+
+	public:
+		/* Didn't like this too much, but I would have to overload
+		 * it in the union anyway, right? 						*/
+		STConstantDef(string s) : _type(Parser::STRING), _str(s), _integer(0), _floating(0), _doubling(0) {};
+		STConstantDef(int i) : _type(Parser::INT), _str(nullptr), _integer(i), _floating(0), _doubling(0) {};
+		STConstantDef(float f) : _type(Parser::FLOAT), _str(nullptr), _integer(0), _floating(f), _doubling(0) {};
+		STConstantDef(double d) : _type(Parser::DOUBLE), _str(nullptr), _integer(0), _floating(0), _doubling(d) {};
+	};
+
 	class SymbolTable {
 	private:
-		map<string, shared_ptr<SymbolTableEntry>> entries;
+		map<string, shared_ptr<SymbolTableEntry>> _entries;
 		shared_ptr<SymbolTable> parent;
 
 	public:
@@ -157,6 +204,8 @@ namespace Parser {
 		shared_ptr<SymbolTableEntry> lookup(string name);
 
 		bool add(shared_ptr<SymbolTableEntry> _entry);
+
+		map<string, shared_ptr<SymbolTableEntry>> entries() { return this->_entries; }
 
 		void dump() const ;
 	};

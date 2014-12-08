@@ -1,0 +1,40 @@
+Tuple							Rendered As...							Description
+--------------------------------------------------------------------------------------------------------------------------
+(COPY, x, y, -)					x = y;									Copy y into x.
+(COPY_FROM_OFS, x, y, z)		x = y[z];								Copy the contents of memory at address y+z into x.
+(COPY_TO_OFS, x, y, z)			x[y] = z;								Copy z into the memory at address x+y.
+
+(IADD, x, y, z)					x = y + z;								Sum.
+(ISUB, x, y, z)					x = y - z;								Difference.
+(IMUL, x, y, z)					x = y * z;								Product.
+(IDIV, x, y, z)					x = y / z;								Quotient.
+(IMOD, x, y, z)					x = y % z;								Modulo.
+(INC, x, -, -)					inc x;									Unit increment.
+(DEC, x, -, -)					dec x;									Unit decrement.
+
+(FADD, x, y, z)					x = y + z;								Floating point sum.
+(FSUB, x, y, z)					x = y - z;								Floating point difference.
+(FMUL, x, y, z)					x = y * z;								Floating point product.
+(FDIV, x, y, z)					x = y / z;								Floating point quotient.
+
+(LAND, x, y, z)					x = y & z;								Bitwise conjunction.
+(LOR, x, y, z)					x = y | z;								Bitwise disjunction.
+(LXOR, x, y, z)					x = y ^ z;								Bitwise exclusive OR.
+(LNOT, x, y)					x = !y;									Logical complement.
+
+(LT, x, y, z)					z := x < y;								1 if x is less than y, 0 otherwise.
+(LTE, x, y, z)					z := x <= y;							1 if x is less than or equal to y, 0 otherwise.
+(GT, x, y, z)					z := x >= y;							1 if x is greater than or equal to y, 0 otherwise.
+(GTE, x, y, z)					z := x > y;								1 if x is greater than y, 0 otherwise.
+(EQ, x, y, z)					z := x == y;							1 if x is equal to y, 0 otherwise.
+(NE, x, y, z)					z := x != y;							1 if x is not equal to y, 0 otherwise.
+
+(LABEL, L, -, -)				x:										The label "x".
+(JUMP, x, -, -)					goto x;									Unconditional jump to label "x".
+(CPJUMP, x, y, -)				ifTrue x goto y;						If x is 1 goto y else fallthrought.
+(CNJUMP, x, y, -)				ifFalse x goto y;						if x is 0 goto y else fallthrought.
+
+(CALL, x, y, -)					call x, [y*];							Call function "f" with the list of arguments [a].
+(RETURN, x, -, -)				ret x;									Exit current function returning "x".
+
+(PHI, x, y, -)					x = phi(y);								Choose one element of "y" as the valu eof "x".

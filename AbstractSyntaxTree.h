@@ -21,6 +21,9 @@ class AstNodeVisitor;
 
 namespace Parser {
 	class AstNode {
+	protected:
+
+
 	public:
 		virtual void accept(AstNodeVisitor* visitor) = 0;
 

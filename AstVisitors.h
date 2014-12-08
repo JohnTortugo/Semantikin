@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "AbstractSyntaxTree.h"
+#include "IR.h"
 
 class AstNodeVisitor {
 public:
@@ -73,7 +74,7 @@ public:
 class AstSemaVisitor : public AstNodeVisitor {
 private:
 	/* Offset of the next variable inside the frame of this function. */
-	int currentOffset;
+	int _currentOffset;
 
 	/* Return type of the current function. */
 	Parser::NativeType currentFunRetType;
@@ -84,7 +85,7 @@ private:
 	std::shared_ptr<Parser::SymbolTable> currentSymbTable;
 
 public:
-	AstSemaVisitor() : currentOffset(0), currentFunRetType(Parser::VOID), currentFunReturns(0) { }
+	AstSemaVisitor() : _currentOffset(0), currentFunRetType(Parser::VOID), currentFunReturns(0) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);
@@ -110,6 +111,50 @@ public:
 	string typeName(Parser::NativeType type);
 	Parser::TypeWidth typeWidth(string name);
 	int variableSize(int typeSize, list<shared_ptr<Parser::Expression>>* param);
+
+	int currentOffset() { return this->_currentOffset; }
+};
+
+class AstTACGenVisitor : public AstNodeVisitor {
+private:
+	/* This is a parameter imported from the Semantic Analyzer, it indicates
+	 * the function frame index used to store new temporary variables.    */
+	int _currentOffset;
+
+	/* Pointer to the module currently being IR generated. */
+	shared_ptr<IR::Module> _module;
+
+	/* Pointer to the function currently being IR generated. */
+	shared_ptr<IR::Function> _currentFunction;
+
+	/* This indicates if the RelationalExpression being analyzed is a
+	 * expression inside a conditional instruction or not. If it is, due to
+	 * short-circuit behavior, we may need to insert jumps (if's) inside
+	 * the expression IR's instruction. 									*/
+	bool _isExpInConditional;
+
+public:
+	AstTACGenVisitor(int currOffset) : _currentOffset(currOffset), _isExpInConditional(false) { }
+
+	void visit(Parser::CompilationUnit* module);
+	void visit(Parser::Function* module);
+	void visit(const Parser::ParamDecl* module);
+	void visit(const Parser::VarSpec* module);
+	void visit(const Parser::VarDecl* module);
+	void visit(const Parser::LoopStmt* module);
+	void visit(const Parser::IfStmt* module);
+	void visit(const Parser::ElseIfStmt* module);
+	void visit(const Parser::ReturnStmt* module);
+	void visit(Parser::CodeBlock* module);
+	void visit(Parser::StringExpr* module);
+	void visit(Parser::FloatExpr* module);
+	void visit(Parser::IntegerExpr* module);
+	void visit(Parser::IdentifierExpr* module);
+	void visit(Parser::FunctionCall* node);
+	void visit(Parser::UnaryExpr* module);
+	void visit(Parser::BinaryExpr* module);
+
+	shared_ptr<IR::Module> module() const { return this->_module; }
 };
 
 #endif /* ASTVISITORS_H_ */

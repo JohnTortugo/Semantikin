@@ -1,26 +1,34 @@
-#include <iostream>
-
-#include "AstVisitors.h"
 #include "Driver.h"
+#include "AstVisitors.h"
+#include <iostream>
+#include <sstream>
 
 int main(const int argc, const char **argv) {
    Parser::Driver driver;
-   Parser::CompilationUnit* module = nullptr;
+   Parser::CompilationUnit* astModule = nullptr;
 
-   int status = driver.parse(argv[1], module);
-
-   if (status == 0) {
+   if (driver.parse(argv[1], astModule)) {
 	   AstToDotVisitor ast("Semantikin.dot");
-	   module->accept(&ast);
+	   astModule->accept(&ast);
 
 	   AstSemaVisitor semantic;
-	   module->accept(&semantic);
+	   astModule->accept(&semantic);
+
+	   AstTACGenVisitor irgen(semantic.currentOffset());
+	   astModule->accept(&irgen);
+
+	   shared_ptr<IR::Module> irModule = irgen.module();
+
+	   std::stringstream buffer;
+	   irModule->dump(buffer);
+
+	   cout << "This is the IR: " << buffer.str();
    }
    else {
-	   std::cout << "Something went wrong bro." << std::endl;
+	   std::cout << "Parsing error!" << std::endl;
    }
 
-   delete module;
+   delete astModule;
 
    return 0;
 }

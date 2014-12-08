@@ -31,8 +31,6 @@ using namespace Parser;
 #endif
 
 void AstSemaVisitor::visit(Parser::CompilationUnit* module) {
-	cout << "Going to carry semantic analyze brow." << endl;
-
 	if (module->getSymbTable() != nullptr) {
 		cout << "The SymbolTable for this module has already been computed. " << endl;
 		return ;
@@ -94,7 +92,7 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 
 	/* Offset is always relative to the function frame,
 	 * so we reset when we enter a function. */
-	this->currentOffset = 0;
+	this->_currentOffset = 0;
 
 	/* Reset the counter of number of return statements of this function. */
 	this->currentFunReturns = 0;
@@ -162,10 +160,10 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 		exit(-1);
 	}
 
-	shared_ptr<Parser::STParamDecl> parDecl(new Parser::STParamDecl(name, translateType(type), varSize, this->currentOffset, param->getDims()->size()));
+	shared_ptr<Parser::STParamDecl> parDecl(new Parser::STParamDecl(name, translateType(type), varSize, this->_currentOffset, param->getDims()->size()));
 	this->currentSymbTable->add(parDecl);
 
-	this->currentOffset += varSize;
+	this->_currentOffset += varSize;
 }
 
 void AstSemaVisitor::visit(const Parser::VarSpec* spec) {
@@ -211,10 +209,10 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 			}
 		}
 
-		shared_ptr<Parser::STLocalVarDecl> param(new Parser::STLocalVarDecl(name, translateType(type), varSize, this->currentOffset, dims));
+		shared_ptr<Parser::STLocalVarDecl> param(new Parser::STLocalVarDecl(name, translateType(type), varSize, this->_currentOffset, dims));
 		this->currentSymbTable->add(param);
 
-		this->currentOffset += varSize;
+		this->_currentOffset += varSize;
 
 		it++;
 	}
@@ -308,9 +306,6 @@ void AstSemaVisitor::visit(Parser::CodeBlock* block) {
 
 	/* Reset pointer to previous symbol table. */
 	this->currentSymbTable = table->getParent();
-
-	table->dump();
-	cout << endl << endl << endl;
 }
 
 void AstSemaVisitor::visit(Parser::StringExpr* str) {
