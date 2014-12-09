@@ -21,16 +21,14 @@ namespace Parser {
 		VOID,
 		INT,
 		FLOAT,
-		DOUBLE,
 		STRING
 	};
 
 	enum TypeWidth {
-		VOID_WIDTH = 2,
+		VOID_WIDTH = 0,
 		INT_WIDTH = 4,
-		FLOAT_WIDTH = 4,
-		DOUBLE_WIDTH = 8,
-		STRING_WIDTH = 10
+		FLOAT_WIDTH = 8,
+		STRING_WIDTH = 4
 	};
 
 	class SymbolTableEntry {
@@ -39,12 +37,17 @@ namespace Parser {
 		string name;
 
 	public:
-		virtual string getName() const = 0;
+		SymbolTableEntry(string nm) : name(nm) {}
+
+		virtual string getName() { return this->name; }
+
+		void rename(string newName) { this->name = newName; }
 
 		virtual void dump() const = 0;
 
 		virtual ~SymbolTableEntry() {};
 	};
+
 
 	class STFunctionDeclaration : public SymbolTableEntry {
 	private:
@@ -59,14 +62,8 @@ namespace Parser {
 		vector<pair<NativeType, int>> params;
 
 	public:
-		STFunctionDeclaration(string _name, string _label, NativeType _returnType, vector<pair<NativeType, int>> _params) {
-			this->name = _name;
-			this->label = _label;
-			this->returnType = _returnType;
-			this->params = _params;
-		}
-
-		string getName() const { return this->name; }
+		STFunctionDeclaration(string _name, string _label, NativeType _returnType, vector<pair<NativeType, int>> _params) : SymbolTableEntry(_name), label(_label), returnType(_returnType), params(_params)
+		{ }
 
 		string getLabel() const { return label; }
 
@@ -76,6 +73,7 @@ namespace Parser {
 
 		void dump() const;
 	};
+
 
 	class STVariableDeclaration : public SymbolTableEntry {
 	protected:
@@ -92,9 +90,11 @@ namespace Parser {
 		 * (numDims == N)?  												 */
 		int numDims;
 
-		STVariableDeclaration() : type(INT), width(0), offset(0), numDims(0) { }
 
 	public:
+		STVariableDeclaration(string nm, NativeType tp, int wd, int off, int nd) : SymbolTableEntry(nm), type(tp), width(wd), offset(off), numDims(nd)
+		{ }
+
 		int getNumDims() const {
 			return numDims;
 		}
@@ -112,53 +112,37 @@ namespace Parser {
 		}
 	};
 
+
 	/* This represent a local variable declaration. */
 	class STLocalVarDecl : public STVariableDeclaration {
 	public:
-		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
-			this->name = _name;
-			this->type = _type;
-			this->width = _width;
-			this->offset = _offset;
-			this->numDims = _numDims;
-		}
-
-		string getName() const { return this->name; }
+		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
+		{ }
 
 		void dump() const;
 	};
+
 
 	/* This represent a formal parameter declaration in a function. */
 	class STParamDecl : public STVariableDeclaration {
 	public:
-		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
-			/* TODO: Should add the proper validations here. */
-			this->name = _name;
-			this->type = _type;
-			this->width = _width;
-			this->offset = _offset;
-			this->numDims = _numDims;
-		}
-
-		string getName() const { return this->name; }
+		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
+		{ }
 
 		void dump() const;
 	};
+
 
 	/* This entry will represent a temporary variable used in the IR. */
 	class STTempVar : public STVariableDeclaration {
-		STTempVar(string _name, NativeType _type, int _width, int _offset) {
-			this->name = _name;
-			this->type = _type;
-			this->width = _width;
-			this->offset = _offset;
-			this->numDims = 0;
-		}
-
-		string getName() const { return this->name; }
+	public:
+		STTempVar(string _name, NativeType _type, int _width, int _offset) : STVariableDeclaration(_name, _type, _width, _offset, 0)
+		{ }
 
 		void dump() const;
 	};
+
+
 
 	/* This entry will represent a address label used in the IR. */
 	class STLabelDef : public SymbolTableEntry {
@@ -166,11 +150,12 @@ namespace Parser {
 		int _address;
 
 	public:
-		STLabelDef(string name, int address) {
-			this->name = name;
-			this->_address = address;
-		}
+		STLabelDef(string nm, int addr) : SymbolTableEntry(nm), _address(addr) {}
+
+		void dump() const;
 	};
+
+
 
 	/* This is used to store the constants when representing the IR. */
 	class STConstantDef : public SymbolTableEntry {
@@ -179,17 +164,27 @@ namespace Parser {
 		NativeType _type;
 		int _integer;
 		float _floating;
-		double _doubling;
 		string _str;
 
 	public:
 		/* Didn't like this too much, but I would have to overload
 		 * it in the union anyway, right? 						*/
-		STConstantDef(string s) : _type(Parser::STRING), _str(s), _integer(0), _floating(0), _doubling(0) {};
-		STConstantDef(int i) : _type(Parser::INT), _str(nullptr), _integer(i), _floating(0), _doubling(0) {};
-		STConstantDef(float f) : _type(Parser::FLOAT), _str(nullptr), _integer(0), _floating(f), _doubling(0) {};
-		STConstantDef(double d) : _type(Parser::DOUBLE), _str(nullptr), _integer(0), _floating(0), _doubling(d) {};
+		STConstantDef(string nm, string s) : SymbolTableEntry(nm), _type(Parser::STRING), _str(s), _integer(0), _floating(0) {}
+		STConstantDef(string nm, int i)    : SymbolTableEntry(nm), _type(Parser::INT), _str(""), _integer(i), _floating(0) {}
+		STConstantDef(string nm, float f)  : SymbolTableEntry(nm), _type(Parser::FLOAT), _str(""), _integer(0), _floating(f) {}
+
+		string getName() {
+			switch (this->_type) {
+				case Parser::STRING: return this->_str;
+				case Parser::INT: return std::to_string(this->_integer);
+				case Parser::FLOAT: return std::to_string(this->_floating);
+			}
+		}
+
+		void dump() const;
 	};
+
+
 
 	class SymbolTable {
 	private:

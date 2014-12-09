@@ -1,7 +1,6 @@
 #include "Driver.h"
 #include "AstVisitors.h"
 #include <iostream>
-#include <sstream>
 
 int main(const int argc, const char **argv) {
    Parser::Driver driver;
@@ -19,10 +18,7 @@ int main(const int argc, const char **argv) {
 
 	   shared_ptr<IR::Module> irModule = irgen.module();
 
-	   std::stringstream buffer;
-	   irModule->dump(buffer);
-
-	   cout << "This is the IR: " << buffer.str();
+	   irModule->dump();
    }
    else {
 	   std::cout << "Parsing error!" << std::endl;

@@ -9,9 +9,6 @@
 	#include <stdlib.h>
 	#include "FlexScanner.h"
 	#include "Parsin.tab.hh"
-
-//	#define YY_USER_ACTION 		printf("Linha: %d, Coluna --\n", yylloc->line);
-
 %}
 
 %%

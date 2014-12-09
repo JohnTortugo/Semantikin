@@ -2,7 +2,9 @@
 
 namespace IR {
 
-	void ScalarCopy::dump(stringstream& buffer) { buffer << "? = ?;" << endl; }
+	void ScalarCopy::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << ";" << endl;
+	}
 
 	void CopyFromArray::dump(stringstream& buffer) { buffer << "? = ?[?];" << endl; }
 
@@ -14,7 +16,9 @@ namespace IR {
 
 	void ISub::dump(stringstream& buffer) { buffer << "? = ? - ?;" << endl; }
 
-	void IMul::dump(stringstream& buffer) { buffer << "? = ? * ?;" << endl; }
+	void IMul::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " * " << this->_src2->getName() << ";" << endl;
+	}
 
 	void IDiv::dump(stringstream& buffer) { buffer << "? = ? / ?;" << endl; }
 
@@ -83,21 +87,36 @@ namespace IR {
 
 	void Function::addSymbolTable(shared_ptr<SymbolTable> st) {
 		for (auto entry : st->entries() ) {
+			if (nameVersions.find(entry.second->getName()) != nameVersions.end()) {
+				entry.second->rename( entry.second->getName() + "_" + std::to_string(nameVersions[entry.second->getName()]));
+			}
+
 			this->symbolTable()->add( entry.second );
 		}
 	}
 
 	void Function::dump(stringstream& buffer) {
-		for (auto instruction : this->_instrs)
-			instruction->dump(buffer);
+		buffer << this->_addr->getName() << ":" << endl;
 
-		buffer << endl;
+		for (auto instruction : *this->_instrs) {
+			buffer << "\t";
+			instruction->dump(buffer);
+		}
 	}
 
 
 
-	void Module::dump(stringstream& buffer) {
-		for (auto function : *this->functions)
+	void Module::dump() {
+	   std::stringstream buffer;
+
+	   buffer << "This is the IR: " << endl;
+	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
+
+		for (auto function : *this->functions) {
 			function->dump(buffer);
+			buffer << endl << endl;
+		}
+
+		cout << buffer.str();
 	}
 }

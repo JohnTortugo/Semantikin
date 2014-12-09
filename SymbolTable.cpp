@@ -83,6 +83,12 @@ namespace Parser {
 		cout << endl;
 	}
 
+	void STLabelDef::dump() const { cout << "Not implemented yet." << endl; }
+
+	void STConstantDef::dump() const { cout << "Not implemented yet." << endl; }
+
+	void STTempVar::dump() const { cout << "Not implemented yet." << endl; }
+
 	void SymbolTable::dump() const {
 		if (this->getParent() != nullptr) {
 			this->getParent()->dump();

@@ -21,9 +21,6 @@ class AstNodeVisitor;
 
 namespace Parser {
 	class AstNode {
-	protected:
-
-
 	public:
 		virtual void accept(AstNodeVisitor* visitor) = 0;
 
@@ -35,11 +32,14 @@ namespace Parser {
 	class Expression : public Statement {
 	protected:
 		NativeType _expType;
+		shared_ptr<SymbolTableEntry> _addr;
 
 	public:
 		NativeType exprType() const { return _expType; }
-
 		void exprType(NativeType _etype) { _expType = _etype; }
+
+		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
+		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
 	};
 
 	class BinaryExpr : public Expression {

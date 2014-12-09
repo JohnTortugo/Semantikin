@@ -44,7 +44,6 @@
 %union {
 	int integer;
 	float floating;
-	double doubling;
 	char* str;
 	Expression* expr;
 	list<std::shared_ptr<Expression>>* listExpr;

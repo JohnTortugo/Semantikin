@@ -3,18 +3,21 @@
 #include <memory>
 #include <list>
 
-/* 1. adicionar declarações.										// OK
- * 2. verificar uso de simbolos inexistentes.						// ok
- * 3. checagem de tipos.											// ok
- * 4. checagem de semantica:										// ok
- * 		4.1 indexacao com ponto flutuante.							// ok
- * 		4.2 usando variável como chamada de função.					// ok
- * 		4.3 usando função como variável.							// ok
- * 		4.4 tipo de argumentos										// ok
- * 		4.5 quantidade correta de argumentos.						// ok
+/*
+ * These are the checks performed:
+ * 		1. adicionar declarações.										// OK
+ * 		2. verificar uso de simbolos inexistentes.						// ok
+ * 		3. checagem de tipos.											// ok
+ * 		4. checagem de semantica:										// ok
+ * 			4.1 indexacao com ponto flutuante.							// ok
+ * 			4.2 usando variável como chamada de função.					// ok
+ * 			4.3 usando função como variável.							// ok
+ * 			4.4 tipo de argumentos										// ok
+ * 			4.5 quantidade correta de argumentos.						// ok
  *
- * 	5. size of array dimensions must be integers contants.			// ok
- * 	6. check (non-)existence of return statements and its type.		// ok
+ * 		5. size of array dimensions must be integers contants.			// ok
+ * 		6. check (non-)existence of return statements and its type.		// ok
+ *
  */
 
 using namespace Parser;
@@ -153,7 +156,7 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 
 	/* Calculate the size of the variable and check if the array
 	 * dimensions were specified with constants. 			  */
-	int varSize = variableSize(typeWidth(type), param->getDims());
+	int varSize = variableSize(typeWidth(translateType(type)), param->getDims());
 
 	if (varSize == 0) {
 		cout << "The dimension of a array should be constant." << endl;
@@ -190,11 +193,11 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 			exit(-1);
 		}
 
-		int dims = 0, varSize = typeWidth(type);
+		int dims = 0, varSize = typeWidth(translateType(type));
 
 		if ((*it)->getDimsExpr() != nullptr) {
 			dims = (*it)->getDimsExpr()->size();
-			varSize = variableSize(typeWidth(type), (*it)->getDimsExpr());
+			varSize = variableSize(typeWidth(translateType(type)), (*it)->getDimsExpr());
 		}
 
 		if ((*it)->getInitializer() != nullptr) {
@@ -382,6 +385,10 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 		}
 	}
 
+	/* Register to which symbol table entry this 'id' refers to. This will
+	 * be helpfull when generating intermediate representation. 		*/
+	id->addr(shared_ptr<STVariableDeclaration>(varDecl));
+
 	/* This reference to a variable has the type of the variable. */
 	id->exprType(varDecl->getType());
 }
@@ -442,6 +449,10 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 		}
 	}
 
+	/* Register to which symbol table entry this 'funCall' refers to.
+	 * This will be helpfull when generating intermediate representation. */
+	funCall->addr(shared_ptr<STFunctionDeclaration>(funDecl));
+
 	/* The type of the function call is the function return type. */
 	funCall->exprType(funDecl->getReturnType());
 }
@@ -482,43 +493,32 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 	else if ((CHECK_TYPE(exp1, INT) && CHECK_TYPE(exp2, FLOAT)) || (CHECK_TYPE(exp1, FLOAT) && CHECK_TYPE(exp2, INT))) {
 		binop->exprType(Parser::FLOAT);
 	}
-	else if ((CHECK_TYPE(exp1, INT) && CHECK_TYPE(exp2, DOUBLE)) || (CHECK_TYPE(exp1, DOUBLE) && CHECK_TYPE(exp2, INT))) {
-		binop->exprType(Parser::DOUBLE);
-	}
-	else if ((CHECK_TYPE(exp1, FLOAT) && CHECK_TYPE(exp2, DOUBLE)) || (CHECK_TYPE(exp1, DOUBLE) && CHECK_TYPE(exp2, FLOAT))) {
-		binop->exprType(Parser::DOUBLE);
-	}
 }
 
 void AstSemaVisitor::addNativeFunctions(shared_ptr<Parser::SymbolTable> table) {
 	/* Global functions for outputing data. */
 	shared_ptr<STFunctionDeclaration> printInt(new STFunctionDeclaration("printInt", "_printInt", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::INT, 0))));
 	shared_ptr<STFunctionDeclaration> printFlt(new STFunctionDeclaration("printFlt", "_printFlt", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::FLOAT, 0))));
-	shared_ptr<STFunctionDeclaration> printDbl(new STFunctionDeclaration("printDbl", "_printDbl", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::DOUBLE, 0))));
 	shared_ptr<STFunctionDeclaration> printStr(new STFunctionDeclaration("printStr", "_printStr", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::STRING, 0))));
 
 	table->add(printInt);
 	table->add(printFlt);
-	table->add(printDbl);
 	table->add(printStr);
 
 
 	/* Global functions for reading data. */
 	shared_ptr<STFunctionDeclaration> readInt(new STFunctionDeclaration("readInt", "_readInt", Parser::INT, vector<pair<NativeType, int>>()));
 	shared_ptr<STFunctionDeclaration> readFlt(new STFunctionDeclaration("readFlt", "_readFlt", Parser::FLOAT, vector<pair<NativeType, int>>()));
-	shared_ptr<STFunctionDeclaration> readDbl(new STFunctionDeclaration("readDbl", "_readDbl", Parser::DOUBLE, vector<pair<NativeType, int>>()));
 	shared_ptr<STFunctionDeclaration> readStr(new STFunctionDeclaration("readStr", "_readStr", Parser::STRING, vector<pair<NativeType, int>>()));
 
 	table->add(readInt);
 	table->add(readFlt);
-	table->add(readDbl);
 	table->add(readStr);
 }
 
 bool AstSemaVisitor::isValidType(string name) {
 	if (name == "int") return true;
 	else if (name == "float") return true;
-	else if (name == "double") return true;
 	else if (name == "string") return true;
 	else if (name == "void") return true;
 	else return false;
@@ -527,7 +527,6 @@ bool AstSemaVisitor::isValidType(string name) {
 string AstSemaVisitor::typeName(Parser::NativeType type) {
 	if (type == Parser::INT) return "int";
 	else if (type == Parser::FLOAT) return "float";
-	else if (type == Parser::DOUBLE) return "double";
 	else if (type == Parser::STRING) return "string";
 	else if (type == Parser::VOID) return "void";
 	else throw -1;
@@ -536,18 +535,16 @@ string AstSemaVisitor::typeName(Parser::NativeType type) {
 NativeType AstSemaVisitor::translateType(string name) {
 	if (name == "int") return Parser::INT;
 	else if (name == "float") return Parser::FLOAT;
-	else if (name == "double") return Parser::DOUBLE;
 	else if (name == "string") return Parser::STRING;
 	else if (name == "void") return Parser::VOID;
 	else throw -1;
 }
 
-TypeWidth AstSemaVisitor::typeWidth(string name) {
-	if (name == "int") return Parser::INT_WIDTH;
-	else if (name == "float") return Parser::FLOAT_WIDTH;
-	else if (name == "double") return Parser::DOUBLE_WIDTH;
-	else if (name == "string") return Parser::STRING_WIDTH;
-	else if (name == "void") return Parser::VOID_WIDTH;
+TypeWidth AstSemaVisitor::typeWidth(NativeType name) {
+	if (name == Parser::INT) return Parser::INT_WIDTH;
+	else if (name == Parser::FLOAT) return Parser::FLOAT_WIDTH;
+	else if (name == Parser::STRING) return Parser::STRING_WIDTH;
+	else if (name == Parser::VOID) return Parser::VOID_WIDTH;
 	else throw -1;
 }
 

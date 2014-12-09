@@ -41,6 +41,9 @@ void AstTACGenVisitor::visit(Parser::Function* function) {
 	/* The IR function must assume the ownership of the symbol table. */
 	this->_currentFunction->symbolTable(function->getSymbTable());
 
+	/* We need to keep a pointer to the current function definition, right? */
+	this->_currentFunction->addr( function->getSymbTable()->getParent()->lookup(function->getName()) );
+
 	/* Produce IR instructions for the statements in the function's code block. */
 	function->getBody()->accept(this);
 }
@@ -51,6 +54,17 @@ void AstTACGenVisitor::visit(const Parser::VarSpec* spec) {
 }
 
 void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
+	shared_ptr<SymbolTable> st = this->_currentFunction->symbolTable();
+
+	for (auto spec : *varDec->getVars()) {
+		Expression* initializer = spec->getInitializer();
+
+		if (initializer != nullptr) {
+			initializer->accept(this);
+
+			this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy(st->lookup(spec->getName()), initializer->addr())));
+		}
+	}
 }
 
 void AstTACGenVisitor::visit(const Parser::LoopStmt* loop) {
@@ -85,19 +99,32 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
 }
 
 void AstTACGenVisitor::visit(Parser::StringExpr* str) {
+	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), str->getValue()));
 
+	this->_currentFunction->symbolTable()->add(cttEntry);
+
+	str->addr(cttEntry);
 }
 
 void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
+	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), flt->getValue()));
 
+	this->_currentFunction->symbolTable()->add(cttEntry);
+
+	flt->addr(cttEntry);
 }
 
 void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
+	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), integer->getValue()));
 
+	this->_currentFunction->symbolTable()->add(cttEntry);
+
+	integer->addr(cttEntry);
 }
 
 void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
-
+	/* No need to code gen. */
+	/* Address was already computed in Sema. */
 }
 
 void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
@@ -109,5 +136,19 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 }
 
 void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
+	Expression* exp1 = binop->getExp1();
+	Expression* exp2 = binop->getExp2();
 
+	exp1->accept(this);
+	exp2->accept(this);
+
+	binop->addr(this->newTemporary(binop->exprType()));
+
+	this->_currentFunction->appendInstruction(shared_ptr<IR::IMul>(new IR::IMul(binop->addr(), exp1->addr(), exp2->addr())));
+}
+
+shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {
+	int width = AstSemaVisitor::typeWidth(type);
+
+	return shared_ptr<STTempVar>(new STTempVar("_t" + std::to_string(this->tempCounter), type, width, this->_currentOffset += width));
 }

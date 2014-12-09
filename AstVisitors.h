@@ -82,6 +82,8 @@ private:
 	/* Number of return statements in the current function. */
 	unsigned int currentFunReturns;
 
+	/* This is the symbol table for the current scope. A pointer to
+	 * the enclosing scope symbol table is keept. 				 */
 	std::shared_ptr<Parser::SymbolTable> currentSymbTable;
 
 public:
@@ -106,11 +108,16 @@ public:
 	void visit(Parser::BinaryExpr* module);
 
 	void addNativeFunctions(shared_ptr<Parser::SymbolTable> table);
-	bool isValidType(string name);
-	Parser::NativeType translateType(string name);
-	string typeName(Parser::NativeType type);
-	Parser::TypeWidth typeWidth(string name);
-	int variableSize(int typeSize, list<shared_ptr<Parser::Expression>>* param);
+
+	static bool isValidType(string name);
+
+	static Parser::NativeType translateType(string name);
+
+	static string typeName(Parser::NativeType type);
+
+	static Parser::TypeWidth typeWidth(Parser::NativeType name);
+
+	static int variableSize(int typeSize, list<shared_ptr<Parser::Expression>>* param);
 
 	int currentOffset() { return this->_currentOffset; }
 };
@@ -130,11 +137,17 @@ private:
 	/* This indicates if the RelationalExpression being analyzed is a
 	 * expression inside a conditional instruction or not. If it is, due to
 	 * short-circuit behavior, we may need to insert jumps (if's) inside
-	 * the expression IR's instruction. 									*/
+	 * the expression IR's instruction. 								 */
 	bool _isExpInConditional;
 
+	/* Count the number of constants/labels/tmps found/added to the symbol table of
+	 * a function. 													 			 */
+	unsigned int constCounter = 1;
+	unsigned int labelCounter = 1;
+	unsigned int tempCounter = 1;
+
 public:
-	AstTACGenVisitor(int currOffset) : _currentOffset(currOffset), _isExpInConditional(false) { }
+	AstTACGenVisitor(int currOffset) : _currentOffset(currOffset), _isExpInConditional(false), constCounter(1), labelCounter(1), tempCounter(1) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);
@@ -155,6 +168,8 @@ public:
 	void visit(Parser::BinaryExpr* module);
 
 	shared_ptr<IR::Module> module() const { return this->_module; }
+
+	shared_ptr<STTempVar> newTemporary(NativeType type);
 };
 
 #endif /* ASTVISITORS_H_ */

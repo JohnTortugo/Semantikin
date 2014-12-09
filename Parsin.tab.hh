@@ -139,7 +139,6 @@ namespace Parser {
 
 	int integer;
 	float floating;
-	double doubling;
 	char* str;
 	Expression* expr;
 	list<std::shared_ptr<Expression>>* listExpr;
@@ -157,7 +156,7 @@ namespace Parser {
 	list<std::shared_ptr<Function>>* listFuncs;
 	CompilationUnit* module;
 
-#line 161 "Parsin.tab.hh" // lalr1.cc:372
+#line 160 "Parsin.tab.hh" // lalr1.cc:372
     };
 #else
     typedef YYSTYPE semantic_type;
@@ -526,7 +525,7 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:372
 } // Parser
-#line 530 "Parsin.tab.hh" // lalr1.cc:372
+#line 529 "Parsin.tab.hh" // lalr1.cc:372
 
 
 

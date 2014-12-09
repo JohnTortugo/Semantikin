@@ -1,5 +1,3 @@
-int soma() {
-	int a;
-	
-	a = 3 + 2;
+void soma() {
+	int a = 3 + 2;
 }
