@@ -85,43 +85,46 @@ namespace IR {
 		{ }
 	};
 
+
 	class IAdd : public IntegerArithmetic {
 	public:
+		using IntegerArithmetic::IntegerArithmetic;
+
 		void dump(stringstream& buffer);
 	};
+
 
 	class ISub : public IntegerArithmetic {
 	public:
+		using IntegerArithmetic::IntegerArithmetic;
+
 		void dump(stringstream& buffer);
 	};
+
 
 	class IMul : public IntegerArithmetic {
 	public:
-		IMul(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : IntegerArithmetic(tgt, src1, src2)
-		{ }
+		using IntegerArithmetic::IntegerArithmetic;
 
 		void dump(stringstream& buffer);
 	};
+
 
 	class IDiv : public IntegerArithmetic {
 	public:
+		using IntegerArithmetic::IntegerArithmetic;
+
 		void dump(stringstream& buffer);
 	};
+
 
 	class IMod : public IntegerArithmetic {
 	public:
+		using IntegerArithmetic::IntegerArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
-	class IInc : public IntegerArithmetic {
-	public:
-		void dump(stringstream& buffer);
-	};
-
-	class IDec : public IntegerArithmetic {
-	public:
-		void dump(stringstream& buffer);
-	};
 
 
 	/* Parent class of all floating point arithmetic instructions. */
@@ -149,84 +152,124 @@ namespace IR {
 
 
 	/* Parent class of all binary arithmetic instructions. */
-	class BinaryArithmetic : public Instruction { };
+	class BinaryArithmetic : public Instruction {
+	public:
+		BinaryArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+	};
 
 	class BinAnd : public BinaryArithmetic {
 	public:
+		using BinaryArithmetic::BinaryArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class BinOr : public BinaryArithmetic {
 	public:
+		using BinaryArithmetic::BinaryArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class BinXor : public BinaryArithmetic {
 	public:
+		using BinaryArithmetic::BinaryArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class BinNot : public BinaryArithmetic {
 	public:
+		using BinaryArithmetic::BinaryArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 
 	/* Parent class of all logical arithmetic instructions. */
-	class LogicalArithmetic : public Instruction { };
+	class LogicalArithmetic : public Instruction {
+	public:
+		LogicalArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+	};
 
 	class LogAnd : public LogicalArithmetic {
 	public:
+		using LogicalArithmetic::LogicalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class LogOr : public LogicalArithmetic {
 	public:
+		using LogicalArithmetic::LogicalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class LogXor : public LogicalArithmetic {
 	public:
+		using LogicalArithmetic::LogicalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class LogNot : public LogicalArithmetic {
 	public:
+		using LogicalArithmetic::LogicalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 
 
 	/* Parent class of all relational arithmetic instructions. */
-	class RelationalArithmetic : public Instruction { };
+	class RelationalArithmetic : public Instruction {
+	public:
+		RelationalArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+	};
 
 	class RLesThan : public RelationalArithmetic {
 	public:
+		using RelationalArithmetic::RelationalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class RLesThanEqual : public RelationalArithmetic {
 	public:
+		using RelationalArithmetic::RelationalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class RGreaterThan : public RelationalArithmetic {
 	public:
+		using RelationalArithmetic::RelationalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class RGreaterThanEqual : public RelationalArithmetic {
 	public:
+		using RelationalArithmetic::RelationalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class REqual : public RelationalArithmetic {
 	public:
+		using RelationalArithmetic::RelationalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class RNotEqual : public RelationalArithmetic {
 	public:
+		using RelationalArithmetic::RelationalArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 

@@ -147,7 +147,7 @@ private:
 	unsigned int tempCounter = 1;
 
 public:
-	AstTACGenVisitor(int currOffset) : _currentOffset(currOffset), _isExpInConditional(false), constCounter(1), labelCounter(1), tempCounter(1) { }
+	AstTACGenVisitor(int currOffset) : _module(nullptr), _currentOffset(currOffset), _isExpInConditional(false), constCounter(1), labelCounter(1), tempCounter(1) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);

@@ -29,17 +29,17 @@ int c(int x, int y) {
 int dfun() {
 	int i;
 	float f;
-	double d;
+	float d;
 	string s;
 	
 	int i1=0, i2=0, i3, i4[3][2];
 	float f1=0, f2=0, f3, f4[3][3][4], f5=0;
-	double d1=0, d2, d3, d4, d5[3][2], d6[3][2], d7[8], d8=0;
+	float d1=0, d2, d3, d4, d5[3][2], d6[3][2], d7[8], d8=0;
 	string s1 = "divino";
 
 	int iiiii = i1 + i2 + i3 + i + 3*i3 + 2*i1;
 	float fffff = f * f * f / f + f - f * f1 * f2 - f3 + f5 + f4[1][2][3];
-	double ddddd = d1 * d2 * d3 * d4 * d8 + d5[1][1] + d6[2][2] + d7[7];
+	float ddddd = d1 * d2 * d3 * d4 * d8 + d5[1][1] + d6[2][2] + d7[7];
 
 //	string ssssss = "divino" + "pai";
 	string sssss = "asdf";

@@ -1,11 +1,13 @@
-string a(int aa) { return aa; }
+string a(string aa) { return aa; }
 
 void b() { int k = 3 + 3; }
 
 int c() {
-	return "strinnnng";
+	return 2;
 }
 
 int d() { 	
-	double a3 = c();
+	int a3 = c();
+	
+	return a3;
 }

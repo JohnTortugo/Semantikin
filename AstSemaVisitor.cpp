@@ -179,7 +179,7 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 
 	while (it != specs->end()) {
 		string name = (*it)->getName();
-		shared_ptr<SymbolTableEntry> prev 	= this->currentSymbTable->lookup(name);
+		shared_ptr<SymbolTableEntry> prev = this->currentSymbTable->lookup(name);
 
 		if (!isValidType(type)) {
 			cout << "Error in semantic analysis." << endl;
@@ -387,7 +387,7 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 
 	/* Register to which symbol table entry this 'id' refers to. This will
 	 * be helpfull when generating intermediate representation. 		*/
-	id->addr(shared_ptr<STVariableDeclaration>(varDecl));
+	id->addr(decl);
 
 	/* This reference to a variable has the type of the variable. */
 	id->exprType(varDecl->getType());
@@ -451,7 +451,7 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 
 	/* Register to which symbol table entry this 'funCall' refers to.
 	 * This will be helpfull when generating intermediate representation. */
-	funCall->addr(shared_ptr<STFunctionDeclaration>(funDecl));
+	funCall->addr(decl);
 
 	/* The type of the function call is the function return type. */
 	funCall->exprType(funDecl->getReturnType());

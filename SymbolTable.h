@@ -37,6 +37,8 @@ namespace Parser {
 		string name;
 
 	public:
+		SymbolTableEntry() { }
+
 		SymbolTableEntry(string nm) : name(nm) {}
 
 		virtual string getName() { return this->name; }
@@ -92,6 +94,8 @@ namespace Parser {
 
 
 	public:
+		STVariableDeclaration() { }
+
 		STVariableDeclaration(string nm, NativeType tp, int wd, int off, int nd) : SymbolTableEntry(nm), type(tp), width(wd), offset(off), numDims(nd)
 		{ }
 
@@ -116,8 +120,17 @@ namespace Parser {
 	/* This represent a local variable declaration. */
 	class STLocalVarDecl : public STVariableDeclaration {
 	public:
-		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
-		{ }
+//		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
+//		{ }
+
+		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
+			name = _name;
+			type = _type;
+			width = _width;
+			offset = _offset;
+			numDims = _numDims;
+		}
+
 
 		void dump() const;
 	};
@@ -126,8 +139,16 @@ namespace Parser {
 	/* This represent a formal parameter declaration in a function. */
 	class STParamDecl : public STVariableDeclaration {
 	public:
-		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
-		{ }
+//		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
+//		{ }
+
+		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
+			name = _name;
+			type = _type;
+			width = _width;
+			offset = _offset;
+			numDims = _numDims;
+		}
 
 		void dump() const;
 	};
@@ -143,7 +164,6 @@ namespace Parser {
 	};
 
 
-
 	/* This entry will represent a address label used in the IR. */
 	class STLabelDef : public SymbolTableEntry {
 	private:
@@ -154,7 +174,6 @@ namespace Parser {
 
 		void dump() const;
 	};
-
 
 
 	/* This is used to store the constants when representing the IR. */
@@ -183,7 +202,6 @@ namespace Parser {
 
 		void dump() const;
 	};
-
 
 
 	class SymbolTable {

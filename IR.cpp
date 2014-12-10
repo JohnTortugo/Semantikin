@@ -12,22 +12,25 @@ namespace IR {
 
 
 
-	void IAdd::dump(stringstream& buffer) { buffer << "? = ? + ?;" << endl; }
+	void IAdd::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + " << this->_src2->getName() << ";" << endl;
+	}
 
-	void ISub::dump(stringstream& buffer) { buffer << "? = ? - ?;" << endl; }
+	void ISub::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - " << this->_src2->getName() << ";" << endl;
+	}
 
 	void IMul::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " * " << this->_src2->getName() << ";" << endl;
 	}
 
-	void IDiv::dump(stringstream& buffer) { buffer << "? = ? / ?;" << endl; }
+	void IDiv::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " / " << this->_src2->getName() << ";" << endl;
+	}
 
-	void IMod::dump(stringstream& buffer) { buffer << "? = ? % ?;" << endl; }
-
-	void IInc::dump(stringstream& buffer) { buffer << "?++;" << endl; }
-
-	void IDec::dump(stringstream& buffer) { buffer << "?--;" << endl; }
-
+	void IMod::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " % " << this->_src2->getName() << ";" << endl;
+	}
 
 	void FAdd::dump(stringstream& buffer) { buffer << "? = ? + ?;" << endl; }
 

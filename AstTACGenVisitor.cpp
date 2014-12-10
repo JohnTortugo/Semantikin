@@ -23,6 +23,11 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
 		/* Something like an inherited attribute. */
 		this->_currentFunction = shared_ptr<IR::Function>(new IR::Function(function->getSymbTable()));
 
+		/* Reset the counters for temps/labels/constants. */
+		this->constCounter = 1;
+		this->labelCounter = 1;
+		this->tempCounter = 1;
+
 		/* Produce IR instructions for the components of function. */
 		function->accept(this);
 
@@ -138,17 +143,109 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
 	Expression* exp1 = binop->getExp1();
 	Expression* exp2 = binop->getExp2();
+	IR::Instruction* newInstruction = nullptr;
+	NativeType tgtType = binop->exprType();
 
 	exp1->accept(this);
 	exp2->accept(this);
 
-	binop->addr(this->newTemporary(binop->exprType()));
+	if (binop->exprType() == Parser::INT) {
+		switch (binop->getType()) {
+			case BinaryExpr::ASSIGN:
+				newInstruction = new IR::ScalarCopy(exp1->addr(), exp2->addr());
+				break;
 
-	this->_currentFunction->appendInstruction(shared_ptr<IR::IMul>(new IR::IMul(binop->addr(), exp1->addr(), exp2->addr())));
+			case BinaryExpr::LOG_AND:
+				newInstruction = new IR::LogAnd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LOG_OR:
+				newInstruction = new IR::LogOr(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::BIT_AND:
+				newInstruction = new IR::BinAnd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::BIT_OR:
+				newInstruction = new IR::BinOr(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::BIT_XOR:
+				newInstruction = new IR::BinXor(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::COMPARE:
+				newInstruction = new IR::REqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LT:
+				newInstruction = new IR::RLesThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LTE:
+				newInstruction = new IR::RLesThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::GT:
+				newInstruction = new IR::RGreaterThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::GTE:
+				newInstruction = new IR::RGreaterThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::ADDITION:
+				newInstruction = new IR::IAdd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::SUBTRACTION:
+				newInstruction = new IR::ISub(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::TIMES:
+				newInstruction = new IR::IMul(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::DIV:
+				newInstruction = new IR::IDiv(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::MOD:
+				newInstruction = new IR::IMod(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::PLUS_EQUAL:
+				newInstruction = new IR::IAdd(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::MINUS_EQUAL:
+				newInstruction = new IR::ISub(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::TIMES_EQUAL:
+				newInstruction = new IR::IMul(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::DIV_EQUAL:
+				newInstruction = new IR::IDiv(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::MOD_EQUAL:
+				newInstruction = new IR::IMod(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+		}
+	}
+
+	binop->addr( newInstruction->tgt() );
+
+	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 }
 
 shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {
-	int width = AstSemaVisitor::typeWidth(type);
+	int width  = AstSemaVisitor::typeWidth(type);
+	int tempId = this->tempCounter++;
+	int offset = this->_currentOffset += width;
 
-	return shared_ptr<STTempVar>(new STTempVar("_t" + std::to_string(this->tempCounter), type, width, this->_currentOffset += width));
+	return shared_ptr<STTempVar>(new STTempVar("_t" + std::to_string(tempId), type, width, offset));
 }
