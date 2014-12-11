@@ -16,7 +16,7 @@ void AstToDotVisitor::visit(Parser::Function* function) {
 
 	/* Add the node of parameters if actually there is parameters. */
 	list<shared_ptr<Parser::ParamDecl>>* params = function->getParams();
-	if (params != nullptr) {
+	if (params != nullptr && params->size() > 0) {
 		list<shared_ptr<Parser::ParamDecl>>::iterator it = params->begin();
 
 		this->dotfile << "\t\"" << function << "\" -> \"" << function << "_params\";" << endl;
@@ -39,11 +39,11 @@ void AstToDotVisitor::visit(const Parser::ParamDecl* param) {
 	list<shared_ptr<Parser::Expression>>* dims = param->getDims();
 
 	/* The parameter header node. */
-	this->dotfile << "\t\"" << param << "\" [shape=record, label=\"{Type:" << param->getType() << "|Name:" << param->getName() << "|Dims:" << dims->size() << "}\"];" << endl;
-
 	if (dims->size() > 0) {
+		this->dotfile << "\t\"" << param << "\" [shape=record, label=\"{Type:" << param->getType() << "|Name:" << param->getName() << "|Dims:" << dims->size() << "}\"];" << endl;
+
 		/* Create the hub node. */
-		this->dotfile << "\t\"" << param << "-dims\" [shape=tripleoctagon, label=\"Dims\"];" << endl;
+		this->dotfile << "\t\"" << param << "-dims\" [shape=tripleoctagon, label=\"Sizes\"];" << endl;
 
 		/* Edge to the dimension hub. */
 		this->dotfile << "\t\"" << param << "\" -> \"" << param << "-dims\";" << endl;
@@ -56,6 +56,9 @@ void AstToDotVisitor::visit(const Parser::ParamDecl* param) {
 			it++;
 		}
 	}
+	else {
+		this->dotfile << "\t\"" << param << "\" [shape=record, label=\"{Type:" << param->getType() << "|Name:" << param->getName() << "|Scalar}\"];" << endl;
+	}
 }
 
 void AstToDotVisitor::visit(const Parser::VarSpec* spec) {
@@ -63,12 +66,16 @@ void AstToDotVisitor::visit(const Parser::VarSpec* spec) {
 	list<shared_ptr<Parser::Expression>>* dims = spec->getDimsExpr();
 
 	if (dims != nullptr && dims->size() > 0) {
-		this->dotfile << "\t\"" << spec << "\" [shape=record, label=\"{Vector|Name:" << spec->getName() << "}\"];" << endl;
+		this->dotfile << "\t\"" << spec << "\" 		[shape=record, label=\"{Vector|Name:" << spec->getName() << "}\"];" << endl;
+		this->dotfile << "\t\"" << spec << "-dims\" [shape=tripleoctagon, label=\"Sizes\"];" << endl;
+
+		/* Edge to the dimension hub. */
+		this->dotfile << "\t\"" << spec << "\" -> \"" << spec << "-dims\";" << endl;
 
 		list<shared_ptr<Parser::Expression>>::iterator it 	= dims->begin();
 
 		while (it != dims->end()) {
-			this->dotfile << "\t\"" << spec << "\" -> \"" << it->get() << "\";" << endl;
+			this->dotfile << "\t\"" << spec << "-dims\" -> \"" << it->get() << "\";" << endl;
 			it++;
 		}
 	}

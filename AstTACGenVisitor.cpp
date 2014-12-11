@@ -1,3 +1,4 @@
+#include "Semantikin.h"
 #include "AstVisitors.h"
 #include "SymbolTable.h"
 #include <memory>
@@ -67,7 +68,20 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 		if (initializer != nullptr) {
 			initializer->accept(this);
 
-			this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy(st->lookup(spec->getName()), initializer->addr())));
+			if (initializer->exprType() == Parser::INT || initializer->exprType() == Parser::FLOAT) {
+				this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy(st->lookup(spec->getName()), initializer->addr())));
+			}
+			else if (initializer->exprType() == Parser::STRING) {
+				shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call( st->lookup(System::NAT_FUN_STRCPY)) );
+
+				newInstruction->addArgument(st->lookup(spec->getName()));
+				newInstruction->addArgument(initializer->addr());
+
+				this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
+			}
+			else {
+				throw System::EXCEPTION_UNEXPECTED_TYPE;
+			}
 		}
 	}
 }
@@ -128,17 +142,113 @@ void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 }
 
 void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
-	/* No need to code gen. */
-	/* Address was already computed in Sema. */
+	if (id->getDimsExprs() != nullptr && id->getDimsExprs()->size() > 0) {
+		/* Tells parent "visiting" methods that this is an array access. */
+		id->isArrayAccess(true);
+
+		/* We look into the symbol table to find the dimensions sizes. */
+		shared_ptr<SymbolTableEntry> entry = this->_currentFunction->symbolTable()->lookup(id->getValue());
+		STVariableDeclaration* decl = dynamic_cast<STVariableDeclaration*>( entry.get() );
+
+		/* Here we are going to store the factors for each index. */
+		vector<shared_ptr<SymbolTableEntry>> indExpsFacts;
+
+		/* Here we are going to store the accumulated (from right to left) size of each dimension. */
+		vector<int> sizes(decl->dims());
+
+		/* Computes the size of each complete dimension. */
+		for (int i=sizes.size()-1, prev=1; i>=0; i--) {
+			sizes[i] = prev;
+			prev *= decl->dims()[i];
+		}
+
+		/* Iterate computing the expressions for each index. */
+		int factIndex = 0;
+		for (auto dimExpr : *id->getDimsExprs()) {
+			/* Compute the index expression. */
+			dimExpr->accept(this);
+
+			/* This represent the index used to make the access and the dimension size. */
+			shared_ptr<SymbolTableEntry> ind = dimExpr->addr();
+			shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), sizes[factIndex]));
+
+			/* multiply index*DIM_SIZE and store it. */
+			IR::Instruction* newInstruction = new IR::IMul(this->newTemporary(Parser::INT), cttEntry, ind);
+
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( newInstruction ) );
+
+			/* We store back the target because at the end we need to sum up the partial factors. */
+			indExpsFacts.push_back( newInstruction->tgt() );
+
+			factIndex++;
+		}
+
+		/* Accumulate the value of the factors. */
+		shared_ptr<SymbolTableEntry> prev = indExpsFacts[0];
+		for (factIndex=1; factIndex < indExpsFacts.size(); factIndex++) {
+			/* Sum prev factor with current. */
+			IR::Instruction* newInstruction = new IR::IAdd(this->newTemporary(Parser::INT), prev, indExpsFacts[factIndex]);
+
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( newInstruction ) );
+
+			prev = newInstruction->tgt();
+		}
+
+		/* Now we need to consider the base type size. */
+		shared_ptr<Parser::STConstantDef> cttBaseType(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), AstSemaVisitor::typeWidth(decl->getType())));
+		IR::Instruction* indAccess = new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev);
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( indAccess ) );
+
+		/* Now we have to sum with the base pointer (id). */
+		IR::Instruction* arrAccess = new IR::IAdd(this->newTemporary(Parser::INT), entry, indAccess->tgt());
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( arrAccess ) );
+
+		/* If we are parsing a right-hand side expression we will de-refer the pointer and load
+		 * the array value in a temporary. Otherwise, we will just return the address to the previous
+		 * expression, and it will take care of dereferencing. 									   */
+		if (!id->isExpLeftHand()) {
+			IR::Instruction* derefer = new IR::CopyFromArray(this->newTemporary(id->exprType()), arrAccess->tgt());
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( derefer ) );
+
+			id->addr( derefer->tgt() );
+		}
+		else {
+			id->addr( arrAccess->tgt() );
+		}
+	}
+	else {
+		id->isArrayAccess(false);
+		/* No need to code gen. */
+		/* Address was already computed in Sema. */
+	}
 }
 
 void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
+	shared_ptr<SymbolTableEntry> decl = this->_currentFunction->symbolTable()->lookup(funCall->getName());
 
+	shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(decl) );
+
+	for (auto argument : *funCall->getArguments()) {
+		/* Visit the argument, produce address for them.*/
+		argument->accept(this);
+
+		/* Add the argument to the function call. */
+		newInstruction->addArgument(argument->addr());
+	}
+
+	this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
 }
 
 void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 
 }
+
+//NOT,
+//MINUS,
+//PLUS,
+//ADDR,
+//INCREMENT,
+//DECREMENT
 
 void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
 	Expression* exp1 = binop->getExp1();
@@ -146,13 +256,19 @@ void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
 	IR::Instruction* newInstruction = nullptr;
 	NativeType tgtType = binop->exprType();
 
+	exp1->isExpLeftHand(binop->getType() == BinaryExpr::ASSIGN);
 	exp1->accept(this);
+
+	exp2->isExpLeftHand(false);
 	exp2->accept(this);
 
 	if (binop->exprType() == Parser::INT) {
 		switch (binop->getType()) {
 			case BinaryExpr::ASSIGN:
-				newInstruction = new IR::ScalarCopy(exp1->addr(), exp2->addr());
+				if (exp1->isArrayAccess())
+					newInstruction = new IR::CopyToArray(exp1->addr(), exp2->addr());
+				else
+					newInstruction = new IR::ScalarCopy(exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::LOG_AND:
@@ -236,11 +352,82 @@ void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
 				break;
 		}
 	}
+	else if (binop->exprType() == Parser::FLOAT) {
+		switch (binop->getType()) {
+			case BinaryExpr::ASSIGN:
+				if (exp1->isArrayAccess())
+					newInstruction = new IR::CopyToArray(exp1->addr(), exp2->addr());
+				else
+					newInstruction = new IR::ScalarCopy(exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LOG_AND:
+				newInstruction = new IR::LogAnd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LOG_OR:
+				newInstruction = new IR::LogOr(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::COMPARE:
+				newInstruction = new IR::REqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LT:
+				newInstruction = new IR::RLesThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::LTE:
+				newInstruction = new IR::RLesThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::GT:
+				newInstruction = new IR::RGreaterThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::GTE:
+				newInstruction = new IR::RGreaterThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::ADDITION:
+				newInstruction = new IR::FAdd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::SUBTRACTION:
+				newInstruction = new IR::FSub(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::TIMES:
+				newInstruction = new IR::FMul(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::DIV:
+				newInstruction = new IR::FDiv(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::PLUS_EQUAL:
+				newInstruction = new IR::FAdd(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::MINUS_EQUAL:
+				newInstruction = new IR::FSub(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::TIMES_EQUAL:
+				newInstruction = new IR::FMul(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+
+			case BinaryExpr::DIV_EQUAL:
+				newInstruction = new IR::FDiv(exp1->addr(), exp1->addr(), exp2->addr());
+				break;
+		}
+	}
 
 	binop->addr( newInstruction->tgt() );
 
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 }
+
 
 shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {
 	int width  = AstSemaVisitor::typeWidth(type);

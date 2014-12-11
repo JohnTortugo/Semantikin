@@ -50,33 +50,7 @@ namespace Parser {
 		virtual ~SymbolTableEntry() {};
 	};
 
-
-	class STFunctionDeclaration : public SymbolTableEntry {
-	private:
-		/* Compiler assigned function's label. */
-		string label;
-
-		/* The function's return type. */
-		NativeType returnType;
-
-		/* Specification of the function's formal parameters in terms of
-		 * <Type,NumberOfDimensions> 								  */
-		vector<pair<NativeType, int>> params;
-
-	public:
-		STFunctionDeclaration(string _name, string _label, NativeType _returnType, vector<pair<NativeType, int>> _params) : SymbolTableEntry(_name), label(_label), returnType(_returnType), params(_params)
-		{ }
-
-		string getLabel() const { return label; }
-
-		const vector<pair<NativeType, int>>* getParams() const { return &params; }
-
-		NativeType getReturnType() const { return returnType; }
-
-		void dump() const;
-	};
-
-
+	/* Represent any kind of variable: parameter, temporary, local. */
 	class STVariableDeclaration : public SymbolTableEntry {
 	protected:
 		/* the variable's type. */
@@ -88,20 +62,21 @@ namespace Parser {
 		/* Offset within the function frame where this variable will be stored. */
 		int offset;
 
-		/* Is this variable scalar (numDims == 0) or a vector with N dimensions
-		 * (numDims == N)?  												 */
-		int numDims;
+		/* Is this variable scalar (dims.size() == 0) or a vector with N dimensions
+		 * (dims.size() == N)? If it is a vector, each index store the size of each
+		 * respective dimension. 												 */
+		vector<int> _dims;
 
 
 	public:
-		STVariableDeclaration() { }
+		STVariableDeclaration() : type(Parser::VOID), width(0), offset(0) { }
 
-		STVariableDeclaration(string nm, NativeType tp, int wd, int off, int nd) : SymbolTableEntry(nm), type(tp), width(wd), offset(off), numDims(nd)
+		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm), type(tp), width(wd), offset(off)
 		{ }
 
-		int getNumDims() const {
-			return numDims;
-		}
+		const vector<int>& dims() const { return _dims; }
+		int getNumDims() const { return _dims.size(); }
+		void addDim(int size) { _dims.push_back(size); }
 
 		int getOffset() const {
 			return offset;
@@ -120,17 +95,12 @@ namespace Parser {
 	/* This represent a local variable declaration. */
 	class STLocalVarDecl : public STVariableDeclaration {
 	public:
-//		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
-//		{ }
-
-		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
+		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset) {
 			name = _name;
 			type = _type;
 			width = _width;
 			offset = _offset;
-			numDims = _numDims;
 		}
-
 
 		void dump() const;
 	};
@@ -139,15 +109,11 @@ namespace Parser {
 	/* This represent a formal parameter declaration in a function. */
 	class STParamDecl : public STVariableDeclaration {
 	public:
-//		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) : STVariableDeclaration(_name, _type, _width, _offset, _numDims)
-//		{ }
-
-		STParamDecl(string _name, NativeType _type, int _width, int _offset, int _numDims) {
+		STParamDecl(string _name, NativeType _type, int _width, int _offset) {
 			name = _name;
 			type = _type;
 			width = _width;
 			offset = _offset;
-			numDims = _numDims;
 		}
 
 		void dump() const;
@@ -157,7 +123,7 @@ namespace Parser {
 	/* This entry will represent a temporary variable used in the IR. */
 	class STTempVar : public STVariableDeclaration {
 	public:
-		STTempVar(string _name, NativeType _type, int _width, int _offset) : STVariableDeclaration(_name, _type, _width, _offset, 0)
+		STTempVar(string _name, NativeType _type, int _width, int _offset) : STVariableDeclaration(_name, _type, _width, _offset)
 		{ }
 
 		void dump() const;
@@ -199,6 +165,31 @@ namespace Parser {
 				case Parser::FLOAT: return std::to_string(this->_floating);
 			}
 		}
+
+		void dump() const;
+	};
+
+	/* Represents the definition of a function. */
+	class STFunctionDeclaration : public SymbolTableEntry {
+	private:
+		/* Compiler assigned function's label. */
+		string label;
+
+		/* The function's return type. */
+		NativeType returnType;
+
+		vector<shared_ptr<SymbolTableEntry>> _params;
+
+	public:
+		STFunctionDeclaration(string _name, string _label, NativeType _returnType) : SymbolTableEntry(_name), label(_label), returnType(_returnType)
+		{ }
+
+		string getLabel() const { return label; }
+
+		const vector<shared_ptr<SymbolTableEntry>>& params() const { return _params; }
+		void addParam(shared_ptr<SymbolTableEntry> newParam) { _params.push_back(newParam); }
+
+		NativeType getReturnType() const { return returnType; }
 
 		void dump() const;
 	};

@@ -134,12 +134,6 @@ private:
 	/* Pointer to the function currently being IR generated. */
 	shared_ptr<IR::Function> _currentFunction;
 
-	/* This indicates if the RelationalExpression being analyzed is a
-	 * expression inside a conditional instruction or not. If it is, due to
-	 * short-circuit behavior, we may need to insert jumps (if's) inside
-	 * the expression IR's instruction. 								 */
-	bool _isExpInConditional;
-
 	/* Count the number of constants/labels/tmps found/added to the symbol table of
 	 * a function. 													 			 */
 	unsigned int constCounter = 1;
@@ -147,7 +141,7 @@ private:
 	unsigned int tempCounter = 1;
 
 public:
-	AstTACGenVisitor(int currOffset) : _module(nullptr), _currentOffset(currOffset), _isExpInConditional(false), constCounter(1), labelCounter(1), tempCounter(1) { }
+	AstTACGenVisitor(int currOffset) : _module(nullptr), _currentOffset(currOffset), constCounter(1), labelCounter(1), tempCounter(1) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);

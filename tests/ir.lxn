@@ -33,3 +33,22 @@ void somaAgain() {
 	sub = 3;
 	sub = add;
 }
+
+void testeParams(int a, float b, string c, int d, float e, string f) {
+
+	printInt(a);
+	printFlt(b);
+	printStr(c);
+
+	printInt(d);
+	printFlt(e);
+	printStr(f);
+}
+
+int main() {
+	string s = "divino";
+
+	testeParams(123, 3.1415, s, 1985, 0.3, "cesar");
+
+	return 0;
+}

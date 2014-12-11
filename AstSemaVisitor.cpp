@@ -1,3 +1,4 @@
+#include "Semantikin.h"
 #include "AstVisitors.h"
 #include "SymbolTable.h"
 #include <memory>
@@ -81,16 +82,7 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 	}
 
 	/* Insert the function definition in the symbol table. */
-	vector<pair<NativeType, int>> params;
-	list<shared_ptr<ParamDecl>>::iterator it;
-	for (it = function->getParams()->begin(); it != function->getParams()->end(); it++) {
-		NativeType ptype = translateType((*it)->getType());
-		int pdims = (*it)->getDims()->size();
-
-		params.push_back(make_pair(ptype, pdims));
-	}
-
-	shared_ptr<Parser::STFunctionDeclaration> funDecl(new Parser::STFunctionDeclaration(name, name, translateType(type), params));
+	shared_ptr<Parser::STFunctionDeclaration> funDecl(new Parser::STFunctionDeclaration(name, name, translateType(type)));
 	this->currentSymbTable->add(funDecl);
 
 	/* Offset is always relative to the function frame,
@@ -116,8 +108,13 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 
 	/* Add the node of parameters if actually there is parameters. */
 	list<shared_ptr<ParamDecl>>::iterator itt = function->getParams()->begin();
-	for (itt = function->getParams()->begin(); itt != function->getParams()->end(); itt++)
+	for (itt = function->getParams()->begin(); itt != function->getParams()->end(); itt++) {
+		/* The parameter is added to the symbol table. */
 		(*itt)->accept(this);
+
+		/* Now set set in the Function entry in the ST a pointer to its parameter entry in the ST. */
+		funDecl->addParam( this->currentSymbTable->lookup((*itt)->getName()) );
+	}
 
 	/* Continue the visiting. */
 	function->getBody()->accept(this);
@@ -159,11 +156,21 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 	int varSize = variableSize(typeWidth(translateType(type)), param->getDims());
 
 	if (varSize == 0) {
-		cout << "The dimension of a array should be constant." << endl;
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tThe size of array dimensions should be integer constants." << endl;
 		exit(-1);
 	}
 
-	shared_ptr<Parser::STParamDecl> parDecl(new Parser::STParamDecl(name, translateType(type), varSize, this->_currentOffset, param->getDims()->size()));
+	/* Create the parameter definition. */
+	shared_ptr<Parser::STParamDecl> parDecl(new Parser::STParamDecl(name, translateType(type), varSize, this->_currentOffset));
+
+	/* Collect the number and size of each dimension. */
+	for (auto _par : *param->getDims()) {
+		IntegerExpr *expr = dynamic_cast<IntegerExpr*>(_par.get());
+		parDecl->addDim(expr->getValue());
+	}
+
+	/* Include the parameter definition in the ST. */
 	this->currentSymbTable->add(parDecl);
 
 	this->_currentOffset += varSize;
@@ -212,7 +219,25 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 			}
 		}
 
-		shared_ptr<Parser::STLocalVarDecl> param(new Parser::STLocalVarDecl(name, translateType(type), varSize, this->_currentOffset, dims));
+		/* Create the parameter */
+		shared_ptr<Parser::STLocalVarDecl> param(new Parser::STLocalVarDecl(name, translateType(type), varSize, this->_currentOffset));
+
+		/* Collect the number and size of each dimension. */
+		if ((*it)->getDimsExpr() != nullptr) {
+			for (auto _par : *(*it)->getDimsExpr()) {
+				IntegerExpr *expr = dynamic_cast<IntegerExpr*>(_par.get());
+
+				if (expr == nullptr) {
+					cout << "Error in semantic analysis." << endl;
+					cout << "\tDimensions size must be integer constants." << endl;
+					exit(-1);
+				}
+
+				param->addDim(expr->getValue());
+			}
+		}
+
+		/* Add the parameter to the current ST. */
 		this->currentSymbTable->add(param);
 
 		this->_currentOffset += varSize;
@@ -415,10 +440,10 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 	}
 
 	/* Check number of parameters. */
-	if (funDecl->getParams()->size() != funCall->getArguments()->size()) {
+	if (funDecl->params().size() != funCall->getArguments()->size()) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tIncorrect number of parameters were passed to function \"" << name << "\"." << endl;
-		cout << "\t" << funDecl->getParams()->size() << " were expected, but " << arguments->size() << " was passed." << endl;
+		cout << "\t" << funDecl->params().size() << " were expected, but " << arguments->size() << " was passed." << endl;
 		exit(-1);
 	}
 
@@ -434,15 +459,16 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 	/* Need to check the type of the parameters. */
 	if (arguments != nullptr) {
 		list<shared_ptr<Parser::Expression>>::iterator it = arguments->begin();
-		const vector<pair<NativeType, int>>* parameters = funDecl->getParams();
+		const vector<shared_ptr<SymbolTableEntry>> parameters = funDecl->params();
 
 		for (int i=0; it != arguments->end(); it++, i++) {
 			Parser::Expression* exp = it->get();
+			STParamDecl* param = dynamic_cast<STParamDecl*>(parameters[i].get());
 
 			/* If the argument is not a subtype of the parameter type it is an error. */
-			if ( ! IS_SUBTYPE(exp->exprType(), (*parameters)[i].first) ) {
+			if ( ! IS_SUBTYPE(exp->exprType(), param->getType()) ) {
 				cout << "Error in semantic analysis." << endl;
-				cout << "\tThe " << (i+1) << "'th parameter of the function \"" << funDecl->getName() << "\" is a \"" << typeName((*parameters)[i].first) << "\"";
+				cout << "\tThe " << (i+1) << "'th parameter of the function \"" << funDecl->getName() << "\" is a \"" << typeName(param->getType()) << "\"";
 				cout << " but an \"" << typeName(exp->exprType()) << "\" was informed." << endl;
 				exit(-1);
 			}
@@ -497,23 +523,53 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 
 void AstSemaVisitor::addNativeFunctions(shared_ptr<Parser::SymbolTable> table) {
 	/* Global functions for outputing data. */
-	shared_ptr<STFunctionDeclaration> printInt(new STFunctionDeclaration("printInt", "_printInt", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::INT, 0))));
-	shared_ptr<STFunctionDeclaration> printFlt(new STFunctionDeclaration("printFlt", "_printFlt", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::FLOAT, 0))));
-	shared_ptr<STFunctionDeclaration> printStr(new STFunctionDeclaration("printStr", "_printStr", Parser::VOID, vector<pair<NativeType, int>>(1, make_pair(Parser::STRING, 0))));
+	shared_ptr<STFunctionDeclaration> printInt(new STFunctionDeclaration("printInt", "_printInt", Parser::VOID));
+	shared_ptr<STFunctionDeclaration> printFlt(new STFunctionDeclaration("printFlt", "_printFlt", Parser::VOID));
+	shared_ptr<STFunctionDeclaration> printStr(new STFunctionDeclaration("printStr", "_printStr", Parser::VOID));
+
+	/* We need to add the function_formal parameters. */
+	shared_ptr<STParamDecl> printIntParam = shared_ptr<STParamDecl>( new STParamDecl("_printInt_1", Parser::INT, typeWidth(Parser::INT), this->_currentOffset+=typeWidth(Parser::INT)));
+	shared_ptr<STParamDecl> printFltParam = shared_ptr<STParamDecl>( new STParamDecl("_printFlt_1", Parser::FLOAT, typeWidth(Parser::FLOAT), this->_currentOffset+=typeWidth(Parser::FLOAT)));
+	shared_ptr<STParamDecl> printStrParam = shared_ptr<STParamDecl>( new STParamDecl("_printStr_1", Parser::STRING, typeWidth(Parser::STRING), this->_currentOffset+=typeWidth(Parser::STRING)));
+
+	table->add(printIntParam);
+	printInt->addParam(printIntParam);
+
+	table->add(printFltParam);
+	printFlt->addParam(printFltParam);
+
+	table->add(printStrParam);
+	printStr->addParam(printStrParam);
 
 	table->add(printInt);
 	table->add(printFlt);
 	table->add(printStr);
 
 
+
 	/* Global functions for reading data. */
-	shared_ptr<STFunctionDeclaration> readInt(new STFunctionDeclaration("readInt", "_readInt", Parser::INT, vector<pair<NativeType, int>>()));
-	shared_ptr<STFunctionDeclaration> readFlt(new STFunctionDeclaration("readFlt", "_readFlt", Parser::FLOAT, vector<pair<NativeType, int>>()));
-	shared_ptr<STFunctionDeclaration> readStr(new STFunctionDeclaration("readStr", "_readStr", Parser::STRING, vector<pair<NativeType, int>>()));
+	shared_ptr<STFunctionDeclaration> readInt(new STFunctionDeclaration("readInt", "_readInt", Parser::INT));
+	shared_ptr<STFunctionDeclaration> readFlt(new STFunctionDeclaration("readFlt", "_readFlt", Parser::FLOAT));
+	shared_ptr<STFunctionDeclaration> readStr(new STFunctionDeclaration("readStr", "_readStr", Parser::STRING));
 
 	table->add(readInt);
 	table->add(readFlt);
 	table->add(readStr);
+
+
+
+	/* Global functions for copying strings. */
+	shared_ptr<STFunctionDeclaration> fstrcpy(new STFunctionDeclaration(System::NAT_FUN_STRCPY, "_" + System::NAT_FUN_STRCPY, Parser::INT));
+	shared_ptr<STParamDecl> fstrcpyPar1 = shared_ptr<STParamDecl>( new STParamDecl("_" + System::NAT_FUN_STRCPY + "_1", Parser::STRING, typeWidth(Parser::STRING), this->_currentOffset+=typeWidth(Parser::STRING)));
+	shared_ptr<STParamDecl> fstrcpyPar2 = shared_ptr<STParamDecl>( new STParamDecl("_" + System::NAT_FUN_STRCPY + "_2", Parser::STRING, typeWidth(Parser::STRING), this->_currentOffset+=typeWidth(Parser::STRING)));
+
+	table->add(fstrcpyPar1);
+	table->add(fstrcpyPar2);
+
+	fstrcpy->addParam(fstrcpyPar1);
+	fstrcpy->addParam(fstrcpyPar2);
+
+	table->add(fstrcpy);
 }
 
 bool AstSemaVisitor::isValidType(string name) {

@@ -34,12 +34,36 @@ namespace Parser {
 		NativeType _expType;
 		shared_ptr<SymbolTableEntry> _addr;
 
+		/* This indicate if the current expression being decoded is a left-hand
+		 * or right-hand. If it is left-hand then, if the expression is a identifier
+		 * array, it is not deferenced instead a pointer to the location is returned.
+		 * If it is a right-hand then the value is loaded into a temporary. 	   */
+		bool _isExpLeftHand = false;
+
+		/* Tells if the expressions turns out to be an array access. */
+		bool _isArrayAccess = false;
+
+		/* This indicates if the RelationalExpression being analyzed is a
+		 * expression inside a conditional instruction or not. If it is, due to
+		 * short-circuit behavior, we may need to insert jumps (if's) inside
+		 * the expression IR's instruction. 								 */
+		bool _isExpInConditional = false;
+
 	public:
 		NativeType exprType() const { return _expType; }
 		void exprType(NativeType _etype) { _expType = _etype; }
 
 		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
 		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
+
+		void isExpLeftHand(bool isLeft) { this->_isExpLeftHand = isLeft; }
+		bool isExpLeftHand() { return this->_isExpLeftHand; }
+
+		void isExpInConditional(bool isCond) { this->_isExpInConditional = isCond; }
+		bool isExpInConditional() { return this->_isExpInConditional; }
+
+		void isArrayAccess(bool isArray) { this->_isArrayAccess = isArray; }
+		bool isArrayAccess() { return this->_isArrayAccess; }
 	};
 
 	class BinaryExpr : public Expression {

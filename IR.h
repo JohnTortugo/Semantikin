@@ -46,14 +46,14 @@ namespace IR {
 	/* Parent class of all data movement instructions. */
 	class Copy : public Instruction {
 	public:
-		Copy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		Copy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Instruction(tgt, src1, nullptr)
 		{ }
 	};
 
 
 	class ScalarCopy : public Copy {
 	public:
-		ScalarCopy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Copy(tgt, src, nullptr)
+		ScalarCopy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Copy(tgt, src)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -62,7 +62,7 @@ namespace IR {
 
 	class CopyFromArray : public Copy {
 	public:
-		CopyFromArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Copy(tgt, src1, src2)
+		CopyFromArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -71,7 +71,7 @@ namespace IR {
 
 	class CopyToArray : public Copy {
 	public:
-		CopyToArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Copy(tgt, src1, src2)
+		CopyToArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -128,25 +128,37 @@ namespace IR {
 
 
 	/* Parent class of all floating point arithmetic instructions. */
-	class FloatingArithmetic : public Instruction { };
+	class FloatingArithmetic : public Instruction {
+	public:
+		FloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+	};
 
 	class FAdd : public FloatingArithmetic {
 	public:
+		using FloatingArithmetic::FloatingArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class FSub : public FloatingArithmetic {
 	public:
+		using FloatingArithmetic::FloatingArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class FMul : public FloatingArithmetic {
 	public:
+		using FloatingArithmetic::FloatingArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
 	class FDiv : public FloatingArithmetic {
 	public:
+		using FloatingArithmetic::FloatingArithmetic;
+
 		void dump(stringstream& buffer);
 	};
 
@@ -295,7 +307,16 @@ namespace IR {
 
 	/* Represent the call to a function. */
 	class Call : public Instruction {
+	private:
+		vector<shared_ptr<SymbolTableEntry>> _arguments;
+
 	public:
+		Call(shared_ptr<SymbolTableEntry> callee) : Instruction(callee, nullptr, nullptr)
+		{ }
+
+		const vector<shared_ptr<SymbolTableEntry>>& arguments() const { return _arguments; }
+		void addArgument(shared_ptr<SymbolTableEntry> argument) { _arguments.push_back(argument); }
+
 		void dump(stringstream& buffer);
 	};
 

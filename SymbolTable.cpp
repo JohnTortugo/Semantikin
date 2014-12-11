@@ -38,14 +38,13 @@ namespace Parser {
 		cout << std::setw(5)  << this->returnType 	<< " |";
 		cout << std::setw(5);
 
-		vector<pair<NativeType, int>>::const_iterator it = this->params.begin();
 		std::stringstream buffer;
 		buffer << "{";
-		while (it != this->params.end()) {
-			buffer << "(" << std::setw(1) << it->first;
-			buffer << "," << std::setw(1) << it->second << ")";
+		for (auto _param : this->params()) {
+			STParamDecl* param = dynamic_cast<STParamDecl*>(_param.get());
 
-			it++;
+			buffer << "(" << std::setw(1) << param->getType() ;
+			buffer << "," << std::setw(1) << param->getNumDims() << ")";
 		}
 		buffer << "}";
 
@@ -61,7 +60,7 @@ namespace Parser {
 		cout << std::setw(5) << this->type << " |";
 		cout << std::setw(5) << this->width << " |";
 		cout << std::setw(5) << this->offset << " |";
-		cout << std::setw(5) << this->numDims << " |";
+		cout << std::setw(5) << this->getNumDims() << " |";
 		cout << std::setw(10) << "-" << " |";
 		cout << std::setw(5)  << "-" << " |";
 		cout << std::setw(40)  << "-" << " |";
@@ -76,7 +75,7 @@ namespace Parser {
 		cout << std::setw(5) << this->type << " |";
 		cout << std::setw(5) << this->width << " |";
 		cout << std::setw(5) << this->offset << " |";
-		cout << std::setw(5) << this->numDims << " |";
+		cout << std::setw(5) << this->getNumDims() << " |";
 		cout << std::setw(10) << "-" << " |";
 		cout << std::setw(5)  << "-" << " |";
 		cout << std::setw(40)  << "-" << " |";

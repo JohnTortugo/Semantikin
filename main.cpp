@@ -1,3 +1,4 @@
+#include "Semantikin.h"
 #include "Driver.h"
 #include "AstVisitors.h"
 #include <iostream>
@@ -16,6 +17,8 @@ int main(const int argc, const char **argv) {
 	   AstTACGenVisitor irgen(semantic.currentOffset());
 	   astModule->accept(&irgen);
 
+	   delete astModule;
+
 	   shared_ptr<IR::Module> irModule = irgen.module();
 
 	   irModule->dump();
@@ -23,8 +26,6 @@ int main(const int argc, const char **argv) {
    else {
 	   std::cout << "Parsing error!" << std::endl;
    }
-
-   delete astModule;
 
    return 0;
 }

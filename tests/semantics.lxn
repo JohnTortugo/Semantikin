@@ -50,12 +50,12 @@ int dfun() {
 	return 4;
 }
 
-void empty(int matrix[15][10], double vet[10]) {
+void empty(int matrix[15][10], int vet[10]) {
 	int vetor[30];
 
 	empty(matrix, matrix[1]);
 
-	double vai = matrix[3][3] * vet[3];
+	int vai = matrix[3][3] * vet[3];
 	
 	//return "divino";
 	
