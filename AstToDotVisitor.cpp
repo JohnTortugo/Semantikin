@@ -138,7 +138,7 @@ void AstToDotVisitor::visit(const Parser::LoopStmt* loop) {
 		loop->getBody()->accept(this);
 }
 
-void AstToDotVisitor::visit(const Parser::IfStmt* ifStmt) {
+void AstToDotVisitor::visit(Parser::IfStmt* ifStmt) {
 	/* The block header header node. */
 	this->dotfile << "\t\"" << ifStmt << "\" [shape=house, label=\"IfStmt\"];" << endl;
 
@@ -190,7 +190,7 @@ void AstToDotVisitor::visit(const Parser::IfStmt* ifStmt) {
 		elseBlock->accept(this);
 }
 
-void AstToDotVisitor::visit(const Parser::ElseIfStmt* elseIfStmt) {
+void AstToDotVisitor::visit(Parser::ElseIfStmt* elseIfStmt) {
 	/* The block header header node. */
 	this->dotfile << "\t\"" << elseIfStmt << "\" [shape=house, label=\"ElseIf\"];" << endl;
 
@@ -365,6 +365,8 @@ string AstToDotVisitor::translateBinop(Parser::BinaryExpr::ExprType type) {
 
 string AstToDotVisitor::translateUnop(Parser::UnaryExpr::ExprType type) {
 	switch (type) {
+		case Parser::UnaryExpr::BIT_NOT: return "~";
+		case Parser::UnaryExpr::NOT: return "!";
 		case Parser::UnaryExpr::MINUS: return "-";
 		case Parser::UnaryExpr::PLUS: return "+";
 		case Parser::UnaryExpr::ADDR: return "&";

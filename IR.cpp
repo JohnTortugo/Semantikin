@@ -36,6 +36,22 @@ namespace IR {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " % " << this->_src2->getName() << ";" << endl;
 	}
 
+	void IMinus::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
+	}
+
+	void IPlus::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
+	}
+
+	void IInc::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "++;" << endl;
+	}
+
+	void IDec::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "--;" << endl;
+	}
+
 	void FAdd::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + " << this->_src2->getName() << ";" << endl;
 	}
@@ -52,6 +68,24 @@ namespace IR {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " / " << this->_src2->getName() << ";" << endl;
 	}
 
+	void FMinus::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
+	}
+
+	void FPlus::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
+	}
+
+	void FInc::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "++;" << endl;
+	}
+
+	void FDec::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "--;" << endl;
+	}
+
+
+
 	void BinAnd::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " & " << this->_src2->getName() << ";" << endl;
 	}
@@ -65,7 +99,7 @@ namespace IR {
 	}
 
 	void BinNot::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = ! " << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getName() << " = ~ " << this->_src1->getName() << ";" << endl;
 	}
 
 
@@ -79,7 +113,7 @@ namespace IR {
 	}
 
 	void LogNot::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = !" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getName() << " = ! " << this->_src1->getName() << ";" << endl;
 	}
 
 
@@ -110,13 +144,23 @@ namespace IR {
 
 
 
-	void Jump::dump(stringstream& buffer) { buffer << "goto ?;" << endl; }
+	void Jump::dump(stringstream& buffer) {
+		buffer << "goto " << this->_tgt->getName() << ";" << endl;
+	}
 
-	void CondTrueJump::dump(stringstream& buffer) { buffer << "ifTrue ? goto ?;" << endl; }
+	void CondTrueJump::dump(stringstream& buffer) {
+		buffer << "ifTrue " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
+	}
 
-	void CondFalseJump::dump(stringstream& buffer) { buffer << "ifFalse ? goto ?;" << endl; }
+	void CondFalseJump::dump(stringstream& buffer) {
+		buffer << "ifFalse " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
+	}
 
 
+
+	void Addr::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = &" << this->_src1->getName() << ";" << endl;
+	}
 
 	void Call::dump(stringstream& buffer) {
 		buffer << "call " << this->_tgt->getName() << "(";
@@ -132,7 +176,9 @@ namespace IR {
 		buffer << ");" << endl;
 	}
 
-	void Return::dump(stringstream& buffer) { buffer << "return ?;" << endl; }
+	void Return::dump(stringstream& buffer) {
+		buffer << "return " << this->_tgt->getName() << ";" << endl;
+	}
 
 	void Phi::dump(stringstream& buffer) { buffer << "phi();" << endl; }
 
@@ -149,12 +195,23 @@ namespace IR {
 	}
 
 	void Function::dump(stringstream& buffer) {
-		buffer << this->_addr->getName() << ":" << endl;
+		buffer << "function " << this->_addr->getName() << "(...) {" << endl;
 
 		for (auto instruction : *this->_instrs) {
-			buffer << "\t";
-			instruction->dump(buffer);
+			/* Do we have a label here?  */
+			if (instruction.first != nullptr)
+				buffer << std::setfill(' ') << std::setw(15) << instruction.first->getName() << ": ";
+			else
+				buffer << std::setfill(' ') << std::setw(17) << " ";
+
+			/* Is it just a label? */
+			if (instruction.second != nullptr)
+				instruction.second->dump(buffer);
+			else
+				buffer << endl;
 		}
+
+		buffer << "}";
 	}
 
 
@@ -171,5 +228,29 @@ namespace IR {
 		}
 
 		cout << buffer.str();
+	}
+
+	void Function::appendLabel(shared_ptr<STLabelDef> label) {
+		if (this->_labelPendingSlot) {
+			printf("IR-TAC-Gen:");
+			printf("\tAppending label but there is already one at this position.\n");
+			exit(1);
+		}
+
+		/* Set the "address" to which the label points to. */
+		label->address((int)this->_instrs->size());
+
+		this->_instrs->push_back( make_pair(label, nullptr) );
+		this->_labelPendingSlot = true;
+	}
+
+	void Function::appendInstruction(shared_ptr<IR::Instruction> instr) {
+		if (this->_labelPendingSlot) {
+			this->_instrs->back().second = instr;
+			this->_labelPendingSlot = false;
+		}
+		else {
+			this->_instrs->push_back( make_pair(nullptr, instr) );
+		}
 	}
 }

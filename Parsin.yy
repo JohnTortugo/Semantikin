@@ -94,6 +94,7 @@
 %token TK_DOUBLE_QUOTE	
 %token TK_SINGLE_QUOTE	
 %token TK_AMPERSAND
+%token TK_BIT_NOT
 %token TK_BIT_OR
 %token TK_BIT_XOR
 
@@ -137,7 +138,7 @@
 %left TK_DIV TK_TIMES
 %left TK_MOD
 %left TK_DPLUS TK_DMINUS
-%left TK_NOT
+%left TK_BIT_NOT TK_NOT
 %left TK_AMPERSAND
 
 
@@ -233,6 +234,7 @@ EXPR			: EXPR TK_COMPARE EXPR														{ $$ = new BinaryExpr(BinaryExpr::COM
 				| EXPR TK_DIV_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::DIV_EQUAL, $1, $3); }
 				| EXPR TK_MOD_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::MOD_EQUAL, $1, $3); }
 				| TK_L_PAREN EXPR TK_R_PAREN												{ $$ = $2; }
+				| TK_BIT_NOT EXPR 															{ $$ = new UnaryExpr(UnaryExpr::BIT_NOT, $2); }
 				| TK_NOT EXPR 																{ $$ = new UnaryExpr(UnaryExpr::NOT, $2); }
 				| TK_MINUS EXPR 															{ $$ = new UnaryExpr(UnaryExpr::MINUS, $2); }
 				| TK_PLUS EXPR 																{ $$ = new UnaryExpr(UnaryExpr::PLUS, $2); }

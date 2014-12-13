@@ -18,7 +18,7 @@
  *
  * 		5. size of array dimensions must be integers contants.			// ok
  * 		6. check (non-)existence of return statements and its type.		// ok
- *
+ *		7. Check if we aren't taking the address of a non-lefthand exp.
  */
 
 using namespace Parser;
@@ -254,7 +254,7 @@ void AstSemaVisitor::visit(const Parser::LoopStmt* loop) {
 		loop->getBody()->accept(this);
 }
 
-void AstSemaVisitor::visit(const Parser::IfStmt* ifStmt) {
+void AstSemaVisitor::visit(Parser::IfStmt* ifStmt) {
 	Parser::Expression* condition 						= ifStmt->getCondition();
 	Parser::CodeBlock* thenBlock 						= ifStmt->getThenBlock();
 	list<shared_ptr<Parser::ElseIfStmt>>* elseIfChain 	= ifStmt->getElseIfChain();
@@ -278,7 +278,7 @@ void AstSemaVisitor::visit(const Parser::IfStmt* ifStmt) {
 		elseBlock->accept(this);
 }
 
-void AstSemaVisitor::visit(const Parser::ElseIfStmt* elseIfStmt) {
+void AstSemaVisitor::visit(Parser::ElseIfStmt* elseIfStmt) {
 	/* Continue visiting. */
 	elseIfStmt->getCondition()->accept(this);
 

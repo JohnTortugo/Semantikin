@@ -190,35 +190,36 @@ namespace Parser {
         TK_DOUBLE_QUOTE = 269,
         TK_SINGLE_QUOTE = 270,
         TK_AMPERSAND = 271,
-        TK_BIT_OR = 272,
-        TK_BIT_XOR = 273,
-        TK_L_PAREN = 274,
-        TK_R_PAREN = 275,
-        TK_L_BRACE = 276,
-        TK_R_BRACE = 277,
-        TK_L_SQBRACE = 278,
-        TK_R_SQBRACE = 279,
-        TK_AND = 280,
-        TK_OR = 281,
-        TK_NOT = 282,
-        TK_ASSIGN = 283,
-        TK_COMPARE = 284,
-        TK_LT = 285,
-        TK_LTE = 286,
-        TK_GT = 287,
-        TK_GTE = 288,
-        TK_PLUS = 289,
-        TK_MINUS = 290,
-        TK_TIMES = 291,
-        TK_DIV = 292,
-        TK_MOD = 293,
-        TK_DPLUS = 294,
-        TK_DMINUS = 295,
-        TK_PLUS_EQUAL = 296,
-        TK_MINUS_EQUAL = 297,
-        TK_TIMES_EQUAL = 298,
-        TK_DIV_EQUAL = 299,
-        TK_MOD_EQUAL = 300
+        TK_BIT_NOT = 272,
+        TK_BIT_OR = 273,
+        TK_BIT_XOR = 274,
+        TK_L_PAREN = 275,
+        TK_R_PAREN = 276,
+        TK_L_BRACE = 277,
+        TK_R_BRACE = 278,
+        TK_L_SQBRACE = 279,
+        TK_R_SQBRACE = 280,
+        TK_AND = 281,
+        TK_OR = 282,
+        TK_NOT = 283,
+        TK_ASSIGN = 284,
+        TK_COMPARE = 285,
+        TK_LT = 286,
+        TK_LTE = 287,
+        TK_GT = 288,
+        TK_GTE = 289,
+        TK_PLUS = 290,
+        TK_MINUS = 291,
+        TK_TIMES = 292,
+        TK_DIV = 293,
+        TK_MOD = 294,
+        TK_DPLUS = 295,
+        TK_DMINUS = 296,
+        TK_PLUS_EQUAL = 297,
+        TK_MINUS_EQUAL = 298,
+        TK_TIMES_EQUAL = 299,
+        TK_DIV_EQUAL = 300,
+        TK_MOD_EQUAL = 301
       };
     };
 
@@ -506,13 +507,13 @@ namespace Parser {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 542,     ///< Last index in yytable_.
+      yylast_ = 535,     ///< Last index in yytable_.
       yynnts_ = 19,  ///< Number of nonterminal symbols.
       yyempty_ = -2,
       yyfinal_ = 6, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 46  ///< Number of tokens.
+      yyntokens_ = 47  ///< Number of tokens.
     };
 
 
@@ -525,7 +526,7 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:372
 } // Parser
-#line 529 "Parsin.tab.hh" // lalr1.cc:372
+#line 530 "Parsin.tab.hh" // lalr1.cc:372
 
 
 

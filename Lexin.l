@@ -29,6 +29,7 @@
 "&"				{ return Parser::BisonParser::token::TK_AMPERSAND; }
 "|"				{ return Parser::BisonParser::token::TK_BIT_OR; }
 "^"				{ return Parser::BisonParser::token::TK_BIT_XOR; }
+"~"				{ return Parser::BisonParser::token::TK_BIT_NOT; }
 
 "("				{ return Parser::BisonParser::token::TK_L_PAREN; }
 ")" 			{ return Parser::BisonParser::token::TK_R_PAREN; }

@@ -135,8 +135,17 @@ namespace Parser {
 	private:
 		int _address;
 
+		int _usageCounter;
+
 	public:
-		STLabelDef(string nm, int addr) : SymbolTableEntry(nm), _address(addr) {}
+		STLabelDef(string nm) : SymbolTableEntry(nm), _address(0), _usageCounter(0)
+		{ }
+
+		void address(int addr) { this->_address = addr; }
+		int address() const { return this->_address; }
+
+		int usageCounter() const { return this->_usageCounter; }
+		void incrementUses() { this->_usageCounter++; }
 
 		void dump() const;
 	};

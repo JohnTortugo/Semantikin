@@ -43,13 +43,14 @@ namespace IR {
 		virtual ~Instruction() {};
 	};
 
+
+
 	/* Parent class of all data movement instructions. */
 	class Copy : public Instruction {
 	public:
 		Copy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Instruction(tgt, src1, nullptr)
 		{ }
 	};
-
 
 	class ScalarCopy : public Copy {
 	public:
@@ -59,7 +60,6 @@ namespace IR {
 		void dump(stringstream& buffer);
 	};
 
-
 	class CopyFromArray : public Copy {
 	public:
 		CopyFromArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
@@ -67,7 +67,6 @@ namespace IR {
 
 		void dump(stringstream& buffer);
 	};
-
 
 	class CopyToArray : public Copy {
 	public:
@@ -78,6 +77,7 @@ namespace IR {
 	};
 
 
+
 	/* Parent class of all integer arithmetic instructions. */
 	class IntegerArithmetic : public Instruction {
 	public:
@@ -85,42 +85,77 @@ namespace IR {
 		{ }
 	};
 
-
-	class IAdd : public IntegerArithmetic {
+	class BinaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		using IntegerArithmetic::IntegerArithmetic;
+		BinaryIntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : IntegerArithmetic(tgt, src1, src2)
+		{ }
+	};
+
+	class UnaryIntegerArithmetic : public IntegerArithmetic {
+	public:
+		UnaryIntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : IntegerArithmetic(tgt, src, nullptr)
+		{ }
+	};
+
+	class IAdd : public BinaryIntegerArithmetic {
+	public:
+		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-
-	class ISub : public IntegerArithmetic {
+	class ISub : public BinaryIntegerArithmetic {
 	public:
-		using IntegerArithmetic::IntegerArithmetic;
+		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-
-	class IMul : public IntegerArithmetic {
+	class IMul : public BinaryIntegerArithmetic {
 	public:
-		using IntegerArithmetic::IntegerArithmetic;
+		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-
-	class IDiv : public IntegerArithmetic {
+	class IDiv : public BinaryIntegerArithmetic {
 	public:
-		using IntegerArithmetic::IntegerArithmetic;
+		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-
-	class IMod : public IntegerArithmetic {
+	class IMod : public BinaryIntegerArithmetic {
 	public:
-		using IntegerArithmetic::IntegerArithmetic;
+		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class IMinus : public UnaryIntegerArithmetic {
+	public:
+		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class IPlus : public UnaryIntegerArithmetic {
+	public:
+		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class IInc : public UnaryIntegerArithmetic {
+	public:
+		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class IDec : public UnaryIntegerArithmetic {
+	public:
+		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
 	};
@@ -134,69 +169,112 @@ namespace IR {
 		{ }
 	};
 
-	class FAdd : public FloatingArithmetic {
+	class BinaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		using FloatingArithmetic::FloatingArithmetic;
-
-		void dump(stringstream& buffer);
-	};
-
-	class FSub : public FloatingArithmetic {
-	public:
-		using FloatingArithmetic::FloatingArithmetic;
-
-		void dump(stringstream& buffer);
-	};
-
-	class FMul : public FloatingArithmetic {
-	public:
-		using FloatingArithmetic::FloatingArithmetic;
-
-		void dump(stringstream& buffer);
-	};
-
-	class FDiv : public FloatingArithmetic {
-	public:
-		using FloatingArithmetic::FloatingArithmetic;
-
-		void dump(stringstream& buffer);
-	};
-
-
-	/* Parent class of all binary arithmetic instructions. */
-	class BinaryArithmetic : public Instruction {
-	public:
-		BinaryArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		BinaryFloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : FloatingArithmetic(tgt, src1, src2)
 		{ }
 	};
 
-	class BinAnd : public BinaryArithmetic {
+	class UnaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		using BinaryArithmetic::BinaryArithmetic;
+		UnaryFloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : FloatingArithmetic(tgt, src, nullptr)
+		{ }
+	};
+
+	class FAdd : public BinaryFloatingArithmetic {
+	public:
+		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-	class BinOr : public BinaryArithmetic {
+	class FSub : public BinaryFloatingArithmetic {
 	public:
-		using BinaryArithmetic::BinaryArithmetic;
+		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-	class BinXor : public BinaryArithmetic {
+	class FMul : public BinaryFloatingArithmetic {
 	public:
-		using BinaryArithmetic::BinaryArithmetic;
+		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
 	};
 
-	class BinNot : public BinaryArithmetic {
+	class FDiv : public BinaryFloatingArithmetic {
 	public:
-		using BinaryArithmetic::BinaryArithmetic;
+		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
 	};
+
+	class FMinus : public UnaryFloatingArithmetic {
+	public:
+		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class FPlus : public UnaryFloatingArithmetic {
+	public:
+		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class FInc : public UnaryFloatingArithmetic {
+	public:
+		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class FDec : public UnaryFloatingArithmetic {
+	public:
+		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+
+
+	/* Parent class of all binary arithmetic instructions. */
+	class BitArithmetic : public Instruction {
+	public:
+		BitArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+	};
+
+	class BinAnd : public BitArithmetic {
+	public:
+		using BitArithmetic::BitArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class BinOr : public BitArithmetic {
+	public:
+		using BitArithmetic::BitArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class BinXor : public BitArithmetic {
+	public:
+		using BitArithmetic::BitArithmetic;
+
+		void dump(stringstream& buffer);
+	};
+
+	class BinNot : public BitArithmetic {
+	public:
+		BinNot(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : BitArithmetic(tgt, src, nullptr)
+		{ }
+
+		void dump(stringstream& buffer);
+	};
+
 
 
 	/* Parent class of all logical arithmetic instructions. */
@@ -229,7 +307,8 @@ namespace IR {
 
 	class LogNot : public LogicalArithmetic {
 	public:
-		using LogicalArithmetic::LogicalArithmetic;
+		LogNot(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : LogicalArithmetic(tgt, src, nullptr)
+		{ }
 
 		void dump(stringstream& buffer);
 	};
@@ -286,24 +365,48 @@ namespace IR {
 	};
 
 
+
 	/* Base class for all instructions that change control flow. */
-	class BranchInstruction : public Instruction { };
+	class BranchInstruction : public Instruction {
+	public:
+		BranchInstruction(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+	};
 
 	class Jump : public BranchInstruction {
 	public:
+		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(tgt, nullptr, nullptr)
+		{ tgt->incrementUses(); }
+
 		void dump(stringstream& buffer);
 	};
 
 	class CondTrueJump : public BranchInstruction {
 	public:
+		CondTrueJump(shared_ptr<SymbolTableEntry> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt, nullptr)
+		{ tgt->incrementUses(); }
+
 		void dump(stringstream& buffer);
 	};
 
 	class CondFalseJump : public BranchInstruction {
 	public:
+		CondFalseJump(shared_ptr<SymbolTableEntry> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt, nullptr)
+		{ tgt->incrementUses(); }
+
 		void dump(stringstream& buffer);
 	};
 
+
+
+	/* Represent taking the address of a variable. */
+	class Addr : public Instruction {
+	public:
+		Addr(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Instruction(tgt, src, nullptr)
+		{ }
+
+		void dump(stringstream& buffer);
+	};
 
 	/* Represent the call to a function. */
 	class Call : public Instruction {
@@ -323,6 +426,9 @@ namespace IR {
 	/* Represent a return instruction. */
 	class Return : public Instruction {
 	public:
+		Return(shared_ptr<SymbolTableEntry> exp) : Instruction(exp, nullptr, nullptr)
+		{ }
+
 		void dump(stringstream& buffer);
 	};
 
@@ -331,7 +437,6 @@ namespace IR {
 	public:
 		void dump(stringstream& buffer);
 	};
-
 
 
 
@@ -346,16 +451,25 @@ namespace IR {
 		 * same function so we can rename them.  				   */
 		map<string, int> nameVersions;
 
+		/* This tells if the last slot in the _instrs array has a label
+		 * added to it. If it has, then the next instruction added to the
+		 * array needs to go into that slot, if it has not, then the instruction
+		 * will be added to a new slot. */
+		bool _labelPendingSlot = false;
+
 		/* The instructions that compose this function. */
-		shared_ptr<list<shared_ptr<Instruction>>> _instrs;
+		shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>> _instrs;
 
 	public:
-		Function(shared_ptr<SymbolTable> st) : _symbTable(st), _instrs(shared_ptr<list<shared_ptr<Instruction>>>(new list<shared_ptr<Instruction>>())) { }
+		Function(shared_ptr<SymbolTable> st) : _symbTable(st), _instrs(shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>>(new list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>()))
+		{ }
 
 		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
 		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
 
-		void appendInstruction(shared_ptr<IR::Instruction> instr) { this->_instrs->push_back(instr); }
+		void appendLabel(shared_ptr<STLabelDef> label);
+
+		void appendInstruction(shared_ptr<IR::Instruction> instr);
 
 		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
 		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }

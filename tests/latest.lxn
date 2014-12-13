@@ -1,0 +1,17 @@
+void function1() {
+	if (3 < 4) {
+		printStr("primeiro");
+	}
+	elseif (3 < 4) {
+		printStr("segundo");
+	}
+	elseif (3 < 4) {
+		printStr("terceiro");
+	}
+	elseif (3 < 4) {
+		printStr("quarto");
+	}
+	else {
+		printStr("finally.\n");
+	}
+}

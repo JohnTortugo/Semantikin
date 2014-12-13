@@ -13,8 +13,8 @@ public:
 	virtual void visit(const Parser::VarSpec* module) = 0;
 	virtual void visit(const Parser::VarDecl* module) = 0;
 	virtual void visit(const Parser::LoopStmt* module) = 0;
-	virtual void visit(const Parser::IfStmt* module) = 0;
-	virtual void visit(const Parser::ElseIfStmt* module) = 0;
+	virtual void visit(Parser::IfStmt* module) = 0;
+	virtual void visit(Parser::ElseIfStmt* module) = 0;
 	virtual void visit(const Parser::ReturnStmt* module) = 0;
 	virtual void visit(Parser::CodeBlock* module) = 0;
 	virtual void visit(Parser::StringExpr* module) = 0;
@@ -58,8 +58,8 @@ public:
 	void visit(const Parser::VarSpec* module);
 	void visit(const Parser::VarDecl* module);
 	void visit(const Parser::LoopStmt* module);
-	void visit(const Parser::IfStmt* module);
-	void visit(const Parser::ElseIfStmt* module);
+	void visit(Parser::IfStmt* module);
+	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
 	void visit(Parser::CodeBlock* module);
 	void visit(Parser::StringExpr* module);
@@ -95,8 +95,8 @@ public:
 	void visit(const Parser::VarSpec* module);
 	void visit(const Parser::VarDecl* module);
 	void visit(const Parser::LoopStmt* module);
-	void visit(const Parser::IfStmt* module);
-	void visit(const Parser::ElseIfStmt* module);
+	void visit(Parser::IfStmt* module);
+	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
 	void visit(Parser::CodeBlock* module);
 	void visit(Parser::StringExpr* module);
@@ -149,8 +149,8 @@ public:
 	void visit(const Parser::VarSpec* module);
 	void visit(const Parser::VarDecl* module);
 	void visit(const Parser::LoopStmt* module);
-	void visit(const Parser::IfStmt* module);
-	void visit(const Parser::ElseIfStmt* module);
+	void visit(Parser::IfStmt* module);
+	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
 	void visit(Parser::CodeBlock* module);
 	void visit(Parser::StringExpr* module);
@@ -163,6 +163,16 @@ public:
 
 	shared_ptr<IR::Module> module() const { return this->_module; }
 
+	void translateBooleanExp(Parser::BinaryExpr* binop);
+	void translateArithmeticExp(Parser::BinaryExpr* binop);
+	void translateRelationalExp(Parser::BinaryExpr* binop);
+	void translateArithmeticExpr(Parser::UnaryExpr* unary);
+	void translateBooleanExp(Parser::UnaryExpr* unary);
+
+	template<typename T>
+	shared_ptr<STConstantDef> newConstant(T value);
+
+	shared_ptr<STLabelDef> newLabel(string suffix="");
 	shared_ptr<STTempVar> newTemporary(NativeType type);
 };
 

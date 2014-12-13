@@ -52,3 +52,29 @@ int main() {
 
 	return 0;
 }
+
+void main1(int a, int b) {
+	int e = (a < b) || (b < a);
+}
+
+void main2(int a, int b) {
+	int e = (a < b) && (b < a);
+}
+
+void main3(int a, int b) {
+	int e = (a == b) || (a < b) || (a <= b) || (a > b) || (a >= b);
+}
+
+void main4(int a, int b) {
+	int e1 = (a < b) || (b < a);
+
+	int e2 = (a < b) && (b < a);
+
+	int e3 = (a == b) || (a < b) || (a <= b) || (a > b) || (a >= b);
+}
+
+void main5(int a, int b) {
+
+	int e = (a * b) - (a / b) + (a * b) - (a / b);
+
+}

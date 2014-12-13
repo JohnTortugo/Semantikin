@@ -27,7 +27,15 @@ namespace Parser {
 		virtual ~AstNode() { };
 	};
 
-	class Statement : public AstNode {};
+	class Statement : public AstNode {
+	protected:
+		/* Pointer to a label after the current AST node. */
+		shared_ptr<STLabelDef> _next = nullptr;
+
+	public:
+		void next(shared_ptr<STLabelDef> label) { this->_next = label; }
+		shared_ptr<STLabelDef> next() { return this->_next; }
+	};
 
 	class Expression : public Statement {
 	protected:
@@ -43,11 +51,18 @@ namespace Parser {
 		/* Tells if the expressions turns out to be an array access. */
 		bool _isArrayAccess = false;
 
+		/* These variables indicate labels that are target of the result of
+		 * evaluating the current expression. If these targets are null it
+		 * means that the current expression is not part of a short circuit
+		 * code (e.g., it is an arithmetic/relation expression). */
+		shared_ptr<STLabelDef> _tLabel = nullptr;
+		shared_ptr<STLabelDef> _fLabel = nullptr;
+
 		/* This indicates if the RelationalExpression being analyzed is a
 		 * expression inside a conditional instruction or not. If it is, due to
 		 * short-circuit behavior, we may need to insert jumps (if's) inside
 		 * the expression IR's instruction. 								 */
-		bool _isExpInConditional = false;
+		//bool _isExpInConditional = false;
 
 	public:
 		NativeType exprType() const { return _expType; }
@@ -59,8 +74,11 @@ namespace Parser {
 		void isExpLeftHand(bool isLeft) { this->_isExpLeftHand = isLeft; }
 		bool isExpLeftHand() { return this->_isExpLeftHand; }
 
-		void isExpInConditional(bool isCond) { this->_isExpInConditional = isCond; }
-		bool isExpInConditional() { return this->_isExpInConditional; }
+		void tLabel(shared_ptr<STLabelDef> label) { this->_tLabel = label; }
+		shared_ptr<STLabelDef> tLabel() { return this->_tLabel; }
+
+		void fLabel(shared_ptr<STLabelDef> label) { this->_fLabel = label; }
+		shared_ptr<STLabelDef> fLabel() { return this->_fLabel; }
 
 		void isArrayAccess(bool isArray) { this->_isArrayAccess = isArray; }
 		bool isArrayAccess() { return this->_isArrayAccess; }
@@ -116,6 +134,7 @@ namespace Parser {
 	class UnaryExpr : public Expression {
 	public:
 		enum ExprType {
+			BIT_NOT,
 			NOT,
 			MINUS,
 			PLUS,
