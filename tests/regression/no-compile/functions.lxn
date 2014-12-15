@@ -1,0 +1,11 @@
+strinf fun7(string param1, string param2, string p3, string p4) {
+
+	return "divcesar";
+	
+}
+
+string fun11(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
+	
+	return p4;
+
+}

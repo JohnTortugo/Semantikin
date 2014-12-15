@@ -12,7 +12,7 @@ public:
 	virtual void visit(const Parser::ParamDecl* module) = 0;
 	virtual void visit(const Parser::VarSpec* module) = 0;
 	virtual void visit(const Parser::VarDecl* module) = 0;
-	virtual void visit(const Parser::LoopStmt* module) = 0;
+	virtual void visit(Parser::LoopStmt* module) = 0;
 	virtual void visit(Parser::IfStmt* module) = 0;
 	virtual void visit(Parser::ElseIfStmt* module) = 0;
 	virtual void visit(const Parser::ReturnStmt* module) = 0;
@@ -57,7 +57,7 @@ public:
 	void visit(const Parser::ParamDecl* module);
 	void visit(const Parser::VarSpec* module);
 	void visit(const Parser::VarDecl* module);
-	void visit(const Parser::LoopStmt* module);
+	void visit(Parser::LoopStmt* module);
 	void visit(Parser::IfStmt* module);
 	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
@@ -86,6 +86,9 @@ private:
 	 * the enclosing scope symbol table is keept. 				 */
 	std::shared_ptr<Parser::SymbolTable> currentSymbTable;
 
+	/* Pointer to the STentry for declaration of current function. */
+	shared_ptr<Parser::STFunctionDeclaration> _curFunDecl;
+
 public:
 	AstSemaVisitor() : _currentOffset(0), currentFunRetType(Parser::VOID), currentFunReturns(0) { }
 
@@ -94,7 +97,7 @@ public:
 	void visit(const Parser::ParamDecl* module);
 	void visit(const Parser::VarSpec* module);
 	void visit(const Parser::VarDecl* module);
-	void visit(const Parser::LoopStmt* module);
+	void visit(Parser::LoopStmt* module);
 	void visit(Parser::IfStmt* module);
 	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
@@ -134,6 +137,11 @@ private:
 	/* Pointer to the function currently being IR generated. */
 	shared_ptr<IR::Function> _currentFunction;
 
+	/* This label is just a sentinel pointer to convey the
+	 * information that the expression should consider a
+	 * fallthrough path. */
+	shared_ptr<Parser::STLabelDef> _fallLabel;
+
 	/* Count the number of constants/labels/tmps found/added to the symbol table of
 	 * a function. 													 			 */
 	unsigned int constCounter = 1;
@@ -141,14 +149,14 @@ private:
 	unsigned int tempCounter = 1;
 
 public:
-	AstTACGenVisitor(int currOffset) : _module(nullptr), _currentOffset(currOffset), constCounter(1), labelCounter(1), tempCounter(1) { }
+	AstTACGenVisitor(int currOffset) : _module(nullptr), _fallLabel(nullptr), _currentOffset(currOffset), constCounter(1), labelCounter(1), tempCounter(1) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);
 	void visit(const Parser::ParamDecl* module);
 	void visit(const Parser::VarSpec* module);
 	void visit(const Parser::VarDecl* module);
-	void visit(const Parser::LoopStmt* module);
+	void visit(Parser::LoopStmt* module);
 	void visit(Parser::IfStmt* module);
 	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);

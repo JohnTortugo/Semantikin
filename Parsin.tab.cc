@@ -560,409 +560,415 @@ namespace Parser {
           switch (yyn)
             {
   case 2:
-#line 149 "Parsin.yy" // lalr1.cc:847
+#line 150 "Parsin.yy" // lalr1.cc:847
     { module = new CompilationUnit((yystack_[0].value.listFuncs)); }
 #line 566 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 3:
-#line 152 "Parsin.yy" // lalr1.cc:847
+#line 153 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listFuncs))->push_front(std::shared_ptr<Function>((yystack_[1].value.function))); (yylhs.value.listFuncs) = (yystack_[0].value.listFuncs); }
 #line 572 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 4:
-#line 153 "Parsin.yy" // lalr1.cc:847
+#line 154 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listFuncs) = new list<std::shared_ptr<Function>>(); }
 #line 578 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 5:
-#line 156 "Parsin.yy" // lalr1.cc:847
+#line 157 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.function) = new Function((yystack_[5].value.str), (yystack_[4].value.str), shared_ptr<list<shared_ptr<ParamDecl>>>((yystack_[2].value.formParams)), (yystack_[0].value.codeBlock)); }
 #line 584 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 6:
-#line 159 "Parsin.yy" // lalr1.cc:847
+#line 160 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.formParams))->push_front(std::shared_ptr<ParamDecl>(new ParamDecl((yystack_[3].value.str), (yystack_[2].value.str), shared_ptr<list<shared_ptr<Expression>>>((yystack_[1].value.listExpr))))); (yylhs.value.formParams) = (yystack_[0].value.formParams); }
 #line 590 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 7:
-#line 160 "Parsin.yy" // lalr1.cc:847
+#line 161 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.formParams) = new list<std::shared_ptr<ParamDecl>>(); }
 #line 596 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 8:
-#line 163 "Parsin.yy" // lalr1.cc:847
+#line 164 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.formParams))->push_front(std::shared_ptr<ParamDecl>(new ParamDecl((yystack_[3].value.str), (yystack_[2].value.str), shared_ptr<list<shared_ptr<Expression>>>((yystack_[1].value.listExpr))))); (yylhs.value.formParams) = (yystack_[0].value.formParams); }
 #line 602 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 9:
-#line 164 "Parsin.yy" // lalr1.cc:847
+#line 165 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.formParams) = new list<std::shared_ptr<ParamDecl>>(); }
 #line 608 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 10:
-#line 167 "Parsin.yy" // lalr1.cc:847
+#line 168 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.codeBlock) = new CodeBlock((yystack_[1].value.listStmts)); }
 #line 614 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 11:
-#line 169 "Parsin.yy" // lalr1.cc:847
+#line 170 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[2].value.varDecl))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
 #line 620 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 12:
-#line 170 "Parsin.yy" // lalr1.cc:847
+#line 171 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[1].value.loopStmt))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
 #line 626 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 13:
-#line 171 "Parsin.yy" // lalr1.cc:847
+#line 172 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[1].value.ifStmt))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
 #line 632 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 14:
-#line 172 "Parsin.yy" // lalr1.cc:847
+#line 173 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[2].value.ret))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
 #line 638 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 15:
-#line 173 "Parsin.yy" // lalr1.cc:847
+#line 174 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[2].value.expr))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
 #line 644 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 16:
-#line 174 "Parsin.yy" // lalr1.cc:847
+#line 175 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listStmts) = new list<std::shared_ptr<Statement>>(); }
 #line 650 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 17:
-#line 177 "Parsin.yy" // lalr1.cc:847
+#line 178 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[2].value.str), (yystack_[1].value.listExpr), nullptr))); (yylhs.value.varDecl) = new VarDecl((yystack_[3].value.str), (yystack_[0].value.listVarSpec)); }
 #line 656 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 18:
-#line 178 "Parsin.yy" // lalr1.cc:847
+#line 179 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[3].value.str), nullptr, (yystack_[1].value.expr)))); (yylhs.value.varDecl) = new VarDecl((yystack_[4].value.str), (yystack_[0].value.listVarSpec)); }
 #line 662 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 19:
-#line 181 "Parsin.yy" // lalr1.cc:847
+#line 182 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[2].value.str), (yystack_[1].value.listExpr), nullptr))); (yylhs.value.listVarSpec) = (yystack_[0].value.listVarSpec); }
 #line 668 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 20:
-#line 182 "Parsin.yy" // lalr1.cc:847
+#line 183 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[3].value.str), nullptr, (yystack_[1].value.expr)))); (yylhs.value.listVarSpec) = (yystack_[0].value.listVarSpec); }
 #line 674 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 21:
-#line 183 "Parsin.yy" // lalr1.cc:847
+#line 184 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listVarSpec) = new list<std::shared_ptr<VarSpec>>(); }
 #line 680 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 22:
-#line 186 "Parsin.yy" // lalr1.cc:847
+#line 187 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listExpr))->push_front(std::shared_ptr<Expression>((yystack_[2].value.expr))); (yylhs.value.listExpr) = (yystack_[0].value.listExpr); }
 #line 686 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 23:
-#line 187 "Parsin.yy" // lalr1.cc:847
+#line 188 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listExpr) = new list<std::shared_ptr<Expression>>(); }
 #line 692 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 24:
-#line 190 "Parsin.yy" // lalr1.cc:847
+#line 191 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.funCall) = new FunctionCall((yystack_[3].value.str), (yystack_[1].value.listExpr)); }
 #line 698 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 25:
-#line 193 "Parsin.yy" // lalr1.cc:847
+#line 194 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.loopStmt) = new LoopStmt((yystack_[2].value.expr), (yystack_[0].value.codeBlock)); }
 #line 704 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 26:
-#line 196 "Parsin.yy" // lalr1.cc:847
+#line 197 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.ifStmt) = new IfStmt((yystack_[3].value.expr), (yystack_[1].value.codeBlock), nullptr, (yystack_[0].value.listElseIf)); }
 #line 710 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 27:
-#line 197 "Parsin.yy" // lalr1.cc:847
+#line 198 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.ifStmt) = new IfStmt((yystack_[5].value.expr), (yystack_[3].value.codeBlock), (yystack_[0].value.codeBlock), (yystack_[2].value.listElseIf)); }
 #line 716 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 28:
-#line 200 "Parsin.yy" // lalr1.cc:847
+#line 201 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listElseIf))->push_front(std::shared_ptr<ElseIfStmt>(new ElseIfStmt((yystack_[3].value.expr), (yystack_[1].value.codeBlock)))); (yylhs.value.listElseIf) = (yystack_[0].value.listElseIf); }
 #line 722 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 29:
-#line 201 "Parsin.yy" // lalr1.cc:847
+#line 202 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listElseIf) = new list<std::shared_ptr<ElseIfStmt>>(); }
 #line 728 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 30:
-#line 204 "Parsin.yy" // lalr1.cc:847
+#line 205 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.ret) = new ReturnStmt((yystack_[0].value.expr)); }
 #line 734 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 31:
-#line 207 "Parsin.yy" // lalr1.cc:847
+#line 208 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listExpr))->push_front(std::shared_ptr<Expression>((yystack_[1].value.expr))); (yylhs.value.listExpr) = (yystack_[0].value.listExpr); }
 #line 740 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 32:
-#line 208 "Parsin.yy" // lalr1.cc:847
+#line 209 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listExpr) = new list<std::shared_ptr<Expression>>(); }
 #line 746 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 33:
-#line 211 "Parsin.yy" // lalr1.cc:847
+#line 212 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listExpr))->push_front(std::shared_ptr<Expression>((yystack_[1].value.expr))); (yylhs.value.listExpr) = (yystack_[0].value.listExpr); }
 #line 752 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 34:
-#line 212 "Parsin.yy" // lalr1.cc:847
+#line 213 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listExpr) = new list<std::shared_ptr<Expression>>(); }
 #line 758 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 35:
-#line 215 "Parsin.yy" // lalr1.cc:847
+#line 216 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::COMPARE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 764 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 36:
-#line 216 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::ASSIGN, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 217 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIFFERENCE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 770 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 37:
-#line 217 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LOG_AND, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 218 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::ASSIGN, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 776 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 38:
-#line 218 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LOG_OR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 219 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LOG_AND, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 782 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 39:
-#line 219 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_AND, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 220 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LOG_OR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 788 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 40:
-#line 220 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_OR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 221 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_AND, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 794 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 41:
-#line 221 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_XOR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 222 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_OR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 800 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 42:
-#line 222 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LT, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 223 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_XOR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 806 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 43:
-#line 223 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LTE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 224 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LT, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 812 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 44:
-#line 224 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::GT, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 225 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LTE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 818 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 45:
-#line 225 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::GTE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 226 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::GT, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 824 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 46:
-#line 226 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::ADDITION, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 227 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::GTE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 830 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 47:
-#line 227 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::SUBTRACTION, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 228 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::ADDITION, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 836 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 48:
-#line 228 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::TIMES, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 229 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::SUBTRACTION, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 842 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 49:
-#line 229 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIV, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 230 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::TIMES, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 848 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 50:
-#line 230 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MOD, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 231 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIV, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 854 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 51:
-#line 231 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::PLUS_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 232 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MOD, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 860 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 52:
-#line 232 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MINUS_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 233 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::PLUS_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 866 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 53:
-#line 233 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::TIMES_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 234 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MINUS_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 872 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 54:
-#line 234 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIV_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 235 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::TIMES_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 878 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 55:
-#line 235 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MOD_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
+#line 236 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIV_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 884 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 56:
-#line 236 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = (yystack_[1].value.expr); }
+#line 237 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MOD_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
 #line 890 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 57:
-#line 237 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::BIT_NOT, (yystack_[0].value.expr)); }
+#line 238 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = (yystack_[1].value.expr); }
 #line 896 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 58:
-#line 238 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::NOT, (yystack_[0].value.expr)); }
+#line 239 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::BIT_NOT, (yystack_[0].value.expr)); }
 #line 902 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 59:
-#line 239 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::MINUS, (yystack_[0].value.expr)); }
+#line 240 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::NOT, (yystack_[0].value.expr)); }
 #line 908 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 60:
-#line 240 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::PLUS, (yystack_[0].value.expr)); }
+#line 241 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::MINUS, (yystack_[0].value.expr)); }
 #line 914 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 61:
-#line 241 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::ADDR, (yystack_[0].value.expr)); }
+#line 242 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::PLUS, (yystack_[0].value.expr)); }
 #line 920 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 62:
-#line 242 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::INCREMENT, (yystack_[1].value.expr)); }
+#line 243 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::ADDR, (yystack_[0].value.expr)); }
 #line 926 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 63:
-#line 243 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::DECREMENT, (yystack_[1].value.expr)); }
+#line 244 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::INCREMENT, (yystack_[1].value.expr)); }
 #line 932 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 64:
-#line 244 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new IntegerExpr((yystack_[0].value.integer)); }
+#line 245 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::DECREMENT, (yystack_[1].value.expr)); }
 #line 938 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 65:
-#line 245 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new FloatExpr((yystack_[0].value.floating)); }
+#line 246 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new IntegerExpr((yystack_[0].value.integer)); }
 #line 944 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 66:
-#line 246 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new StringExpr((yystack_[0].value.str)); }
+#line 247 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new FloatExpr((yystack_[0].value.floating)); }
 #line 950 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 67:
-#line 247 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = new IdentifierExpr((yystack_[1].value.str), (yystack_[0].value.listExpr)); }
+#line 248 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new StringExpr((yystack_[0].value.str)); }
 #line 956 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 68:
-#line 248 "Parsin.yy" // lalr1.cc:847
-    { (yylhs.value.expr) = (yystack_[0].value.funCall); }
+#line 249 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = new IdentifierExpr((yystack_[1].value.str), (yystack_[0].value.listExpr)); }
 #line 962 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
+  case 69:
+#line 250 "Parsin.yy" // lalr1.cc:847
+    { (yylhs.value.expr) = (yystack_[0].value.funCall); }
+#line 968 "Parsin.tab.cc" // lalr1.cc:847
+    break;
 
-#line 966 "Parsin.tab.cc" // lalr1.cc:847
+
+#line 972 "Parsin.tab.cc" // lalr1.cc:847
             default:
               break;
             }
@@ -1129,212 +1135,214 @@ namespace Parser {
   }
 
 
-  const signed char BisonParser::yypact_ninf_ = -106;
+  const signed char BisonParser::yypact_ninf_ = -123;
 
   const signed char BisonParser::yytable_ninf_ = -1;
 
   const short int
   BisonParser::yypact_[] =
   {
-      -7,     4,     1,  -106,    -7,    12,  -106,  -106,    23,    24,
-      32,    30,    55,   472,    61,    62,  -106,  -106,  -106,  -106,
-     -17,   472,   472,   472,   472,   472,   472,  -106,   210,    72,
-    -106,    64,    66,   472,    -6,    69,    83,    62,    62,    84,
-     111,   472,  -106,  -106,    88,   241,    88,   -14,   -14,   472,
-     472,   472,    30,   472,   472,   472,   472,   472,   472,   472,
-     472,   472,   472,   472,   472,   472,  -106,  -106,   472,   472,
-     472,   472,   472,    95,   472,   472,   365,    51,  -106,    62,
-    -106,  -106,    62,    62,    86,   145,  -106,  -106,   494,   494,
-    -106,   494,   494,   396,   396,   427,   427,   427,   427,   -14,
-     -14,   -10,   -10,    48,    75,    75,   458,   458,   487,    30,
-     272,   303,   472,    96,  -106,  -106,  -106,  -106,   472,  -106,
-      61,    55,    55,   179,    97,  -106,   145,  -106,   113,  -106,
-    -106,    52,  -106,   105,   122,   472,    96,   472,    55,   179,
-    -106,   334,  -106,  -106,    55,   113,  -106
+      -7,     6,    31,  -123,    -7,    13,  -123,  -123,    23,    24,
+      18,    29,    32,   488,    48,    67,  -123,  -123,  -123,  -123,
+     -17,   488,   488,   488,   488,   488,   488,  -123,   216,    54,
+    -123,    46,    47,   488,    68,    57,    69,    67,    67,    70,
+     117,   488,  -123,   -11,   -26,   247,   -26,   414,   414,   488,
+     488,   488,    29,   488,   488,   488,   488,   488,   488,   488,
+     488,   488,   488,   488,   488,   488,  -123,  -123,   488,   488,
+     488,   488,   488,   488,    58,   488,   488,   371,    -8,  -123,
+      67,  -123,  -123,    67,    67,    64,   151,  -123,   -11,   428,
+     454,  -123,   402,    80,   371,   494,   501,   501,   501,   501,
+     414,   414,   -11,   -11,   -11,   371,   371,   371,   371,   371,
+     494,    29,   278,   309,   488,    73,  -123,  -123,  -123,  -123,
+     488,  -123,    48,    32,    32,   185,    78,  -123,   151,  -123,
+      86,  -123,  -123,     3,  -123,    74,    89,   488,    73,   488,
+      32,   185,  -123,   340,  -123,  -123,    32,    86,  -123
   };
 
   const unsigned char
   BisonParser::yydefact_[] =
   {
        4,     0,     0,     2,     4,     0,     1,     3,     7,     0,
-       0,    23,     0,     0,     9,    16,     5,    66,    64,    65,
-      23,     0,     0,     0,     0,     0,     0,    68,     0,     0,
+       0,    23,     0,     0,     9,    16,     5,    67,    65,    66,
+      23,     0,     0,     0,     0,     0,     0,    69,     0,     0,
        6,     0,     0,     0,    23,     0,     0,    16,    16,     0,
-       0,    32,    67,    61,    57,     0,    58,    60,    59,     0,
+       0,    32,    68,    62,    58,     0,    59,    61,    60,     0,
        0,     0,    23,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    62,    63,     0,     0,
-       0,     0,     0,     0,     0,     0,    30,    23,    10,    16,
-      12,    13,    16,    16,     0,    34,    56,    39,    40,    41,
-      22,    37,    38,    36,    35,    42,    43,    44,    45,    46,
-      47,    48,    49,    50,    51,    52,    53,    54,    55,    23,
-       0,     0,     0,    21,    11,    14,    15,    24,     0,    31,
-       9,     0,     0,    21,     0,    17,    34,     8,    29,    25,
-      18,    23,    33,     0,    26,     0,    21,     0,     0,    21,
-      19,     0,    27,    20,     0,    29,    28
+       0,     0,     0,     0,     0,     0,    63,    64,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    30,    23,    10,
+      16,    12,    13,    16,    16,     0,    34,    57,    40,    41,
+      42,    22,    38,    39,    37,    35,    43,    44,    45,    46,
+      47,    48,    49,    50,    51,    52,    53,    54,    55,    56,
+      36,    23,     0,     0,     0,    21,    11,    14,    15,    24,
+       0,    31,     9,     0,     0,    21,     0,    17,    34,     8,
+      29,    25,    18,    23,    33,     0,    26,     0,    21,     0,
+       0,    21,    19,     0,    27,    20,     0,    29,    28
   };
 
   const signed char
   BisonParser::yypgoto_[] =
   {
-    -106,  -106,   124,  -106,  -106,    11,  -105,   -16,  -106,   -36,
-       8,  -106,  -106,  -106,   -12,  -106,  -106,     6,   -13
+    -123,  -123,    93,  -123,  -123,   -22,  -122,   -12,  -123,  -119,
+      12,  -123,  -123,  -123,   -43,  -123,  -123,   -23,   -13
   };
 
   const short int
   BisonParser::yydefgoto_[] =
   {
-      -1,     2,     3,     4,    10,    30,    16,    35,    36,   125,
-      42,    27,    37,    38,   134,    39,    84,   119,    40
+      -1,     2,     3,     4,    10,    30,    16,    35,    36,   127,
+      42,    27,    37,    38,   136,    39,    85,   121,    40
   };
 
   const unsigned char
   BisonParser::yytable_[] =
   {
-      28,     6,    49,    41,     1,    77,    49,    13,    43,    44,
-      45,    46,    47,    48,    41,     5,   128,   129,    13,    14,
-      76,    80,    81,    63,    64,    65,    66,    67,    85,    65,
-      66,    67,     8,   142,     9,    11,    87,    88,    89,   145,
-      91,    92,    93,    94,    95,    96,    97,    98,    99,   100,
-     101,   102,   103,    12,    13,   104,   105,   106,   107,   108,
-      90,   110,   111,   114,    49,    31,   115,   116,    32,    33,
-      17,    18,    19,    34,    29,    13,    13,    15,    21,    22,
-     112,   135,    23,    73,    74,   113,    75,   130,    66,    67,
-      24,    49,    78,    50,    51,    79,    82,    25,    26,   123,
-     140,    53,    54,   143,    49,   126,   109,   117,   131,   124,
-      61,    62,    63,    64,    65,    66,    67,   120,   133,    70,
-      71,    72,   139,    83,   141,   137,   138,    49,     7,    50,
-      51,   127,   132,   146,     0,     0,     0,    53,    54,   136,
+      28,   130,   131,    41,     1,    49,   132,    13,    43,    44,
+      45,    46,    47,    48,    66,    67,    13,     5,   144,   142,
+      77,   114,   145,    14,   147,    81,    82,    13,    86,    66,
+      67,     6,   137,     8,     9,    11,    88,    89,    90,    12,
+      92,    93,    94,    95,    96,    97,    98,    99,   100,   101,
+     102,   103,   104,    13,    15,   105,   106,   107,   108,   109,
+     110,    29,   112,   113,    91,    74,    75,    76,   116,   111,
+      31,   117,   118,    32,    33,    17,    18,    19,    34,    78,
+      79,    80,    83,    21,    22,   119,   126,    23,    41,   133,
+     115,   135,    13,   140,   139,    24,    49,     7,    50,    51,
+     129,   125,    25,    26,   148,   134,    53,   128,     0,     0,
+      56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
+      66,    67,     0,   122,   141,     0,   143,     0,    73,    84,
+       0,     0,     0,    49,     0,    50,    51,     0,     0,     0,
+       0,     0,     0,    53,    54,   138,    55,    56,    57,    58,
+      59,    60,    61,    62,    63,    64,    65,    66,    67,    68,
+      69,    70,    71,    72,   120,    73,     0,    49,     0,    50,
+      51,     0,     0,     0,     0,     0,     0,    53,    54,     0,
       55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
-      65,    66,    67,    68,    69,    70,    71,    72,   118,     0,
+      65,    66,    67,    68,    69,    70,    71,    72,   126,    73,
        0,    49,     0,    50,    51,     0,     0,     0,     0,     0,
        0,    53,    54,     0,    55,    56,    57,    58,    59,    60,
       61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,   124,     0,     0,    49,     0,    50,    51,     0,
-       0,     0,     0,     0,     0,    53,    54,     0,    55,    56,
-      57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
-      67,    68,    69,    70,    71,    72,    49,     0,    50,    51,
-       0,     0,     0,     0,     0,    52,    53,    54,     0,    55,
-      56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    49,     0,    50,
-      51,     0,    86,     0,     0,     0,     0,    53,    54,     0,
-      55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
-      65,    66,    67,    68,    69,    70,    71,    72,    49,     0,
-      50,    51,     0,   121,     0,     0,     0,     0,    53,    54,
-       0,    55,    56,    57,    58,    59,    60,    61,    62,    63,
-      64,    65,    66,    67,    68,    69,    70,    71,    72,    49,
-       0,    50,    51,     0,   122,     0,     0,     0,     0,    53,
-      54,     0,    55,    56,    57,    58,    59,    60,    61,    62,
-      63,    64,    65,    66,    67,    68,    69,    70,    71,    72,
-      49,     0,    50,    51,     0,   144,     0,     0,     0,     0,
-      53,    54,     0,    55,    56,    57,    58,    59,    60,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
-      72,    49,     0,    50,    51,     0,     0,     0,     0,     0,
-       0,    53,    54,     0,    55,    56,    57,    58,    59,    60,
-      61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,    49,     0,    50,    51,     0,     0,     0,     0,
-       0,     0,    53,    54,     0,     0,     0,    57,    58,    59,
+      71,    72,    49,    73,    50,    51,     0,     0,     0,     0,
+       0,    52,    53,    54,     0,    55,    56,    57,    58,    59,
       60,    61,    62,    63,    64,    65,    66,    67,    68,    69,
-      70,    71,    72,    49,     0,    50,    51,     0,     0,     0,
-       0,     0,     0,    53,    54,     0,     0,     0,     0,     0,
-       0,     0,    61,    62,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,    72,    49,     0,    50,    51,     0,     0,
-      17,    18,    19,    20,    53,    54,     0,     0,    21,    22,
-       0,     0,    23,    61,    62,    63,    64,    65,    66,    67,
-      24,     0,     0,    49,    72,    50,    51,    25,    26,     0,
-      49,     0,     0,    53,    54,     0,     0,     0,     0,     0,
-       0,     0,    61,    62,    63,    64,    65,    66,    67,    61,
-      62,    63,    64,    65,    66,    67
+      70,    71,    72,    49,    73,    50,    51,     0,    87,     0,
+       0,     0,     0,    53,    54,     0,    55,    56,    57,    58,
+      59,    60,    61,    62,    63,    64,    65,    66,    67,    68,
+      69,    70,    71,    72,    49,    73,    50,    51,     0,   123,
+       0,     0,     0,     0,    53,    54,     0,    55,    56,    57,
+      58,    59,    60,    61,    62,    63,    64,    65,    66,    67,
+      68,    69,    70,    71,    72,    49,    73,    50,    51,     0,
+     124,     0,     0,     0,     0,    53,    54,     0,    55,    56,
+      57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
+      67,    68,    69,    70,    71,    72,    49,    73,    50,    51,
+       0,   146,     0,     0,     0,     0,    53,    54,     0,    55,
+      56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
+      66,    67,    68,    69,    70,    71,    72,    49,    73,    50,
+      51,     0,     0,     0,     0,     0,     0,    53,    54,     0,
+      55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
+      65,    66,    67,    68,    69,    70,    71,    72,    49,    73,
+      50,    51,     0,     0,     0,     0,     0,     0,     0,     0,
+      49,     0,    56,    57,    58,    59,    60,    61,    62,    63,
+      64,    65,    66,    67,    49,     0,     0,    51,     0,     0,
+      73,    63,    64,    65,    66,    67,     0,     0,    56,    57,
+      58,    59,    60,    61,    62,    63,    64,    65,    66,    67,
+      49,     0,     0,     0,     0,     0,    73,     0,     0,     0,
+       0,     0,     0,     0,    56,    57,    58,    59,    60,    61,
+      62,    63,    64,    65,    66,    67,    17,    18,    19,    20,
+       0,     0,    73,     0,    21,    22,     0,     0,    23,     0,
+      49,     0,     0,     0,     0,     0,    24,    49,     0,     0,
+       0,     0,     0,    25,    26,    57,    58,    59,    60,    61,
+      62,    63,    64,    65,    66,    67,    61,    62,    63,    64,
+      65,    66,    67
   };
 
   const short int
   BisonParser::yycheck_[] =
   {
-      13,     0,    16,    20,    11,    11,    16,    24,    21,    22,
-      23,    24,    25,    26,    20,    11,   121,   122,    24,    11,
-      33,    37,    38,    37,    38,    39,    40,    41,    41,    39,
-      40,    41,    20,   138,    11,    11,    49,    50,    51,   144,
+      13,   123,   124,    20,    11,    16,   125,    24,    21,    22,
+      23,    24,    25,    26,    40,    41,    24,    11,   140,   138,
+      33,    29,   141,    11,   146,    37,    38,    24,    41,    40,
+      41,     0,    29,    20,    11,    11,    49,    50,    51,    21,
       53,    54,    55,    56,    57,    58,    59,    60,    61,    62,
-      63,    64,    65,    21,    24,    68,    69,    70,    71,    72,
-      52,    74,    75,    79,    16,     3,    82,    83,     6,     7,
-       8,     9,    10,    11,    13,    24,    24,    22,    16,    17,
-      29,    29,    20,    11,    20,    77,    20,   123,    40,    41,
-      28,    16,    23,    18,    19,    12,    12,    35,    36,   112,
-     136,    26,    27,   139,    16,   118,    11,    21,    11,    13,
-      35,    36,    37,    38,    39,    40,    41,   109,     5,    44,
-      45,    46,   135,    12,   137,    20,     4,    16,     4,    18,
-      19,   120,   126,   145,    -1,    -1,    -1,    26,    27,   131,
+      63,    64,    65,    24,    22,    68,    69,    70,    71,    72,
+      73,    13,    75,    76,    52,    11,    20,    20,    80,    11,
+       3,    83,    84,     6,     7,     8,     9,    10,    11,    11,
+      23,    12,    12,    16,    17,    21,    13,    20,    20,    11,
+      78,     5,    24,     4,    20,    28,    16,     4,    18,    19,
+     122,   114,    35,    36,   147,   128,    26,   120,    -1,    -1,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+      40,    41,    -1,   111,   137,    -1,   139,    -1,    48,    12,
+      -1,    -1,    -1,    16,    -1,    18,    19,    -1,    -1,    -1,
+      -1,    -1,    -1,    26,    27,   133,    29,    30,    31,    32,
+      33,    34,    35,    36,    37,    38,    39,    40,    41,    42,
+      43,    44,    45,    46,    13,    48,    -1,    16,    -1,    18,
+      19,    -1,    -1,    -1,    -1,    -1,    -1,    26,    27,    -1,
       29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
-      39,    40,    41,    42,    43,    44,    45,    46,    13,    -1,
+      39,    40,    41,    42,    43,    44,    45,    46,    13,    48,
       -1,    16,    -1,    18,    19,    -1,    -1,    -1,    -1,    -1,
       -1,    26,    27,    -1,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    13,    -1,    -1,    16,    -1,    18,    19,    -1,
-      -1,    -1,    -1,    -1,    -1,    26,    27,    -1,    29,    30,
-      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
-      41,    42,    43,    44,    45,    46,    16,    -1,    18,    19,
-      -1,    -1,    -1,    -1,    -1,    25,    26,    27,    -1,    29,
-      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    45,    46,    16,    -1,    18,
-      19,    -1,    21,    -1,    -1,    -1,    -1,    26,    27,    -1,
-      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
-      39,    40,    41,    42,    43,    44,    45,    46,    16,    -1,
-      18,    19,    -1,    21,    -1,    -1,    -1,    -1,    26,    27,
-      -1,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    46,    16,
-      -1,    18,    19,    -1,    21,    -1,    -1,    -1,    -1,    26,
-      27,    -1,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
-      16,    -1,    18,    19,    -1,    21,    -1,    -1,    -1,    -1,
-      26,    27,    -1,    29,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-      46,    16,    -1,    18,    19,    -1,    -1,    -1,    -1,    -1,
-      -1,    26,    27,    -1,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    16,    -1,    18,    19,    -1,    -1,    -1,    -1,
-      -1,    -1,    26,    27,    -1,    -1,    -1,    31,    32,    33,
+      45,    46,    16,    48,    18,    19,    -1,    -1,    -1,    -1,
+      -1,    25,    26,    27,    -1,    29,    30,    31,    32,    33,
       34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      44,    45,    46,    16,    -1,    18,    19,    -1,    -1,    -1,
-      -1,    -1,    -1,    26,    27,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    44,    45,    46,    16,    -1,    18,    19,    -1,    -1,
-       8,     9,    10,    11,    26,    27,    -1,    -1,    16,    17,
-      -1,    -1,    20,    35,    36,    37,    38,    39,    40,    41,
-      28,    -1,    -1,    16,    46,    18,    19,    35,    36,    -1,
-      16,    -1,    -1,    26,    27,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    35,    36,    37,    38,    39,    40,    41,    35,
-      36,    37,    38,    39,    40,    41
+      44,    45,    46,    16,    48,    18,    19,    -1,    21,    -1,
+      -1,    -1,    -1,    26,    27,    -1,    29,    30,    31,    32,
+      33,    34,    35,    36,    37,    38,    39,    40,    41,    42,
+      43,    44,    45,    46,    16,    48,    18,    19,    -1,    21,
+      -1,    -1,    -1,    -1,    26,    27,    -1,    29,    30,    31,
+      32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
+      42,    43,    44,    45,    46,    16,    48,    18,    19,    -1,
+      21,    -1,    -1,    -1,    -1,    26,    27,    -1,    29,    30,
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      41,    42,    43,    44,    45,    46,    16,    48,    18,    19,
+      -1,    21,    -1,    -1,    -1,    -1,    26,    27,    -1,    29,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+      40,    41,    42,    43,    44,    45,    46,    16,    48,    18,
+      19,    -1,    -1,    -1,    -1,    -1,    -1,    26,    27,    -1,
+      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    16,    48,
+      18,    19,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      16,    -1,    30,    31,    32,    33,    34,    35,    36,    37,
+      38,    39,    40,    41,    16,    -1,    -1,    19,    -1,    -1,
+      48,    37,    38,    39,    40,    41,    -1,    -1,    30,    31,
+      32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
+      16,    -1,    -1,    -1,    -1,    -1,    48,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    30,    31,    32,    33,    34,    35,
+      36,    37,    38,    39,    40,    41,     8,     9,    10,    11,
+      -1,    -1,    48,    -1,    16,    17,    -1,    -1,    20,    -1,
+      16,    -1,    -1,    -1,    -1,    -1,    28,    16,    -1,    -1,
+      -1,    -1,    -1,    35,    36,    31,    32,    33,    34,    35,
+      36,    37,    38,    39,    40,    41,    35,    36,    37,    38,
+      39,    40,    41
   };
 
   const unsigned char
   BisonParser::yystos_[] =
   {
-       0,    11,    48,    49,    50,    11,     0,    49,    20,    11,
-      51,    11,    21,    24,    57,    22,    53,     8,     9,    10,
-      11,    16,    17,    20,    28,    35,    36,    58,    65,    13,
-      52,     3,     6,     7,    11,    54,    55,    59,    60,    62,
-      65,    20,    57,    65,    65,    65,    65,    65,    65,    16,
+       0,    11,    50,    51,    52,    11,     0,    51,    20,    11,
+      53,    11,    21,    24,    59,    22,    55,     8,     9,    10,
+      11,    16,    17,    20,    28,    35,    36,    60,    67,    13,
+      54,     3,     6,     7,    11,    56,    57,    61,    62,    64,
+      67,    20,    59,    67,    67,    67,    67,    67,    67,    16,
       18,    19,    25,    26,    27,    29,    30,    31,    32,    33,
       34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      44,    45,    46,    11,    20,    20,    65,    11,    23,    12,
-      54,    54,    12,    12,    63,    65,    21,    65,    65,    65,
-      57,    65,    65,    65,    65,    65,    65,    65,    65,    65,
-      65,    65,    65,    65,    65,    65,    65,    65,    65,    11,
-      65,    65,    29,    57,    54,    54,    54,    21,    13,    64,
-      57,    21,    21,    65,    13,    56,    65,    52,    53,    53,
-      56,    11,    64,     5,    61,    29,    57,    20,     4,    65,
-      56,    65,    53,    56,    21,    53,    61
+      44,    45,    46,    48,    11,    20,    20,    67,    11,    23,
+      12,    56,    56,    12,    12,    65,    67,    21,    67,    67,
+      67,    59,    67,    67,    67,    67,    67,    67,    67,    67,
+      67,    67,    67,    67,    67,    67,    67,    67,    67,    67,
+      67,    11,    67,    67,    29,    59,    56,    56,    56,    21,
+      13,    66,    59,    21,    21,    67,    13,    58,    67,    54,
+      55,    55,    58,    11,    66,     5,    63,    29,    59,    20,
+       4,    67,    58,    67,    55,    58,    21,    55,    63
   };
 
   const unsigned char
   BisonParser::yyr1_[] =
   {
-       0,    47,    48,    49,    49,    50,    51,    51,    52,    52,
-      53,    54,    54,    54,    54,    54,    54,    55,    55,    56,
-      56,    56,    57,    57,    58,    59,    60,    60,    61,    61,
-      62,    63,    63,    64,    64,    65,    65,    65,    65,    65,
-      65,    65,    65,    65,    65,    65,    65,    65,    65,    65,
-      65,    65,    65,    65,    65,    65,    65,    65,    65,    65,
-      65,    65,    65,    65,    65,    65,    65,    65,    65
+       0,    49,    50,    51,    51,    52,    53,    53,    54,    54,
+      55,    56,    56,    56,    56,    56,    56,    57,    57,    58,
+      58,    58,    59,    59,    60,    61,    62,    62,    63,    63,
+      64,    65,    65,    66,    66,    67,    67,    67,    67,    67,
+      67,    67,    67,    67,    67,    67,    67,    67,    67,    67,
+      67,    67,    67,    67,    67,    67,    67,    67,    67,    67,
+      67,    67,    67,    67,    67,    67,    67,    67,    67,    67
   };
 
   const unsigned char
@@ -1345,8 +1353,8 @@ namespace Parser {
        5,     0,     4,     0,     4,     5,     6,     8,     6,     0,
        2,     2,     0,     3,     0,     3,     3,     3,     3,     3,
        3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     3,     3,     3,     3,     2,     2,     2,
-       2,     2,     2,     2,     1,     1,     1,     2,     1
+       3,     3,     3,     3,     3,     3,     3,     3,     2,     2,
+       2,     2,     2,     2,     2,     1,     1,     1,     2,     1
   };
 
 
@@ -1364,23 +1372,24 @@ namespace Parser {
   "TK_AND", "TK_OR", "TK_NOT", "TK_ASSIGN", "TK_COMPARE", "TK_LT",
   "TK_LTE", "TK_GT", "TK_GTE", "TK_PLUS", "TK_MINUS", "TK_TIMES", "TK_DIV",
   "TK_MOD", "TK_DPLUS", "TK_DMINUS", "TK_PLUS_EQUAL", "TK_MINUS_EQUAL",
-  "TK_TIMES_EQUAL", "TK_DIV_EQUAL", "TK_MOD_EQUAL", "$accept", "MODULE",
-  "FUNCTIONS", "FUNCTION", "ARGS", "MARGS", "CODE_BLOCK", "CODE",
-  "VAR_DECL", "MULT_VARS_DECL", "MAT_DIMS", "FUN_CALL", "LOOP", "COND",
-  "COND_ELSES", "RETURN", "FORM_PARAMS", "MFORM_PARAMS", "EXPR", YY_NULLPTR
+  "TK_TIMES_EQUAL", "TK_DIV_EQUAL", "TK_MOD_EQUAL", "TK_BIT_AND",
+  "TK_DIFFERENCE", "$accept", "MODULE", "FUNCTIONS", "FUNCTION", "ARGS",
+  "MARGS", "CODE_BLOCK", "CODE", "VAR_DECL", "MULT_VARS_DECL", "MAT_DIMS",
+  "FUN_CALL", "LOOP", "COND", "COND_ELSES", "RETURN", "FORM_PARAMS",
+  "MFORM_PARAMS", "EXPR", YY_NULLPTR
   };
 
 
   const unsigned char
   BisonParser::yyrline_[] =
   {
-       0,   149,   149,   152,   153,   156,   159,   160,   163,   164,
-     167,   169,   170,   171,   172,   173,   174,   177,   178,   181,
-     182,   183,   186,   187,   190,   193,   196,   197,   200,   201,
-     204,   207,   208,   211,   212,   215,   216,   217,   218,   219,
-     220,   221,   222,   223,   224,   225,   226,   227,   228,   229,
-     230,   231,   232,   233,   234,   235,   236,   237,   238,   239,
-     240,   241,   242,   243,   244,   245,   246,   247,   248
+       0,   150,   150,   153,   154,   157,   160,   161,   164,   165,
+     168,   170,   171,   172,   173,   174,   175,   178,   179,   182,
+     183,   184,   187,   188,   191,   194,   197,   198,   201,   202,
+     205,   208,   209,   212,   213,   216,   217,   218,   219,   220,
+     221,   222,   223,   224,   225,   226,   227,   228,   229,   230,
+     231,   232,   233,   234,   235,   236,   237,   238,   239,   240,
+     241,   242,   243,   244,   245,   246,   247,   248,   249,   250
   };
 
   // Print the state stack on the debug stream.
@@ -1451,9 +1460,9 @@ namespace Parser {
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46
+      45,    46,    47,    48
     };
-    const unsigned int user_token_number_max_ = 301;
+    const unsigned int user_token_number_max_ = 303;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1466,8 +1475,8 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:1155
 } // Parser
-#line 1470 "Parsin.tab.cc" // lalr1.cc:1155
-#line 251 "Parsin.yy" // lalr1.cc:1156
+#line 1479 "Parsin.tab.cc" // lalr1.cc:1155
+#line 253 "Parsin.yy" // lalr1.cc:1156
 
 
 

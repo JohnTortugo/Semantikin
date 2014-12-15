@@ -219,7 +219,9 @@ namespace Parser {
         TK_MINUS_EQUAL = 298,
         TK_TIMES_EQUAL = 299,
         TK_DIV_EQUAL = 300,
-        TK_MOD_EQUAL = 301
+        TK_MOD_EQUAL = 301,
+        TK_BIT_AND = 302,
+        TK_DIFFERENCE = 303
       };
     };
 
@@ -507,13 +509,13 @@ namespace Parser {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 535,     ///< Last index in yytable_.
+      yylast_ = 542,     ///< Last index in yytable_.
       yynnts_ = 19,  ///< Number of nonterminal symbols.
       yyempty_ = -2,
       yyfinal_ = 6, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 47  ///< Number of tokens.
+      yyntokens_ = 49  ///< Number of tokens.
     };
 
 
@@ -526,7 +528,7 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:372
 } // Parser
-#line 530 "Parsin.tab.hh" // lalr1.cc:372
+#line 532 "Parsin.tab.hh" // lalr1.cc:372
 
 
 

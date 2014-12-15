@@ -44,6 +44,7 @@
 "!"				{ return Parser::BisonParser::token::TK_NOT; }
 "="				{ return Parser::BisonParser::token::TK_ASSIGN; }
 "=="			{ return Parser::BisonParser::token::TK_COMPARE; }
+"!="			{ return Parser::BisonParser::token::TK_DIFFERENCE; }
 "<"				{ return Parser::BisonParser::token::TK_LT; }
 "<="			{ return Parser::BisonParser::token::TK_LTE; }
 ">"				{ return Parser::BisonParser::token::TK_GT; }

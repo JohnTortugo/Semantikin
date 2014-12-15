@@ -1,0 +1,88 @@
+int fun1() {
+	int a = 100 * 0 * 1;
+
+	return 3 * 2 / 4 - 3 + 1;	
+}
+
+int fun2() {
+	return -1 * 3 + 4 - 2 + 1 / 1;
+}
+
+void fun3() {
+	int a, b, c;
+	
+	a = b < c;
+	a = b <= c;
+	a = b > c;
+	a = b >= c;
+	a = b == c;
+}
+
+void fun4() {
+	float a, b, c;
+	
+	a = b < c;
+	a = b <= c;
+	a = b > c;
+	a = b >= c;
+	a = b == c;
+}
+
+void fun5() {
+	string a, b, c;
+
+	a = b;
+	b = a;
+	a = "divino";
+	b = "cesar";	
+}
+
+void fun6() {
+	string a = "first variable", b = a, c = b;
+}
+
+void fun7() {
+	int a = 1011, b = 1110;
+
+	int c = a | b | b | b | b;
+	int d = a & a & a | a & a;
+	int e = c ^ c;
+}
+
+void fun8() {
+	int a = 1011, b = 1110;
+	
+	int c = a || b;
+}
+
+void fun9() {
+	int a = 1011, b = 1110;
+	
+	int c = a && b;
+}
+
+void fun10() {
+	int a = 1011, b = 1110;
+	
+	int c = ! a;
+}
+
+void fun11(int a, int b, int c, int d, int e, int f) {
+	int final = (a || b) || (c || d);
+}
+
+void fun12(int a, int b, int c, int d, int e, int f) {
+	int final = (a && b) && (c && d);
+}
+
+void fun13(int a, int b, int c, int d, int e, int f) {
+	int final = (a && b) || (c && d);
+}
+
+void fun14(int a, int b, int c, int d, int e, int f) {
+	int final = (a || b) && (c || d);
+}
+
+void fun15(int a, int b, int c, int d, int e, int f) {
+	int final = (a < 100 || a > 200 && a != b);
+}

@@ -7,6 +7,7 @@ using std::string;
 namespace System {
 
 	const unsigned int EXCEPTION_UNEXPECTED_TYPE = 1001;
+	const unsigned int EXCEPTION_UNREACHABLE_CODE = 1002;
 
 	const string NAT_FUN_STRCPY = "strcpy";
 

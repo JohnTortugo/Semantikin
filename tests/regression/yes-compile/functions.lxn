@@ -1,0 +1,45 @@
+int fun1() { return 1985; }
+
+void fun2() { }
+
+string fun3() { return "divcesar"; }
+
+float fun4() { return 3.1415; }
+
+int fun5(int a, int b, int c, int d) { return a + b + c + d; }
+
+int fun6(int a, float b, int c, float d, string e) { 
+	return a + c;
+}
+
+string fun7(string param1, string param2, string p3, string p4) {
+
+	return "divcesar";
+	
+}
+
+float fun8(float a, float b, float c, float d, float e) {
+
+	return a + b + c + d + e;
+
+}
+
+string fun9(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
+	
+	return p1;
+
+}
+
+string fun10(string p1, string p2, int p3, int p4, float p5, float p6, string p7) { return p7; }
+
+
+string fun11(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
+	
+	return p2;
+
+}
+
+string fun12(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
+	return p7;
+}
+

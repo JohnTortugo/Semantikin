@@ -78,3 +78,45 @@ void main5(int a, int b) {
 	int e = (a * b) - (a / b) + (a * b) - (a / b);
 
 }
+
+void function1() {
+	if (3 < 4) {
+		printStr("primeiro");
+	}
+	elseif (3 < 4) {
+		printStr("segundo");
+	}
+	elseif (3 < 4) {
+		printStr("terceiro");
+	}
+	elseif (3 < 4) {
+		printStr("quarto");
+	}
+	else {
+		printStr("finally.\n");
+	}
+}
+
+void function11(int a, int b) {
+
+	while (3 < 4) {
+		
+		if (30 < &b) {
+		
+			printStr("Infinito e avante!\n");
+		
+		}
+		
+	}
+
+}
+
+void function1(int x, int y) {
+
+		if (x < 100 || x > 200 && x != y) {
+		
+			printStr("Infinito e avante!\n");
+		
+		}
+
+}

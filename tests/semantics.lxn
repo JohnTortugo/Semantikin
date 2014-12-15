@@ -2,10 +2,6 @@ string a(string aa) { return aa; }
 
 int b() { return 6; }
 
-void strcpy(string tgt, string src) {
-
-}
-
 int c(int x, int y) {
 	int matrix[3][2][4.5];
 	

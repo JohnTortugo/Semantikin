@@ -19,6 +19,11 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
 	/* The IR module owns the symbol table. */
 	this->_module->symbolTable(module->getSymbTable());
 
+	/* This label is just a sentinel pointer to convey the
+	 * information that the expression should consider a fallthrough
+	 * path. */
+	this->_fallLabel = this->newLabel("fallthrough");
+
 	/* Continue visiting children. */
 	for (auto function : *module->getFunctions()) {
 		/* Something like an inherited attribute. */
@@ -69,11 +74,11 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 		if (initializer != nullptr) {
 			initializer->accept(this);
 
-			if (initializer->exprType() == Parser::INT || initializer->exprType() == Parser::FLOAT) {
+			if (initializer->type() == Parser::INT || initializer->type() == Parser::FLOAT) {
 				this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy(st->lookup(spec->getName()), initializer->addr())));
 			}
-			else if (initializer->exprType() == Parser::STRING) {
-				shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call( st->lookup(System::NAT_FUN_STRCPY)) );
+			else if (initializer->type() == Parser::STRING) {
+				shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(st->lookup(System::NAT_FUN_STRCPY), nullptr) );
 
 				newInstruction->addArgument(st->lookup(spec->getName()));
 				newInstruction->addArgument(initializer->addr());
@@ -87,8 +92,20 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 	}
 }
 
-void AstTACGenVisitor::visit(const Parser::LoopStmt* loop) {
+void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
+	auto begin 		= this->newLabel();
+	auto condition 	= loop->getCondition();
+	auto codeBlock 	= loop->getBody();
 
+	condition->tLabel( this->newLabel() );
+	condition->fLabel( loop->next() );
+	codeBlock->next( begin );
+
+	this->_currentFunction->appendLabel(begin);
+	condition->accept(this);
+	this->_currentFunction->appendLabel(condition->tLabel());
+	codeBlock->accept(this);
+	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(begin) ) );
 }
 
 void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
@@ -100,12 +117,12 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 	if ((elseIfChain == nullptr || elseIfChain->size() == 0) && elseBlock == nullptr) {
 		/* Does not have else-if nor else blocks. */
 
-		condition->tLabel( this->newLabel() );
+		condition->tLabel( this->_fallLabel );
 		condition->fLabel( ifStmt->next() );
 		thenBlock->next( ifStmt->next() );
 
 		condition->accept(this);
-		this->_currentFunction->appendLabel(condition->tLabel());
+//		this->_currentFunction->appendLabel(condition->tLabel());
 		thenBlock->accept(this);
 	}
 	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
@@ -254,14 +271,14 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
 void AstTACGenVisitor::visit(Parser::StringExpr* str) {
 	/* If we are not inside a conditional expression. */
 	if ( str->tLabel() == nullptr || str->fLabel() == nullptr ) {
-		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), str->getValue()));
+		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), str->value()));
 		this->_currentFunction->symbolTable()->add(cttEntry);
 		str->addr(cttEntry);
 	}
 	else {
 		/* We are inside conditional expression. We evaluate the parameters
 		 * and goes to the correct direction. */
-		if (str->getValue() == "") {
+		if (str->value() == "") {
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(str->fLabel()) ) );
 		}
 		else {
@@ -273,14 +290,14 @@ void AstTACGenVisitor::visit(Parser::StringExpr* str) {
 void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 	/* If we are not inside a conditional expression. */
 	if ( flt->tLabel() == nullptr || flt->fLabel() == nullptr ) {
-		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), flt->getValue()));
+		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), flt->value()));
 		this->_currentFunction->symbolTable()->add(cttEntry);
 		flt->addr(cttEntry);
 	}
 	else {
 		/* We are inside conditional expression. We evaluate the parameters
 		 * and goes to the correct direction. */
-		if (flt->getValue() == 0) {
+		if (flt->value() == 0) {
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(flt->fLabel()) ) );
 		}
 		else {
@@ -292,29 +309,31 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 	/* If we are not inside a conditional expression. */
 	if ( integer->tLabel() == nullptr || integer->fLabel() == nullptr ) {
-		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), integer->getValue()));
+		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), integer->value()));
 		this->_currentFunction->symbolTable()->add(cttEntry);
 		integer->addr(cttEntry);
 	}
 	else {
 		/* We are inside conditional expression. We evaluate the parameters
 		 * and goes to the correct direction. */
-		if (integer->getValue() == 0) {
-			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(integer->fLabel()) ) );
+		if (integer->value() == 0) {
+			if (integer->fLabel() != this->_fallLabel)
+				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(integer->fLabel()) ) );
 		}
 		else {
-			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(integer->tLabel()) ) );
+			if (integer->tLabel() != this->_fallLabel)
+				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(integer->tLabel()) ) );
 		}
 	}
 }
 
 void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
-	if (id->getDimsExprs() != nullptr && id->getDimsExprs()->size() > 0) {
+	if (id->dimsExprs() != nullptr && id->dimsExprs()->size() > 0) {
 		/* Tells parent "visiting" methods that this is an array access. */
 		id->isArrayAccess(true);
 
 		/* We look into the symbol table to find the dimensions sizes. */
-		shared_ptr<SymbolTableEntry> entry = this->_currentFunction->symbolTable()->lookup(id->getValue());
+		shared_ptr<SymbolTableEntry> entry = this->_currentFunction->symbolTable()->lookup(id->value());
 		STVariableDeclaration* decl = dynamic_cast<STVariableDeclaration*>( entry.get() );
 
 		/* Here we are going to store the factors for each index. */
@@ -331,7 +350,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 
 		/* Iterate computing the expressions for each index. */
 		int factIndex = 0;
-		for (auto dimExpr : *id->getDimsExprs()) {
+		for (auto dimExpr : *id->dimsExprs()) {
 			/* Compute the index expression. */
 			dimExpr->accept(this);
 
@@ -362,7 +381,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		}
 
 		/* Now we need to consider the base type size. */
-		shared_ptr<Parser::STConstantDef> cttBaseType(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), AstSemaVisitor::typeWidth(decl->getType())));
+		shared_ptr<Parser::STConstantDef> cttBaseType(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), AstSemaVisitor::typeWidth(decl->type())));
 		IR::Instruction* indAccess = new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev);
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( indAccess ) );
 
@@ -374,7 +393,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		 * the array value in a temporary. Otherwise, we will just return the address to the previous
 		 * expression, and it will take care of dereferencing. 									   */
 		if (!id->isExpLeftHand()) {
-			IR::Instruction* derefer = new IR::CopyFromArray(this->newTemporary(id->exprType()), arrAccess->tgt());
+			IR::Instruction* derefer = new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess->tgt());
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( derefer ) );
 
 			id->addr( derefer->tgt() );
@@ -385,17 +404,48 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 	}
 	else {
 		id->isArrayAccess(false);
+		id->addr( this->_currentFunction->symbolTable()->lookup(id->value()) );
 		/* No need to code gen. */
 		/* Address was already computed in Sema. */
+	}
+
+	if (id->tLabel() != nullptr && id->fLabel() != nullptr) {
+		auto entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
+		auto type 	= entry->type();
+
+		if (type == Parser::INT || type == Parser::FLOAT) {
+			auto cmpInstr = new IR::REqual(this->newTemporary(type), id->addr(), this->newConstant<int>(0));
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( cmpInstr ) );
+
+			if (id->tLabel() != this->_fallLabel && id->fLabel() != this->_fallLabel) {
+				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), id->fLabel()) ) );
+				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(id->tLabel()) ) );
+			}
+			else if (id->tLabel() == this->_fallLabel) {
+				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), id->fLabel()) ) );
+			}
+			else if (id->fLabel() == this->_fallLabel) {
+				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(cmpInstr->tgt(), id->tLabel()) ) );
+			}
+			else
+				throw System::EXCEPTION_UNREACHABLE_CODE;
+		}
+		else if (type == Parser::STRING) {
+
+		}
+		else {
+			throw System::EXCEPTION_UNEXPECTED_TYPE;
+		}
 	}
 }
 
 void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
-	shared_ptr<SymbolTableEntry> decl = this->_currentFunction->symbolTable()->lookup(funCall->getName());
+	auto decl 	 = this->_currentFunction->symbolTable()->lookup(funCall->name());
+	auto tmpRes = this->newTemporary( decl->type() );
 
-	shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(decl) );
+	shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(decl, tmpRes) );
 
-	for (auto argument : *funCall->getArguments()) {
+	for (auto argument : *funCall->arguments()) {
 		/* Visit the argument, produce address for them.*/
 		argument->accept(this);
 
@@ -404,27 +454,29 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 	}
 
 	this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
+
+	funCall->addr(tmpRes);
 }
 
 void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
-	if (unary->getType() == UnaryExpr::NOT) {
+	if (unary->opr() == UnaryExpr::NOT) {
 		translateBooleanExp(unary);
 	}
-	else if (unary->getType() == UnaryExpr::ADDR) {
-		unary->getExp()->isExpLeftHand(false);
-		unary->getExp()->accept(this);
+	else if (unary->opr() == UnaryExpr::ADDR) {
+		unary->exp()->isExpLeftHand(false);
+		unary->exp()->accept(this);
 
-		auto newInstruction = new IR::Addr(this->newTemporary(unary->exprType()), unary->getExp()->addr());
+		auto newInstruction = new IR::Addr(this->newTemporary(unary->type()), unary->exp()->addr());
 
 		unary->addr( newInstruction->tgt() );
 
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 	}
-	else if (unary->getType() == UnaryExpr::BIT_NOT) {
-		unary->getExp()->isExpLeftHand(false);
-		unary->getExp()->accept(this);
+	else if (unary->opr() == UnaryExpr::BIT_NOT) {
+		unary->exp()->isExpLeftHand(false);
+		unary->exp()->accept(this);
 
-		auto newInstruction = new IR::BinNot(this->newTemporary(unary->exprType()), unary->getExp()->addr());
+		auto newInstruction = new IR::BinNot(this->newTemporary(unary->type()), unary->exp()->addr());
 
 		unary->addr( newInstruction->tgt() );
 
@@ -456,10 +508,10 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 		}
 	}
 
-	unary->getExp()->isExpLeftHand(false);
-	unary->getExp()->tLabel( unary->fLabel() );
-	unary->getExp()->fLabel( unary->tLabel() );
-	unary->getExp()->accept(this);
+	unary->exp()->isExpLeftHand(false);
+	unary->exp()->tLabel( unary->fLabel() );
+	unary->exp()->fLabel( unary->tLabel() );
+	unary->exp()->accept(this);
 
 	if (notCond) {
 		shared_ptr<STTempVar> res = this->newTemporary(Parser::INT);
@@ -479,14 +531,14 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 
 void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 	IR::Instruction* newInstruction = nullptr;
-	Expression* exp 				= unary->getExp();
-	NativeType tgtType 				= unary->exprType();
+	Expression* exp 				= unary->exp();
+	NativeType tgtType 				= unary->type();
 
 	exp->isExpLeftHand(false);
 	exp->accept(this);
 
 	if (tgtType == Parser::INT) {
-		switch (unary->getType()) {
+		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
 				newInstruction = new IR::IMinus(this->newTemporary(tgtType), exp->addr());
 				break;
@@ -505,7 +557,7 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 		}
 	}
 	else if (tgtType == Parser::FLOAT) {
-		switch (unary->getType()) {
+		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
 				newInstruction = new IR::FMinus(this->newTemporary(tgtType), exp->addr());
 				break;
@@ -530,12 +582,12 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 }
 
 void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
-	auto type = binop->getType();
+	auto opr = binop->opr();
 
-	if (type == BinaryExpr::LOG_AND || type == BinaryExpr::LOG_OR) {
+	if (opr == BinaryExpr::LOG_AND || opr == BinaryExpr::LOG_OR) {
 		translateBooleanExp(binop);
 	}
-	else if (type == BinaryExpr::LT || type == BinaryExpr::LTE || type == BinaryExpr::GT || type == BinaryExpr::GTE || type == BinaryExpr::COMPARE) {
+	else if (opr == BinaryExpr::LT || opr == BinaryExpr::LTE || opr == BinaryExpr::GT || opr == BinaryExpr::GTE || opr == BinaryExpr::COMPARE || opr == BinaryExpr::DIFFERENCE) {
 		translateRelationalExp(binop);
 	}
 	else {
@@ -546,7 +598,7 @@ void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
 void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	auto exp1 	  = binop->getExp1();
 	auto exp2 	  = binop->getExp2();
-	auto tgtType  = binop->exprType();
+	auto tgtType  = binop->type();
 	auto notCond  = false;
 	auto nextNull = false;
 
@@ -570,25 +622,36 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	exp1->isExpLeftHand(false);
 	exp2->isExpLeftHand(false);
 
-	if (binop->getType() == BinaryExpr::LOG_AND) {
-		exp1->tLabel( this->newLabel() );
-		exp1->fLabel( binop->fLabel() );
+	if (binop->opr() == BinaryExpr::LOG_AND) {
+		auto newLabel = (binop->fLabel() != this->_fallLabel) ? binop->fLabel() : this->newLabel();
+
+		exp1->tLabel( this->_fallLabel );
+		exp1->fLabel( newLabel );
+
 		exp2->tLabel( binop->tLabel() );
 		exp2->fLabel( binop->fLabel() );
 
 		exp1->accept(this);
-		this->_currentFunction->appendLabel(exp1->tLabel());
 		exp2->accept(this);
+
+		if (binop->fLabel() == this->_fallLabel) {
+			this->_currentFunction->appendLabel(newLabel);
+		}
 	}
-	else if (binop->getType() == BinaryExpr::LOG_OR) {
-		exp1->tLabel( binop->tLabel() );
-		exp1->fLabel( this->newLabel() );
+	else if (binop->opr() == BinaryExpr::LOG_OR) {
+		auto newLabel = (binop->tLabel() != this->_fallLabel) ? binop->tLabel() : this->newLabel();
+
+		exp1->tLabel( newLabel );
+		exp1->fLabel( this->_fallLabel );
 		exp2->tLabel( binop->tLabel() );
 		exp2->fLabel( binop->fLabel() );
 
 		exp1->accept(this);
-		this->_currentFunction->appendLabel(exp1->fLabel());
 		exp2->accept(this);
+
+		if (binop->tLabel() == this->_fallLabel) {
+			this->_currentFunction->appendLabel(newLabel);
+		}
 	}
 
 	/* We aren't inside a conditional, then we insert the labels
@@ -613,16 +676,16 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 	IR::Instruction* newInstruction = nullptr;
 	auto exp1 	 = binop->getExp1();
 	auto exp2 	 = binop->getExp2();
-	auto tgtType = binop->exprType();
+	auto tgtType = binop->type();
 
-	exp1->isExpLeftHand(binop->getType() == BinaryExpr::ASSIGN);
+	exp1->isExpLeftHand(binop->opr() == BinaryExpr::ASSIGN);
 	exp1->accept(this);
 
 	exp2->isExpLeftHand(false);
 	exp2->accept(this);
 
 	if (tgtType == Parser::INT) {
-		switch (binop->getType()) {
+		switch (binop->opr()) {
 			case BinaryExpr::ASSIGN:
 				if (exp1->isArrayAccess())
 					newInstruction = new IR::CopyToArray(exp1->addr(), exp2->addr());
@@ -684,7 +747,7 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 		}
 	}
 	else if (tgtType == Parser::FLOAT) {
-		switch (binop->getType()) {
+		switch (binop->opr()) {
 			case BinaryExpr::ASSIGN:
 				if (exp1->isArrayAccess())
 					newInstruction = new IR::CopyToArray(exp1->addr(), exp2->addr());
@@ -725,6 +788,15 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 				break;
 		}
 	}
+	else if (tgtType == Parser::STRING) {
+		if (binop->opr() == BinaryExpr::ASSIGN) {
+			auto st 	   = this->_currentFunction->symbolTable();
+			newInstruction = new IR::Call(st->lookup(System::NAT_FUN_STRCPY), this->newTemporary(Parser::STRING));
+
+			newInstruction->addArgument( exp1->addr() );
+			newInstruction->addArgument( exp2->addr() );
+		}
+	}
 
 	binop->addr( newInstruction->tgt() );
 
@@ -735,17 +807,25 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 	IR::Instruction* newInstruction = nullptr;
 	auto exp1 	 = binop->getExp1();
 	auto exp2 	 = binop->getExp2();
-	auto tgtType = binop->exprType();
+	auto tgtType = binop->type();
 
 	exp1->isExpLeftHand(false);
+	exp1->tLabel(nullptr);
+	exp1->fLabel(nullptr);
 	exp1->accept(this);
 
 	exp2->isExpLeftHand(false);
+	exp2->tLabel(nullptr);
+	exp2->fLabel(nullptr);
 	exp2->accept(this);
 
-	switch (binop->getType()) {
+	switch (binop->opr()) {
 		case BinaryExpr::COMPARE:
 			newInstruction = new IR::REqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			break;
+
+		case BinaryExpr::DIFFERENCE:
+			newInstruction = new IR::RNotEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 
 		case BinaryExpr::LT:
@@ -768,9 +848,32 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 	binop->addr( newInstruction->tgt() );
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 
-	if (binop->tLabel() != nullptr && binop->fLabel() != nullptr) {
-		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), binop->tLabel()) ) );
-		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(binop->fLabel()) ) );
+	auto tLabel = binop->tLabel();
+	auto fLabel = binop->fLabel();
+	auto fall = this->_fallLabel;
+
+	/* If neither targets were informed then it is because this
+	 * expression is part of a larger expression and in this case
+	 * we cannot have short-circuit code yet. */
+	if (tLabel != nullptr && fLabel != nullptr) {
+		/* In this case jumps were informed for both targets, this
+		 * may happen when this expression is part of a larger expression
+		 * that is inside conditionals. */
+		if (tLabel != fall && fLabel != fall) {
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), tLabel) ) );
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(fLabel) ) );
+		}
+		else if (tLabel != fall) {
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), tLabel) ) );
+		}
+		else if (fLabel != fall) {
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(binop->addr(), fLabel) ) );
+		}
+		else {
+			/* I do not expect this to happen, but better be
+			 * safe than sorry. */
+			throw System::EXCEPTION_UNREACHABLE_CODE;
+		}
 	}
 }
 

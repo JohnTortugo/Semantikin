@@ -1,17 +1,3 @@
-void function1() {
-	if (3 < 4) {
-		printStr("primeiro");
-	}
-	elseif (3 < 4) {
-		printStr("segundo");
-	}
-	elseif (3 < 4) {
-		printStr("terceiro");
-	}
-	elseif (3 < 4) {
-		printStr("quarto");
-	}
-	else {
-		printStr("finally.\n");
-	}
+void fun13(int a, int b, int c, int d, int e, int f) {
+	int final = (a && b) || (c && d);
 }

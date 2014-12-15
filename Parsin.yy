@@ -128,19 +128,20 @@
 %token TK_DIV_EQUAL	
 %token TK_MOD_EQUAL		
 
-%left TK_COMPARE TK_ASSIGN
+%right TK_ASSIGN TK_TIMES_EQUAL TK_DIV_EQUAL TK_MOD_EQUAL TK_PLUS_EQUAL TK_MINUS_EQUAL 
+%left TK_OR 
+%left TK_AND 
+%left TK_BIT_OR 
+%left TK_BIT_XOR 
+%left TK_BIT_AND
+%left TK_COMPARE TK_DIFFERENCE
 %left TK_LT TK_LTE TK_GT TK_GTE
-%left TK_MINUS_EQUAL TK_PLUS_EQUAL
-%left TK_DIV_EQUAL TK_TIMES_EQUAL
-%left TK_MOD_EQUAL
-%left TK_AND TK_OR TK_BIT_OR TK_BIT_XOR
 %left TK_PLUS TK_MINUS
-%left TK_DIV TK_TIMES
-%left TK_MOD
-%left TK_DPLUS TK_DMINUS
-%left TK_BIT_NOT TK_NOT
-%left TK_AMPERSAND
-
+%left TK_TIMES TK_DIV TK_MOD
+%right TK_AMPERSAND
+%right TK_BIT_NOT 
+%right TK_NOT
+%right TK_DPLUS TK_DMINUS
 
 %start MODULE
 
@@ -213,6 +214,7 @@ MFORM_PARAMS	: TK_COMMA EXPR MFORM_PARAMS												{ ($3)->push_front(std::sha
 				;
 
 EXPR			: EXPR TK_COMPARE EXPR														{ $$ = new BinaryExpr(BinaryExpr::COMPARE, $1, $3); }
+				| EXPR TK_DIFFERENCE EXPR													{ $$ = new BinaryExpr(BinaryExpr::DIFFERENCE, $1, $3); }
 				| EXPR TK_ASSIGN EXPR														{ $$ = new BinaryExpr(BinaryExpr::ASSIGN, $1, $3); }
 				| EXPR TK_AND EXPR															{ $$ = new BinaryExpr(BinaryExpr::LOG_AND, $1, $3); }
 				| EXPR TK_OR EXPR															{ $$ = new BinaryExpr(BinaryExpr::LOG_OR, $1, $3); }

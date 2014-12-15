@@ -15,6 +15,7 @@ using std::string;
 using std::list;
 using std::map;
 using std::shared_ptr;
+using std::make_shared;
 using namespace Parser;
 
 namespace IR {
@@ -37,6 +38,9 @@ namespace IR {
 
 		void src2(shared_ptr<SymbolTableEntry> src) { this->_src2 = src; }
 		shared_ptr<SymbolTableEntry> src2() { return this->_src2; }
+
+		virtual const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() { return nullptr; }
+		virtual void addArgument(shared_ptr<SymbolTableEntry> argument) { }
 
 		virtual void dump(stringstream& buffer) = 0;
 
@@ -411,14 +415,20 @@ namespace IR {
 	/* Represent the call to a function. */
 	class Call : public Instruction {
 	private:
-		vector<shared_ptr<SymbolTableEntry>> _arguments;
+		shared_ptr<vector<shared_ptr<SymbolTableEntry>>> _arguments;
 
 	public:
-		Call(shared_ptr<SymbolTableEntry> callee) : Instruction(callee, nullptr, nullptr)
+		Call(shared_ptr<SymbolTableEntry> callee, shared_ptr<SymbolTableEntry> resTgt) : Instruction(resTgt, callee, nullptr)
 		{ }
 
-		const vector<shared_ptr<SymbolTableEntry>>& arguments() const { return _arguments; }
-		void addArgument(shared_ptr<SymbolTableEntry> argument) { _arguments.push_back(argument); }
+		const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() const { return _arguments; }
+
+		void addArgument(shared_ptr<SymbolTableEntry> argument) {
+			if (this->_arguments == nullptr)
+				this->_arguments = make_shared<vector<shared_ptr<SymbolTableEntry>>>();
+
+			_arguments->push_back(argument);
+		}
 
 		void dump(stringstream& buffer);
 	};

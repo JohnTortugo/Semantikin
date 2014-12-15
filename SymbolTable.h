@@ -1,5 +1,6 @@
 #ifndef SYMBOLTABLE_H_
 #define SYMBOLTABLE_H_
+#include "Semantikin.h"
 
 #include <iostream>
 #include <vector>
@@ -18,6 +19,7 @@ using std::shared_ptr;
 
 namespace Parser {
 	enum NativeType {
+		NOT_A_TYPE,
 		VOID,
 		INT,
 		FLOAT,
@@ -36,12 +38,18 @@ namespace Parser {
 		/* Name the user gave to the variable/function. */
 		string name;
 
-	public:
-		SymbolTableEntry() { }
+		/* the variable's type. */
+		NativeType _type;
 
-		SymbolTableEntry(string nm) : name(nm) {}
+	public:
+		SymbolTableEntry() : name(""), _type(Parser::NOT_A_TYPE) { }
+
+		SymbolTableEntry(string nm, NativeType tp) : name(nm), _type(tp) {}
 
 		virtual string getName() { return this->name; }
+
+		NativeType type() const { return this->_type; }
+		void type(NativeType tp) { this->_type = tp; }
 
 		void rename(string newName) { this->name = newName; }
 
@@ -53,9 +61,6 @@ namespace Parser {
 	/* Represent any kind of variable: parameter, temporary, local. */
 	class STVariableDeclaration : public SymbolTableEntry {
 	protected:
-		/* the variable's type. */
-		NativeType type;
-
 		/* How many bytes this variable occupy. */
 		int width;
 
@@ -69,9 +74,10 @@ namespace Parser {
 
 
 	public:
-		STVariableDeclaration() : type(Parser::VOID), width(0), offset(0) { }
+		STVariableDeclaration() : SymbolTableEntry("", Parser::NOT_A_TYPE), width(0), offset(0)
+		{ }
 
-		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm), type(tp), width(wd), offset(off)
+		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), width(wd), offset(off)
 		{ }
 
 		const vector<int>& dims() const { return _dims; }
@@ -80,10 +86,6 @@ namespace Parser {
 
 		int getOffset() const {
 			return offset;
-		}
-
-		NativeType getType() const {
-			return type;
 		}
 
 		int getWidth() const {
@@ -95,12 +97,8 @@ namespace Parser {
 	/* This represent a local variable declaration. */
 	class STLocalVarDecl : public STVariableDeclaration {
 	public:
-		STLocalVarDecl(string _name, NativeType _type, int _width, int _offset) {
-			name = _name;
-			type = _type;
-			width = _width;
-			offset = _offset;
-		}
+		STLocalVarDecl(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
+		{ }
 
 		void dump() const;
 	};
@@ -109,12 +107,8 @@ namespace Parser {
 	/* This represent a formal parameter declaration in a function. */
 	class STParamDecl : public STVariableDeclaration {
 	public:
-		STParamDecl(string _name, NativeType _type, int _width, int _offset) {
-			name = _name;
-			type = _type;
-			width = _width;
-			offset = _offset;
-		}
+		STParamDecl(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
+		{ }
 
 		void dump() const;
 	};
@@ -123,7 +117,7 @@ namespace Parser {
 	/* This entry will represent a temporary variable used in the IR. */
 	class STTempVar : public STVariableDeclaration {
 	public:
-		STTempVar(string _name, NativeType _type, int _width, int _offset) : STVariableDeclaration(_name, _type, _width, _offset)
+		STTempVar(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
 		{ }
 
 		void dump() const;
@@ -134,11 +128,10 @@ namespace Parser {
 	class STLabelDef : public SymbolTableEntry {
 	private:
 		int _address;
-
 		int _usageCounter;
 
 	public:
-		STLabelDef(string nm) : SymbolTableEntry(nm), _address(0), _usageCounter(0)
+		STLabelDef(string nm) : SymbolTableEntry(nm, Parser::NOT_A_TYPE), _address(0), _usageCounter(0)
 		{ }
 
 		void address(int addr) { this->_address = addr; }
@@ -155,7 +148,6 @@ namespace Parser {
 	class STConstantDef : public SymbolTableEntry {
 	private:
 		/* TODO: make these fields part of a union */
-		NativeType _type;
 		int _integer;
 		float _floating;
 		string _str;
@@ -163,15 +155,16 @@ namespace Parser {
 	public:
 		/* Didn't like this too much, but I would have to overload
 		 * it in the union anyway, right? 						*/
-		STConstantDef(string nm, string s) : SymbolTableEntry(nm), _type(Parser::STRING), _str(s), _integer(0), _floating(0) {}
-		STConstantDef(string nm, int i)    : SymbolTableEntry(nm), _type(Parser::INT), _str(""), _integer(i), _floating(0) {}
-		STConstantDef(string nm, float f)  : SymbolTableEntry(nm), _type(Parser::FLOAT), _str(""), _integer(0), _floating(f) {}
+		STConstantDef(string nm, string s) : SymbolTableEntry(nm, Parser::STRING), _str(s), _integer(0), _floating(0) {}
+		STConstantDef(string nm, int i)    : SymbolTableEntry(nm, Parser::INT), _str(""), _integer(i), _floating(0) {}
+		STConstantDef(string nm, float f)  : SymbolTableEntry(nm, Parser::FLOAT), _str(""), _integer(0), _floating(f) {}
 
 		string getName() {
 			switch (this->_type) {
 				case Parser::STRING: return this->_str;
 				case Parser::INT: return std::to_string(this->_integer);
 				case Parser::FLOAT: return std::to_string(this->_floating);
+				case Parser::NOT_A_TYPE: throw System::EXCEPTION_UNEXPECTED_TYPE;
 			}
 		}
 
@@ -184,21 +177,16 @@ namespace Parser {
 		/* Compiler assigned function's label. */
 		string label;
 
-		/* The function's return type. */
-		NativeType returnType;
-
 		vector<shared_ptr<SymbolTableEntry>> _params;
 
 	public:
-		STFunctionDeclaration(string _name, string _label, NativeType _returnType) : SymbolTableEntry(_name), label(_label), returnType(_returnType)
+		STFunctionDeclaration(string nm, string lbl, NativeType rtp) : SymbolTableEntry(nm, rtp), label(lbl)
 		{ }
 
 		string getLabel() const { return label; }
 
 		const vector<shared_ptr<SymbolTableEntry>>& params() const { return _params; }
 		void addParam(shared_ptr<SymbolTableEntry> newParam) { _params.push_back(newParam); }
-
-		NativeType getReturnType() const { return returnType; }
 
 		void dump() const;
 	};

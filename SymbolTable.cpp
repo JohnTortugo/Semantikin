@@ -35,7 +35,7 @@ namespace Parser {
 		cout << std::setw(5) << "-" 				<< " |";
 		cout << std::setw(5) << "-" 				<< " |";
 		cout << std::setw(10) << this->label 		<< " |";
-		cout << std::setw(5)  << this->returnType 	<< " |";
+//		cout << std::setw(5)  << this->returnType 	<< " |";
 		cout << std::setw(5);
 
 		std::stringstream buffer;
@@ -43,7 +43,7 @@ namespace Parser {
 		for (auto _param : this->params()) {
 			STParamDecl* param = dynamic_cast<STParamDecl*>(_param.get());
 
-			buffer << "(" << std::setw(1) << param->getType() ;
+//			buffer << "(" << std::setw(1) << param->getType() ;
 			buffer << "," << std::setw(1) << param->getNumDims() << ")";
 		}
 		buffer << "}";
@@ -57,7 +57,7 @@ namespace Parser {
 		cout << std::setw(10) << "| LocVar" << " |";
 		cout << std::right;
 		cout << std::setw(10) << this->name << " |";
-		cout << std::setw(5) << this->type << " |";
+//		cout << std::setw(5) << this->type << " |";
 		cout << std::setw(5) << this->width << " |";
 		cout << std::setw(5) << this->offset << " |";
 		cout << std::setw(5) << this->getNumDims() << " |";
@@ -72,7 +72,7 @@ namespace Parser {
 		cout << std::setw(10) << "| Param" << " |";
 		cout << std::right;
 		cout << std::setw(10) << this->name << " |";
-		cout << std::setw(5) << this->type << " |";
+//		cout << std::setw(5) << this->type << " |";
 		cout << std::setw(5) << this->width << " |";
 		cout << std::setw(5) << this->offset << " |";
 		cout << std::setw(5) << this->getNumDims() << " |";

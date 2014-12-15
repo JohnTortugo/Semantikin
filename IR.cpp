@@ -163,15 +163,18 @@ namespace IR {
 	}
 
 	void Call::dump(stringstream& buffer) {
-		buffer << "call " << this->_tgt->getName() << "(";
+		if (this->_tgt != nullptr)
+			buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "(";
+		else
+			buffer << this->_src1->getName() << "(";
 
-		const vector<shared_ptr<SymbolTableEntry>> arguments = this->arguments();
+		auto arguments = this->arguments();
 
-		if (arguments.size() > 0)
-			buffer << arguments[0]->getName();
+		if (arguments->size() > 0)
+			buffer << (*arguments)[0]->getName();
 
-		for (int i=1; i<arguments.size(); i++)
-			buffer << ", " << arguments[i]->getName();
+		for (int i=1; i<arguments->size(); i++)
+			buffer << ", " << (*arguments)[i]->getName();
 
 		buffer << ");" << endl;
 	}

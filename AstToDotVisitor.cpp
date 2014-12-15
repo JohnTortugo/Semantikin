@@ -120,7 +120,7 @@ void AstToDotVisitor::visit(const Parser::VarDecl* varDec) {
 	}
 }
 
-void AstToDotVisitor::visit(const Parser::LoopStmt* loop) {
+void AstToDotVisitor::visit(Parser::LoopStmt* loop) {
 	/* The loop header node. */
 	this->dotfile << "\t\"" << loop << "\" [shape=egg, label=\"Loop\"];" << endl;
 
@@ -241,7 +241,7 @@ void AstToDotVisitor::visit(Parser::CodeBlock* block) {
 
 void AstToDotVisitor::visit(Parser::StringExpr* str) {
 	/* The main node information. */
-	string value = escapeStr(str->getValue());
+	string value = escapeStr(str->value());
 	value = (value.length() > 10) ? value.substr(0, 10)  + "...\\\"" : value;
 
 	this->dotfile << "\t\"" << str << "\" [shape=rect, label=\"" << value<< "\"];" << endl;
@@ -250,19 +250,19 @@ void AstToDotVisitor::visit(Parser::StringExpr* str) {
 
 void AstToDotVisitor::visit(Parser::FloatExpr* flt) {
 	/* The main node information. */
-	this->dotfile << "\t\"" << flt << "\" [shape=rect, label=\"" << flt->getValue() << "\"];" << endl;
+	this->dotfile << "\t\"" << flt << "\" [shape=rect, label=\"" << flt->value() << "\"];" << endl;
 }
 
 void AstToDotVisitor::visit(Parser::IntegerExpr* integer) {
 	/* The main node information. */
-	this->dotfile << "\t\"" << integer << "\" [shape=rect, label=\"" << integer->getValue() << "\"];" << endl;
+	this->dotfile << "\t\"" << integer << "\" [shape=rect, label=\"" << integer->value() << "\"];" << endl;
 }
 
 void AstToDotVisitor::visit(Parser::IdentifierExpr* id) {
 	/* The main node information. */
-	this->dotfile << "\t\"" << id << "\" [shape=octagon, label=\"" << id->getValue() << "\"];" << endl;
+	this->dotfile << "\t\"" << id << "\" [shape=octagon, label=\"" << id->value() << "\"];" << endl;
 
-	list<shared_ptr<Parser::Expression>>* dims = id->getDimsExprs();
+	list<shared_ptr<Parser::Expression>>* dims = id->dimsExprs();
 
 	if (dims != nullptr && dims->size() > 0) {
 		/* Create the hub node. */
@@ -292,9 +292,9 @@ void AstToDotVisitor::visit(Parser::IdentifierExpr* id) {
 
 void AstToDotVisitor::visit(Parser::FunctionCall* funCall) {
 	/* The main node information. */
-	this->dotfile << "\t\"" << funCall << "\" [shape=record, label=\"{FunCall|Name:" << funCall->getName() << "|Arguments}\"];" << endl;
+	this->dotfile << "\t\"" << funCall << "\" [shape=record, label=\"{FunCall|Name:" << funCall->name() << "|Arguments}\"];" << endl;
 
-	list<shared_ptr<Parser::Expression>>* arguments = funCall->getArguments();
+	list<shared_ptr<Parser::Expression>>* arguments = funCall->arguments();
 	list<shared_ptr<Parser::Expression>>::iterator it = arguments->begin();
 	while (it != arguments->end()) {
 		this->dotfile << "\t\"" << funCall << "\" -> \"" << it->get() << "\";" << endl;
@@ -313,18 +313,18 @@ void AstToDotVisitor::visit(Parser::FunctionCall* funCall) {
 
 void AstToDotVisitor::visit(Parser::UnaryExpr* unary) {
 	/* The main node information. */
-	this->dotfile << "\t\"" << unary << "\" [shape=triangle, label=\"" << translateUnop(unary->getType()) << "\"];" << endl;
+	this->dotfile << "\t\"" << unary << "\" [shape=triangle, label=\"" << translateUnop(unary->opr()) << "\"];" << endl;
 
 	/* Edge to the first expression. */
-	this->dotfile << "\t\"" << unary << "\" -> \"" << unary->getExp() << "\";" << endl;
+	this->dotfile << "\t\"" << unary << "\" -> \"" << unary->exp() << "\";" << endl;
 
 	/* Continue visiting */
-	unary->getExp()->accept(this);
+	unary->exp()->accept(this);
 }
 
 void AstToDotVisitor::visit(Parser::BinaryExpr* binop) {
 	/* The main node information. */
-	this->dotfile << "\t\"" << binop << "\" [shape=triangle, label=\"" << translateBinop(binop->getType()) << "\"];" << endl;
+	this->dotfile << "\t\"" << binop << "\" [shape=triangle, label=\"" << translateBinop(binop->opr()) << "\"];" << endl;
 
 	/* Edge to the first expression. */
 	this->dotfile << "\t\"" << binop << "\" -> \"" << binop->getExp1() << "\";" << endl;
@@ -340,6 +340,7 @@ void AstToDotVisitor::visit(Parser::BinaryExpr* binop) {
 string AstToDotVisitor::translateBinop(Parser::BinaryExpr::ExprType type) {
 	switch (type) {
 		case Parser::BinaryExpr::COMPARE: return "==";
+		case Parser::BinaryExpr::DIFFERENCE: return "!=";
 		case Parser::BinaryExpr::ASSIGN: return "=";
 		case Parser::BinaryExpr::LOG_AND: return "&&";
 		case Parser::BinaryExpr::LOG_OR: return "||";

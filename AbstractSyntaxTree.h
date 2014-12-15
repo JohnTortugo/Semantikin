@@ -39,7 +39,7 @@ namespace Parser {
 
 	class Expression : public Statement {
 	protected:
-		NativeType _expType;
+		NativeType _type;
 		shared_ptr<SymbolTableEntry> _addr;
 
 		/* This indicate if the current expression being decoded is a left-hand
@@ -58,15 +58,9 @@ namespace Parser {
 		shared_ptr<STLabelDef> _tLabel = nullptr;
 		shared_ptr<STLabelDef> _fLabel = nullptr;
 
-		/* This indicates if the RelationalExpression being analyzed is a
-		 * expression inside a conditional instruction or not. If it is, due to
-		 * short-circuit behavior, we may need to insert jumps (if's) inside
-		 * the expression IR's instruction. 								 */
-		//bool _isExpInConditional = false;
-
 	public:
-		NativeType exprType() const { return _expType; }
-		void exprType(NativeType _etype) { _expType = _etype; }
+		NativeType type() const { return _type; }
+		void type(NativeType _etype) { _type = _etype; }
 
 		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
 		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
@@ -88,6 +82,7 @@ namespace Parser {
 	public:
 		enum ExprType {
 			COMPARE,
+			DIFFERENCE,
 			ASSIGN,
 			LOG_AND,
 			LOG_OR,
@@ -111,20 +106,20 @@ namespace Parser {
 		};
 
 	private:
-		ExprType type;
+		ExprType _opr;
 		shared_ptr<Expression> exp1;
 		shared_ptr<Expression> exp2;
 
 	public:
 		BinaryExpr(ExprType _type, Expression* _exp1, Expression* _exp2) {
-			this->type = _type;
+			this->_opr = _type;
 			this->exp1 = shared_ptr<Expression>(_exp1);
 			this->exp2 = shared_ptr<Expression>(_exp2);
 		}
 
 		void accept(AstNodeVisitor* visitor);
 
-		ExprType getType() const { return this->type; }
+		ExprType opr() const { return this->_opr; }
 
 		Expression* getExp1() const { return this->exp1.get(); }
 
@@ -144,92 +139,92 @@ namespace Parser {
 		};
 
 	private:
-		ExprType type;
-		shared_ptr<Expression> exp;
+		ExprType _opr;
+		shared_ptr<Expression> _exp;
 
 	public:
 		UnaryExpr(ExprType _type, Expression* _exp) {
-			this->type = _type;
-			this->exp = shared_ptr<Expression>(_exp);
+			this->_opr = _type;
+			this->_exp = shared_ptr<Expression>(_exp);
 		}
 
-		ExprType getType() const { return this->type; }
+		ExprType opr() const { return this->_opr; }
 
-		Expression* getExp() const { return this->exp.get(); }
+		Expression* exp() const { return this->_exp.get(); }
 
 		void accept(AstNodeVisitor* visitor);
 	};
 
 	class FunctionCall : public Expression {
 	private:
-		string name;
-		shared_ptr<list<shared_ptr<Expression>>> arguments;
+		string _name;
+		shared_ptr<list<shared_ptr<Expression>>> _arguments;
 
 	public:
 		FunctionCall(string _name, list<shared_ptr<Expression>>* _arguments) {
-			this->name = _name;
-			this->arguments = shared_ptr<list<shared_ptr<Expression>>>(_arguments);
+			this->_name = _name;
+			this->_arguments = shared_ptr<list<shared_ptr<Expression>>>(_arguments);
 		}
 
 		void accept(AstNodeVisitor* visitor);
 
-		string getName() const { return this->name; }
+		string name() const { return this->_name; }
 
-		list<shared_ptr<Expression>>* getArguments() const { return this->arguments.get(); }
+		list<shared_ptr<Expression>>* arguments() const { return this->_arguments.get(); }
 	};
 
 	class IdentifierExpr : public Expression {
 	private:
-		string value;
-		shared_ptr<list<shared_ptr<Expression>>> dimExprs;
+		string _value;
+		shared_ptr<list<shared_ptr<Expression>>> _dimExprs;
 
 	public:
 		IdentifierExpr(string _value,  list<shared_ptr<Expression>>* _dimExprs) {
-			this->value			= _value;
-			this->dimExprs		= shared_ptr<list<shared_ptr<Expression>>>(_dimExprs);
+			this->_value			= _value;
+			this->_dimExprs		= shared_ptr<list<shared_ptr<Expression>>>(_dimExprs);
 		}
 
 		void accept(AstNodeVisitor* visitor);
 
-		string getValue() const { return this->value; }
+		string value() const { return this->_value; }
 
-		list<shared_ptr<Expression>>* getDimsExprs() const { return this->dimExprs.get(); }
+		list<shared_ptr<Expression>>* dimsExprs() const { return this->_dimExprs.get(); }
 	};
 
 	class IntegerExpr : public Expression {
 	private:
-		int value;
+		int _value;
 
 	public:
-		IntegerExpr(int _value) : value(_value) {}
+		IntegerExpr(int _value) : _value(_value) {}
 
 		void accept(AstNodeVisitor* visitor);
 
-		int getValue() const { return this->value; }
+		int value() const { return this->_value; }
 	};
 
 	class FloatExpr : public Expression {
 	private:
-		float value;
+		float _value;
 
 	public:
-		FloatExpr(float _value) : value(_value) {}
+		FloatExpr(float _value) : _value(_value) {}
 
 		void accept(AstNodeVisitor* visitor);
 
-		float getValue() const { return this->value; }
+		float value() const { return this->_value; }
 	};
 
 	class StringExpr : public Expression {
 	private:
-		string value;
+		string _value;
 
 	public:
-		StringExpr(string _value) : value(_value) {}
+		StringExpr(string _value) : _value(_value) {}
 
 		void accept(AstNodeVisitor* visitor);
 
-		string getValue() const { return this->value; }
+		string value() const { return this->_value; }
 	};
 
 	class CodeBlock : public Statement {
