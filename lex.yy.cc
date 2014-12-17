@@ -498,7 +498,15 @@ static yyconst flex_int32_t yy_rule_can_match_eol[51] =
 	#include <stdlib.h>
 	#include "FlexScanner.h"
 	#include "Parsin.tab.hh"
-#line 502 "lex.yy.cc"
+
+//	extern int GetNextChar(char *b, int maxBuffer);
+#line 17 "Lexin.l"
+    
+	#define YY_USER_ACTION  {													\
+		_currentLine += yytext;													\
+		location->columns(yyleng);												\
+	}
+#line 510 "lex.yy.cc"
 
 #define INITIAL 0
 
@@ -603,9 +611,15 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 14 "Lexin.l"
+#line 27 "Lexin.l"
 
-#line 609 "lex.yy.cc"
+
+				/*** At the start of yylex() reset the location. ***/
+    location->step();
+
+
+
+#line 623 "lex.yy.cc"
 
 	if ( !(yy_init) )
 		{
@@ -700,261 +714,261 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 15 "Lexin.l"
-{ }
+#line 34 "Lexin.l"
+{ location->step(); }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 16 "Lexin.l"
-{ }
+#line 35 "Lexin.l"
+{ location->lines(yyleng); location->step(); _currentLine = ""; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 17 "Lexin.l"
+#line 36 "Lexin.l"
 { }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 19 "Lexin.l"
+#line 38 "Lexin.l"
 { return Parser::BisonParser::token::TK_IF; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 20 "Lexin.l"
+#line 39 "Lexin.l"
 { return Parser::BisonParser::token::TK_ELSE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 21 "Lexin.l"
+#line 40 "Lexin.l"
 { return Parser::BisonParser::token::TK_ELSEIF; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 22 "Lexin.l"
+#line 41 "Lexin.l"
 { return Parser::BisonParser::token::TK_WHILE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 23 "Lexin.l"
+#line 42 "Lexin.l"
 { return Parser::BisonParser::token::TK_RETURN; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 25 "Lexin.l"
+#line 44 "Lexin.l"
 { return Parser::BisonParser::token::TK_SEMICOLON; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 26 "Lexin.l"
+#line 45 "Lexin.l"
 { return Parser::BisonParser::token::TK_COMMA; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 27 "Lexin.l"
+#line 46 "Lexin.l"
 { return Parser::BisonParser::token::TK_DOUBLE_QUOTE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 28 "Lexin.l"
+#line 47 "Lexin.l"
 { return Parser::BisonParser::token::TK_SINGLE_QUOTE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 29 "Lexin.l"
+#line 48 "Lexin.l"
 { return Parser::BisonParser::token::TK_AMPERSAND; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 30 "Lexin.l"
+#line 49 "Lexin.l"
 { return Parser::BisonParser::token::TK_BIT_OR; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 31 "Lexin.l"
+#line 50 "Lexin.l"
 { return Parser::BisonParser::token::TK_BIT_XOR; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 32 "Lexin.l"
+#line 51 "Lexin.l"
 { return Parser::BisonParser::token::TK_BIT_NOT; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 34 "Lexin.l"
+#line 53 "Lexin.l"
 { return Parser::BisonParser::token::TK_L_PAREN; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 35 "Lexin.l"
+#line 54 "Lexin.l"
 { return Parser::BisonParser::token::TK_R_PAREN; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 36 "Lexin.l"
+#line 55 "Lexin.l"
 { return Parser::BisonParser::token::TK_L_BRACE; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 37 "Lexin.l"
+#line 56 "Lexin.l"
 { return Parser::BisonParser::token::TK_R_BRACE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 38 "Lexin.l"
+#line 57 "Lexin.l"
 { return Parser::BisonParser::token::TK_L_SQBRACE; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 39 "Lexin.l"
+#line 58 "Lexin.l"
 { return Parser::BisonParser::token::TK_R_SQBRACE; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 42 "Lexin.l"
+#line 61 "Lexin.l"
 { return Parser::BisonParser::token::TK_AND; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 43 "Lexin.l"
+#line 62 "Lexin.l"
 { return Parser::BisonParser::token::TK_OR; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 44 "Lexin.l"
+#line 63 "Lexin.l"
 { return Parser::BisonParser::token::TK_NOT; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 45 "Lexin.l"
+#line 64 "Lexin.l"
 { return Parser::BisonParser::token::TK_ASSIGN; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 46 "Lexin.l"
+#line 65 "Lexin.l"
 { return Parser::BisonParser::token::TK_COMPARE; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 47 "Lexin.l"
+#line 66 "Lexin.l"
 { return Parser::BisonParser::token::TK_DIFFERENCE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 48 "Lexin.l"
+#line 67 "Lexin.l"
 { return Parser::BisonParser::token::TK_LT; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 49 "Lexin.l"
+#line 68 "Lexin.l"
 { return Parser::BisonParser::token::TK_LTE; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 50 "Lexin.l"
+#line 69 "Lexin.l"
 { return Parser::BisonParser::token::TK_GT; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 51 "Lexin.l"
+#line 70 "Lexin.l"
 { return Parser::BisonParser::token::TK_GTE; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 53 "Lexin.l"
+#line 72 "Lexin.l"
 { return Parser::BisonParser::token::TK_PLUS; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 54 "Lexin.l"
+#line 73 "Lexin.l"
 { return Parser::BisonParser::token::TK_MINUS; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 55 "Lexin.l"
+#line 74 "Lexin.l"
 { return Parser::BisonParser::token::TK_TIMES; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 56 "Lexin.l"
+#line 75 "Lexin.l"
 { return Parser::BisonParser::token::TK_DIV; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 57 "Lexin.l"
+#line 76 "Lexin.l"
 { return Parser::BisonParser::token::TK_MOD; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 58 "Lexin.l"
+#line 77 "Lexin.l"
 { return Parser::BisonParser::token::TK_DPLUS; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 59 "Lexin.l"
+#line 78 "Lexin.l"
 { return Parser::BisonParser::token::TK_DMINUS; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 60 "Lexin.l"
+#line 79 "Lexin.l"
 { return Parser::BisonParser::token::TK_PLUS_EQUAL; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 61 "Lexin.l"
+#line 80 "Lexin.l"
 { return Parser::BisonParser::token::TK_MINUS_EQUAL; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 62 "Lexin.l"
+#line 81 "Lexin.l"
 { return Parser::BisonParser::token::TK_TIMES_EQUAL; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 63 "Lexin.l"
+#line 82 "Lexin.l"
 { return Parser::BisonParser::token::TK_DIV_EQUAL; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 64 "Lexin.l"
+#line 83 "Lexin.l"
 { return Parser::BisonParser::token::TK_MOD_EQUAL; }
 	YY_BREAK
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 66 "Lexin.l"
+#line 85 "Lexin.l"
 { tokenValue->str = strdup(yytext); 	return Parser::BisonParser::token::TK_STRING;	}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 67 "Lexin.l"
+#line 86 "Lexin.l"
 { tokenValue->integer = atoi(yytext); 	return Parser::BisonParser::token::TK_INTEGER; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 68 "Lexin.l"
+#line 87 "Lexin.l"
 { tokenValue->floating = atof(yytext); 	return Parser::BisonParser::token::TK_FLOAT; 	}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 69 "Lexin.l"
+#line 88 "Lexin.l"
 { tokenValue->str = strdup(yytext); 	return Parser::BisonParser::token::TK_ID; 		}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 71 "Lexin.l"
+#line 90 "Lexin.l"
 { printf("Unrecognized token '%s'\n", yytext); }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 72 "Lexin.l"
+#line 91 "Lexin.l"
 { return 0; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 75 "Lexin.l"
+#line 94 "Lexin.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 958 "lex.yy.cc"
+#line 972 "lex.yy.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1861,6 +1875,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 75 "Lexin.l"
+#line 94 "Lexin.l"
 
 

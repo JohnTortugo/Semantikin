@@ -9,11 +9,30 @@
 	#include <stdlib.h>
 	#include "FlexScanner.h"
 	#include "Parsin.tab.hh"
+
+//	extern int GetNextChar(char *b, int maxBuffer);
 %}
 
-%%
-[ \t]*			{ }
-[\n]*			{ }
+%{
+    
+	#define YY_USER_ACTION  {													\
+		_currentLine += yytext;													\
+		location->columns(yyleng);												\
+	}
+%}
+
+
+
+
+%%				/*** Regular Expressions Part 					 ***/
+
+%{				/*** At the start of yylex() reset the location. ***/
+    location->step();
+%}
+
+
+[ \t]*			{ location->step(); }
+[\n]*			{ location->lines(yyleng); location->step(); _currentLine = ""; }
 [\/][\/].*		{ }
 
 "if"			{ return Parser::BisonParser::token::TK_IF; }

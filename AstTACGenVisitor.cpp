@@ -122,7 +122,6 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		thenBlock->next( ifStmt->next() );
 
 		condition->accept(this);
-//		this->_currentFunction->appendLabel(condition->tLabel());
 		thenBlock->accept(this);
 	}
 	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
@@ -413,25 +412,9 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		auto entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
 		auto type 	= entry->type();
 
+		/* Only numerical values are acceptable in boolean comparissons. */
 		if (type == Parser::INT || type == Parser::FLOAT) {
-			auto cmpInstr = new IR::REqual(this->newTemporary(type), id->addr(), this->newConstant<int>(0));
-			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( cmpInstr ) );
-
-			if (id->tLabel() != this->_fallLabel && id->fLabel() != this->_fallLabel) {
-				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), id->fLabel()) ) );
-				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(id->tLabel()) ) );
-			}
-			else if (id->tLabel() == this->_fallLabel) {
-				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), id->fLabel()) ) );
-			}
-			else if (id->fLabel() == this->_fallLabel) {
-				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(cmpInstr->tgt(), id->tLabel()) ) );
-			}
-			else
-				throw System::EXCEPTION_UNREACHABLE_CODE;
-		}
-		else if (type == Parser::STRING) {
-
+			this->emitBranchesBasedOnExpValue(id->addr(), id->tLabel(), id->fLabel());
 		}
 		else {
 			throw System::EXCEPTION_UNEXPECTED_TYPE;
@@ -608,14 +591,14 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	 * the true and false values. */
 	if (binop->tLabel() == nullptr && binop->fLabel() == nullptr) {
 		notCond = true;
-		binop->tLabel( this->newLabel("blt") );
-		binop->fLabel( this->newLabel("blf") );
+		binop->tLabel( this->_fallLabel );
+		binop->fLabel( this->newLabel() );
 
 		/* We need to make sure that there is a target so we can jump over the
 		 * true/false blocks. */
 		if (binop->next() == nullptr) {
 			nextNull = true;
-			binop->next( this->newLabel("blExit") );
+			binop->next( this->newLabel() );
 		}
 	}
 
@@ -659,7 +642,7 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	if (notCond) {
 		shared_ptr<STTempVar> res = this->newTemporary(Parser::INT);
 
-		this->_currentFunction->appendLabel(binop->tLabel());
+		//this->_currentFunction->appendLabel(binop->tLabel());
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::ScalarCopy(res, this->newConstant<int>(1)) ) );
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(binop->next()) ) );
 		this->_currentFunction->appendLabel(binop->fLabel());
@@ -801,6 +784,12 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 	binop->addr( newInstruction->tgt() );
 
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
+
+	/* If we are inside a conditional we need to use the result
+	 * of this expression to consider the jump targets. */
+	if (binop->tLabel() != nullptr || binop->fLabel() != nullptr) {
+		this->emitBranchesBasedOnExpValue(binop->addr(), binop->tLabel(), binop->fLabel());
+	}
 }
 
 void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
@@ -875,6 +864,24 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 			throw System::EXCEPTION_UNREACHABLE_CODE;
 		}
 	}
+}
+
+void AstTACGenVisitor::emitBranchesBasedOnExpValue(shared_ptr<SymbolTableEntry> result, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse) {
+	auto cmpInstr = new IR::REqual(this->newTemporary(Parser::INT), result, this->newConstant<int>(0));
+	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( cmpInstr ) );
+
+	if (lTrue != this->_fallLabel && lFalse != this->_fallLabel) {
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), lFalse) ) );
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(lTrue) ) );
+	}
+	else if (lTrue == this->_fallLabel) {
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), lFalse) ) );
+	}
+	else if (lFalse == this->_fallLabel) {
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(cmpInstr->tgt(), lTrue) ) );
+	}
+	else
+		throw System::EXCEPTION_UNREACHABLE_CODE;
 }
 
 template<typename T>

@@ -67,22 +67,22 @@ void fun10() {
 	int c = ! a;
 }
 
-void fun11(int a, int b, int c, int d, int e, int f) {
+void fun11(int a, int b, int c, int d) {
 	int final = (a || b) || (c || d);
 }
 
-void fun12(int a, int b, int c, int d, int e, int f) {
+void fun12(int a, int b, int c, int d) {
 	int final = (a && b) && (c && d);
 }
 
-void fun13(int a, int b, int c, int d, int e, int f) {
+void fun13(int a, int b, int c, int d) {
 	int final = (a && b) || (c && d);
 }
 
-void fun14(int a, int b, int c, int d, int e, int f) {
+void fun14(int a, int b, int c, int d) {
 	int final = (a || b) && (c || d);
 }
 
-void fun15(int a, int b, int c, int d, int e, int f) {
+void fun15(int a, int b) {
 	int final = (a < 100 || a > 200 && a != b);
 }

@@ -235,9 +235,11 @@ namespace IR {
 
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {
 		if (this->_labelPendingSlot) {
-			printf("IR-TAC-Gen:");
-			printf("\tAppending label but there is already one at this position.\n");
-			exit(1);
+			this->_instrs->back().second = nullptr;
+//			cout << endl << "IR-TAC-Gen:" << endl;
+//			cout << "\tAppending label but there is already one at this position." << endl;
+//			cout << "New would be: \t\t \"" << label->getName() << "\"" << endl;
+//			exit(1);
 		}
 
 		/* Set the "address" to which the label points to. */
@@ -245,6 +247,8 @@ namespace IR {
 
 		this->_instrs->push_back( make_pair(label, nullptr) );
 		this->_labelPendingSlot = true;
+
+//		cout << label->getName() << ": ";
 	}
 
 	void Function::appendInstruction(shared_ptr<IR::Instruction> instr) {
@@ -255,5 +259,9 @@ namespace IR {
 		else {
 			this->_instrs->push_back( make_pair(nullptr, instr) );
 		}
+
+//		stringstream ss;
+//		instr->dump(ss);
+//		cout << ss.str();
 	}
 }

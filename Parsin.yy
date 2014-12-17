@@ -19,6 +19,9 @@
 %parse-param {Driver &driver}
 %parse-param {CompilationUnit*& module}
 
+/* verbose error messages */
+%define parse.error verbose
+
 %code requires {
 	#include "AbstractSyntaxTree.h"
 }
@@ -28,15 +31,33 @@
 	#include <iostream>
 	#include <memory>
 	#include <string>
+	#include <iomanip>
 	#include "Driver.h"
 	#include "FlexScanner.h"
 
+	static int findPos(const std::string& msg, int virtPos) {
+		int actPos = 0;
+
+		for (int i=0; i<virtPos; i++) {
+			if (msg[i] == '\t') actPos += 4;
+			else actPos++;
+		}
+
+		return actPos;
+	}
+
 	void Parser::BisonParser::error(const location_type& loc, const std::string& msg) {
-		std::cerr << "Location was <Line, Col> = <" << loc.begin.line << "," << loc.begin.column << ">\n";
+		int beg = findPos(scanner.currentLine(), loc.begin.column) - 1;
+		int end = findPos(scanner.currentLine(), loc.end.column);
+		int dif = end - beg;
+		
+		std::cerr << loc.begin.line << ":" << loc.begin.column << "-" << loc.end.column << ": " << msg << endl;
+		std::cerr << scanner.currentLine() << endl;
+		std::cerr << std::setw(beg) << std::setfill('.') << "" << std::setw(dif) << std::setfill('^') << "" << endl;
 	}
 	
 	static int yylex(Parser::BisonParser::semantic_type *tokenVal, Parser::BisonParser::location_type *location, Parser::FlexScanner &scanner, Parser::Driver &driver) {
-		return scanner.yylex(tokenVal);	
+		return scanner.yylex(tokenVal, location);	
 	}
 %}
 
@@ -128,14 +149,18 @@
 %token TK_DIV_EQUAL	
 %token TK_MOD_EQUAL		
 
-%right TK_ASSIGN TK_TIMES_EQUAL TK_DIV_EQUAL TK_MOD_EQUAL TK_PLUS_EQUAL TK_MINUS_EQUAL 
+%right TK_MOD_EQUAL 
+%right TK_TIMES_EQUAL TK_DIV_EQUAL
+%right TK_PLUS_EQUAL TK_MINUS_EQUAL
+%right TK_ASSIGN 
 %left TK_OR 
 %left TK_AND 
 %left TK_BIT_OR 
 %left TK_BIT_XOR 
 %left TK_BIT_AND
 %left TK_COMPARE TK_DIFFERENCE
-%left TK_LT TK_LTE TK_GT TK_GTE
+%left TK_GT TK_GTE
+%left TK_LT TK_LTE 
 %left TK_PLUS TK_MINUS
 %left TK_TIMES TK_DIV TK_MOD
 %right TK_AMPERSAND

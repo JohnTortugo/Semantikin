@@ -32,24 +32,42 @@
 
 
 // First part of user declarations.
-#line 26 "Parsin.yy" // lalr1.cc:399
+#line 29 "Parsin.yy" // lalr1.cc:399
 
 	#include <cstdio>
 	#include <iostream>
 	#include <memory>
 	#include <string>
+	#include <iomanip>
 	#include "Driver.h"
 	#include "FlexScanner.h"
 
+	static int findPos(const std::string& msg, int virtPos) {
+		int actPos = 0;
+
+		for (int i=0; i<virtPos; i++) {
+			if (msg[i] == '\t') actPos += 4;
+			else actPos++;
+		}
+
+		return actPos;
+	}
+
 	void Parser::BisonParser::error(const location_type& loc, const std::string& msg) {
-		std::cerr << "Location was <Line, Col> = <" << loc.begin.line << "," << loc.begin.column << ">\n";
+		int beg = findPos(scanner.currentLine(), loc.begin.column) - 1;
+		int end = findPos(scanner.currentLine(), loc.end.column);
+		int dif = end - beg;
+		
+		std::cerr << loc.begin.line << ":" << loc.begin.column << "-" << loc.end.column << ": " << msg << endl;
+		std::cerr << scanner.currentLine() << endl;
+		std::cerr << std::setw(beg) << std::setfill('.') << "" << std::setw(dif) << std::setfill('^') << "" << endl;
 	}
 	
 	static int yylex(Parser::BisonParser::semantic_type *tokenVal, Parser::BisonParser::location_type *location, Parser::FlexScanner &scanner, Parser::Driver &driver) {
-		return scanner.yylex(tokenVal);	
+		return scanner.yylex(tokenVal, location);	
 	}
 
-#line 53 "Parsin.tab.cc" // lalr1.cc:399
+#line 71 "Parsin.tab.cc" // lalr1.cc:399
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -63,7 +81,7 @@
 
 // User implementation prologue.
 
-#line 67 "Parsin.tab.cc" // lalr1.cc:407
+#line 85 "Parsin.tab.cc" // lalr1.cc:407
 
 
 #ifndef YY_
@@ -149,7 +167,45 @@
 
 #line 5 "Parsin.yy" // lalr1.cc:474
 namespace Parser {
-#line 153 "Parsin.tab.cc" // lalr1.cc:474
+#line 171 "Parsin.tab.cc" // lalr1.cc:474
+
+  /* Return YYSTR after stripping away unnecessary quotes and
+     backslashes, so that it's suitable for yyerror.  The heuristic is
+     that double-quoting is unnecessary unless the string contains an
+     apostrophe, a comma, or backslash (other than backslash-backslash).
+     YYSTR is taken from yytname.  */
+  std::string
+  BisonParser::yytnamerr_ (const char *yystr)
+  {
+    if (*yystr == '"')
+      {
+        std::string yyr = "";
+        char const *yyp = yystr;
+
+        for (;;)
+          switch (*++yyp)
+            {
+            case '\'':
+            case ',':
+              goto do_not_strip_quotes;
+
+            case '\\':
+              if (*++yyp != '\\')
+                goto do_not_strip_quotes;
+              // Fall through.
+            default:
+              yyr += *yyp;
+              break;
+
+            case '"':
+              return yyr;
+            }
+      do_not_strip_quotes: ;
+      }
+
+    return yystr;
+  }
+
 
   /// Build a parser object.
   BisonParser::BisonParser (FlexScanner &scanner_yyarg, Driver &driver_yyarg, CompilationUnit*& module_yyarg)
@@ -560,415 +616,415 @@ namespace Parser {
           switch (yyn)
             {
   case 2:
-#line 150 "Parsin.yy" // lalr1.cc:847
+#line 175 "Parsin.yy" // lalr1.cc:847
     { module = new CompilationUnit((yystack_[0].value.listFuncs)); }
-#line 566 "Parsin.tab.cc" // lalr1.cc:847
+#line 622 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 3:
-#line 153 "Parsin.yy" // lalr1.cc:847
+#line 178 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listFuncs))->push_front(std::shared_ptr<Function>((yystack_[1].value.function))); (yylhs.value.listFuncs) = (yystack_[0].value.listFuncs); }
-#line 572 "Parsin.tab.cc" // lalr1.cc:847
+#line 628 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 4:
-#line 154 "Parsin.yy" // lalr1.cc:847
+#line 179 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listFuncs) = new list<std::shared_ptr<Function>>(); }
-#line 578 "Parsin.tab.cc" // lalr1.cc:847
+#line 634 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 5:
-#line 157 "Parsin.yy" // lalr1.cc:847
+#line 182 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.function) = new Function((yystack_[5].value.str), (yystack_[4].value.str), shared_ptr<list<shared_ptr<ParamDecl>>>((yystack_[2].value.formParams)), (yystack_[0].value.codeBlock)); }
-#line 584 "Parsin.tab.cc" // lalr1.cc:847
+#line 640 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 6:
-#line 160 "Parsin.yy" // lalr1.cc:847
+#line 185 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.formParams))->push_front(std::shared_ptr<ParamDecl>(new ParamDecl((yystack_[3].value.str), (yystack_[2].value.str), shared_ptr<list<shared_ptr<Expression>>>((yystack_[1].value.listExpr))))); (yylhs.value.formParams) = (yystack_[0].value.formParams); }
-#line 590 "Parsin.tab.cc" // lalr1.cc:847
+#line 646 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 7:
-#line 161 "Parsin.yy" // lalr1.cc:847
+#line 186 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.formParams) = new list<std::shared_ptr<ParamDecl>>(); }
-#line 596 "Parsin.tab.cc" // lalr1.cc:847
+#line 652 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 8:
-#line 164 "Parsin.yy" // lalr1.cc:847
+#line 189 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.formParams))->push_front(std::shared_ptr<ParamDecl>(new ParamDecl((yystack_[3].value.str), (yystack_[2].value.str), shared_ptr<list<shared_ptr<Expression>>>((yystack_[1].value.listExpr))))); (yylhs.value.formParams) = (yystack_[0].value.formParams); }
-#line 602 "Parsin.tab.cc" // lalr1.cc:847
+#line 658 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 9:
-#line 165 "Parsin.yy" // lalr1.cc:847
+#line 190 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.formParams) = new list<std::shared_ptr<ParamDecl>>(); }
-#line 608 "Parsin.tab.cc" // lalr1.cc:847
+#line 664 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 10:
-#line 168 "Parsin.yy" // lalr1.cc:847
+#line 193 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.codeBlock) = new CodeBlock((yystack_[1].value.listStmts)); }
-#line 614 "Parsin.tab.cc" // lalr1.cc:847
+#line 670 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 11:
-#line 170 "Parsin.yy" // lalr1.cc:847
+#line 195 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[2].value.varDecl))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
-#line 620 "Parsin.tab.cc" // lalr1.cc:847
+#line 676 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 12:
-#line 171 "Parsin.yy" // lalr1.cc:847
+#line 196 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[1].value.loopStmt))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
-#line 626 "Parsin.tab.cc" // lalr1.cc:847
+#line 682 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 13:
-#line 172 "Parsin.yy" // lalr1.cc:847
+#line 197 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[1].value.ifStmt))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
-#line 632 "Parsin.tab.cc" // lalr1.cc:847
+#line 688 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 14:
-#line 173 "Parsin.yy" // lalr1.cc:847
+#line 198 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[2].value.ret))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
-#line 638 "Parsin.tab.cc" // lalr1.cc:847
+#line 694 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 15:
-#line 174 "Parsin.yy" // lalr1.cc:847
+#line 199 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listStmts))->push_front(std::shared_ptr<Statement>((yystack_[2].value.expr))); (yylhs.value.listStmts) = (yystack_[0].value.listStmts); }
-#line 644 "Parsin.tab.cc" // lalr1.cc:847
+#line 700 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 16:
-#line 175 "Parsin.yy" // lalr1.cc:847
+#line 200 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listStmts) = new list<std::shared_ptr<Statement>>(); }
-#line 650 "Parsin.tab.cc" // lalr1.cc:847
+#line 706 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 17:
-#line 178 "Parsin.yy" // lalr1.cc:847
+#line 203 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[2].value.str), (yystack_[1].value.listExpr), nullptr))); (yylhs.value.varDecl) = new VarDecl((yystack_[3].value.str), (yystack_[0].value.listVarSpec)); }
-#line 656 "Parsin.tab.cc" // lalr1.cc:847
+#line 712 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 18:
-#line 179 "Parsin.yy" // lalr1.cc:847
+#line 204 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[3].value.str), nullptr, (yystack_[1].value.expr)))); (yylhs.value.varDecl) = new VarDecl((yystack_[4].value.str), (yystack_[0].value.listVarSpec)); }
-#line 662 "Parsin.tab.cc" // lalr1.cc:847
+#line 718 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 19:
-#line 182 "Parsin.yy" // lalr1.cc:847
+#line 207 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[2].value.str), (yystack_[1].value.listExpr), nullptr))); (yylhs.value.listVarSpec) = (yystack_[0].value.listVarSpec); }
-#line 668 "Parsin.tab.cc" // lalr1.cc:847
+#line 724 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 20:
-#line 183 "Parsin.yy" // lalr1.cc:847
+#line 208 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listVarSpec))->push_front(std::shared_ptr<VarSpec>(new VarSpec((yystack_[3].value.str), nullptr, (yystack_[1].value.expr)))); (yylhs.value.listVarSpec) = (yystack_[0].value.listVarSpec); }
-#line 674 "Parsin.tab.cc" // lalr1.cc:847
+#line 730 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 21:
-#line 184 "Parsin.yy" // lalr1.cc:847
+#line 209 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listVarSpec) = new list<std::shared_ptr<VarSpec>>(); }
-#line 680 "Parsin.tab.cc" // lalr1.cc:847
+#line 736 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 22:
-#line 187 "Parsin.yy" // lalr1.cc:847
+#line 212 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listExpr))->push_front(std::shared_ptr<Expression>((yystack_[2].value.expr))); (yylhs.value.listExpr) = (yystack_[0].value.listExpr); }
-#line 686 "Parsin.tab.cc" // lalr1.cc:847
+#line 742 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 23:
-#line 188 "Parsin.yy" // lalr1.cc:847
+#line 213 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listExpr) = new list<std::shared_ptr<Expression>>(); }
-#line 692 "Parsin.tab.cc" // lalr1.cc:847
+#line 748 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 24:
-#line 191 "Parsin.yy" // lalr1.cc:847
+#line 216 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.funCall) = new FunctionCall((yystack_[3].value.str), (yystack_[1].value.listExpr)); }
-#line 698 "Parsin.tab.cc" // lalr1.cc:847
+#line 754 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 25:
-#line 194 "Parsin.yy" // lalr1.cc:847
+#line 219 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.loopStmt) = new LoopStmt((yystack_[2].value.expr), (yystack_[0].value.codeBlock)); }
-#line 704 "Parsin.tab.cc" // lalr1.cc:847
+#line 760 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 26:
-#line 197 "Parsin.yy" // lalr1.cc:847
+#line 222 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.ifStmt) = new IfStmt((yystack_[3].value.expr), (yystack_[1].value.codeBlock), nullptr, (yystack_[0].value.listElseIf)); }
-#line 710 "Parsin.tab.cc" // lalr1.cc:847
+#line 766 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 27:
-#line 198 "Parsin.yy" // lalr1.cc:847
+#line 223 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.ifStmt) = new IfStmt((yystack_[5].value.expr), (yystack_[3].value.codeBlock), (yystack_[0].value.codeBlock), (yystack_[2].value.listElseIf)); }
-#line 716 "Parsin.tab.cc" // lalr1.cc:847
+#line 772 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 28:
-#line 201 "Parsin.yy" // lalr1.cc:847
+#line 226 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listElseIf))->push_front(std::shared_ptr<ElseIfStmt>(new ElseIfStmt((yystack_[3].value.expr), (yystack_[1].value.codeBlock)))); (yylhs.value.listElseIf) = (yystack_[0].value.listElseIf); }
-#line 722 "Parsin.tab.cc" // lalr1.cc:847
+#line 778 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 29:
-#line 202 "Parsin.yy" // lalr1.cc:847
+#line 227 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listElseIf) = new list<std::shared_ptr<ElseIfStmt>>(); }
-#line 728 "Parsin.tab.cc" // lalr1.cc:847
+#line 784 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 30:
-#line 205 "Parsin.yy" // lalr1.cc:847
+#line 230 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.ret) = new ReturnStmt((yystack_[0].value.expr)); }
-#line 734 "Parsin.tab.cc" // lalr1.cc:847
+#line 790 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 31:
-#line 208 "Parsin.yy" // lalr1.cc:847
+#line 233 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listExpr))->push_front(std::shared_ptr<Expression>((yystack_[1].value.expr))); (yylhs.value.listExpr) = (yystack_[0].value.listExpr); }
-#line 740 "Parsin.tab.cc" // lalr1.cc:847
+#line 796 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 32:
-#line 209 "Parsin.yy" // lalr1.cc:847
+#line 234 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listExpr) = new list<std::shared_ptr<Expression>>(); }
-#line 746 "Parsin.tab.cc" // lalr1.cc:847
+#line 802 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 33:
-#line 212 "Parsin.yy" // lalr1.cc:847
+#line 237 "Parsin.yy" // lalr1.cc:847
     { ((yystack_[0].value.listExpr))->push_front(std::shared_ptr<Expression>((yystack_[1].value.expr))); (yylhs.value.listExpr) = (yystack_[0].value.listExpr); }
-#line 752 "Parsin.tab.cc" // lalr1.cc:847
+#line 808 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 34:
-#line 213 "Parsin.yy" // lalr1.cc:847
+#line 238 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.listExpr) = new list<std::shared_ptr<Expression>>(); }
-#line 758 "Parsin.tab.cc" // lalr1.cc:847
+#line 814 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 35:
-#line 216 "Parsin.yy" // lalr1.cc:847
+#line 241 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::COMPARE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 764 "Parsin.tab.cc" // lalr1.cc:847
+#line 820 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 36:
-#line 217 "Parsin.yy" // lalr1.cc:847
+#line 242 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIFFERENCE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 770 "Parsin.tab.cc" // lalr1.cc:847
+#line 826 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 37:
-#line 218 "Parsin.yy" // lalr1.cc:847
+#line 243 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::ASSIGN, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 776 "Parsin.tab.cc" // lalr1.cc:847
+#line 832 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 38:
-#line 219 "Parsin.yy" // lalr1.cc:847
+#line 244 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LOG_AND, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 782 "Parsin.tab.cc" // lalr1.cc:847
+#line 838 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 39:
-#line 220 "Parsin.yy" // lalr1.cc:847
+#line 245 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LOG_OR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 788 "Parsin.tab.cc" // lalr1.cc:847
+#line 844 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 40:
-#line 221 "Parsin.yy" // lalr1.cc:847
+#line 246 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_AND, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 794 "Parsin.tab.cc" // lalr1.cc:847
+#line 850 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 41:
-#line 222 "Parsin.yy" // lalr1.cc:847
+#line 247 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_OR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 800 "Parsin.tab.cc" // lalr1.cc:847
+#line 856 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 42:
-#line 223 "Parsin.yy" // lalr1.cc:847
+#line 248 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::BIT_XOR, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 806 "Parsin.tab.cc" // lalr1.cc:847
+#line 862 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 43:
-#line 224 "Parsin.yy" // lalr1.cc:847
+#line 249 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LT, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 812 "Parsin.tab.cc" // lalr1.cc:847
+#line 868 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 44:
-#line 225 "Parsin.yy" // lalr1.cc:847
+#line 250 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::LTE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 818 "Parsin.tab.cc" // lalr1.cc:847
+#line 874 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 45:
-#line 226 "Parsin.yy" // lalr1.cc:847
+#line 251 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::GT, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 824 "Parsin.tab.cc" // lalr1.cc:847
+#line 880 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 46:
-#line 227 "Parsin.yy" // lalr1.cc:847
+#line 252 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::GTE, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 830 "Parsin.tab.cc" // lalr1.cc:847
+#line 886 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 47:
-#line 228 "Parsin.yy" // lalr1.cc:847
+#line 253 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::ADDITION, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 836 "Parsin.tab.cc" // lalr1.cc:847
+#line 892 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 48:
-#line 229 "Parsin.yy" // lalr1.cc:847
+#line 254 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::SUBTRACTION, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 842 "Parsin.tab.cc" // lalr1.cc:847
+#line 898 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 49:
-#line 230 "Parsin.yy" // lalr1.cc:847
+#line 255 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::TIMES, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 848 "Parsin.tab.cc" // lalr1.cc:847
+#line 904 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 50:
-#line 231 "Parsin.yy" // lalr1.cc:847
+#line 256 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIV, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 854 "Parsin.tab.cc" // lalr1.cc:847
+#line 910 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 51:
-#line 232 "Parsin.yy" // lalr1.cc:847
+#line 257 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MOD, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 860 "Parsin.tab.cc" // lalr1.cc:847
+#line 916 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 52:
-#line 233 "Parsin.yy" // lalr1.cc:847
+#line 258 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::PLUS_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 866 "Parsin.tab.cc" // lalr1.cc:847
+#line 922 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 53:
-#line 234 "Parsin.yy" // lalr1.cc:847
+#line 259 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MINUS_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 872 "Parsin.tab.cc" // lalr1.cc:847
+#line 928 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 54:
-#line 235 "Parsin.yy" // lalr1.cc:847
+#line 260 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::TIMES_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 878 "Parsin.tab.cc" // lalr1.cc:847
+#line 934 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 55:
-#line 236 "Parsin.yy" // lalr1.cc:847
+#line 261 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::DIV_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 884 "Parsin.tab.cc" // lalr1.cc:847
+#line 940 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 56:
-#line 237 "Parsin.yy" // lalr1.cc:847
+#line 262 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new BinaryExpr(BinaryExpr::MOD_EQUAL, (yystack_[2].value.expr), (yystack_[0].value.expr)); }
-#line 890 "Parsin.tab.cc" // lalr1.cc:847
+#line 946 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 57:
-#line 238 "Parsin.yy" // lalr1.cc:847
+#line 263 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = (yystack_[1].value.expr); }
-#line 896 "Parsin.tab.cc" // lalr1.cc:847
+#line 952 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 58:
-#line 239 "Parsin.yy" // lalr1.cc:847
+#line 264 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::BIT_NOT, (yystack_[0].value.expr)); }
-#line 902 "Parsin.tab.cc" // lalr1.cc:847
+#line 958 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 59:
-#line 240 "Parsin.yy" // lalr1.cc:847
+#line 265 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::NOT, (yystack_[0].value.expr)); }
-#line 908 "Parsin.tab.cc" // lalr1.cc:847
+#line 964 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 60:
-#line 241 "Parsin.yy" // lalr1.cc:847
+#line 266 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::MINUS, (yystack_[0].value.expr)); }
-#line 914 "Parsin.tab.cc" // lalr1.cc:847
+#line 970 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 61:
-#line 242 "Parsin.yy" // lalr1.cc:847
+#line 267 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::PLUS, (yystack_[0].value.expr)); }
-#line 920 "Parsin.tab.cc" // lalr1.cc:847
+#line 976 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 62:
-#line 243 "Parsin.yy" // lalr1.cc:847
+#line 268 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::ADDR, (yystack_[0].value.expr)); }
-#line 926 "Parsin.tab.cc" // lalr1.cc:847
+#line 982 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 63:
-#line 244 "Parsin.yy" // lalr1.cc:847
+#line 269 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::INCREMENT, (yystack_[1].value.expr)); }
-#line 932 "Parsin.tab.cc" // lalr1.cc:847
+#line 988 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 64:
-#line 245 "Parsin.yy" // lalr1.cc:847
+#line 270 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new UnaryExpr(UnaryExpr::DECREMENT, (yystack_[1].value.expr)); }
-#line 938 "Parsin.tab.cc" // lalr1.cc:847
+#line 994 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 65:
-#line 246 "Parsin.yy" // lalr1.cc:847
+#line 271 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new IntegerExpr((yystack_[0].value.integer)); }
-#line 944 "Parsin.tab.cc" // lalr1.cc:847
+#line 1000 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 66:
-#line 247 "Parsin.yy" // lalr1.cc:847
+#line 272 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new FloatExpr((yystack_[0].value.floating)); }
-#line 950 "Parsin.tab.cc" // lalr1.cc:847
+#line 1006 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 67:
-#line 248 "Parsin.yy" // lalr1.cc:847
+#line 273 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new StringExpr((yystack_[0].value.str)); }
-#line 956 "Parsin.tab.cc" // lalr1.cc:847
+#line 1012 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 68:
-#line 249 "Parsin.yy" // lalr1.cc:847
+#line 274 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = new IdentifierExpr((yystack_[1].value.str), (yystack_[0].value.listExpr)); }
-#line 962 "Parsin.tab.cc" // lalr1.cc:847
+#line 1018 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
   case 69:
-#line 250 "Parsin.yy" // lalr1.cc:847
+#line 275 "Parsin.yy" // lalr1.cc:847
     { (yylhs.value.expr) = (yystack_[0].value.funCall); }
-#line 968 "Parsin.tab.cc" // lalr1.cc:847
+#line 1024 "Parsin.tab.cc" // lalr1.cc:847
     break;
 
 
-#line 972 "Parsin.tab.cc" // lalr1.cc:847
+#line 1028 "Parsin.tab.cc" // lalr1.cc:847
             default:
               break;
             }
@@ -1129,9 +1185,97 @@ namespace Parser {
 
   // Generate an error message.
   std::string
-  BisonParser::yysyntax_error_ (state_type, symbol_number_type) const
+  BisonParser::yysyntax_error_ (state_type yystate, symbol_number_type yytoken) const
   {
-    return YY_("syntax error");
+    std::string yyres;
+    // Number of reported tokens (one for the "unexpected", one per
+    // "expected").
+    size_t yycount = 0;
+    // Its maximum.
+    enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
+    // Arguments of yyformat.
+    char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+
+    /* There are many possibilities here to consider:
+       - If this state is a consistent state with a default action, then
+         the only way this function was invoked is if the default action
+         is an error action.  In that case, don't check for expected
+         tokens because there are none.
+       - The only way there can be no lookahead present (in yytoken) is
+         if this state is a consistent state with a default action.
+         Thus, detecting the absence of a lookahead is sufficient to
+         determine that there is no unexpected or expected token to
+         report.  In that case, just report a simple "syntax error".
+       - Don't assume there isn't a lookahead just because this state is
+         a consistent state with a default action.  There might have
+         been a previous inconsistent state, consistent state with a
+         non-default action, or user semantic action that manipulated
+         yyla.  (However, yyla is currently not documented for users.)
+       - Of course, the expected token list depends on states to have
+         correct lookahead information, and it depends on the parser not
+         to perform extra reductions after fetching a lookahead from the
+         scanner and before detecting a syntax error.  Thus, state
+         merging (from LALR or IELR) and default reductions corrupt the
+         expected token list.  However, the list is correct for
+         canonical LR with one exception: it will still contain any
+         token that will not be accepted due to an error action in a
+         later state.
+    */
+    if (yytoken != yyempty_)
+      {
+        yyarg[yycount++] = yytname_[yytoken];
+        int yyn = yypact_[yystate];
+        if (!yy_pact_value_is_default_ (yyn))
+          {
+            /* Start YYX at -YYN if negative to avoid negative indexes in
+               YYCHECK.  In other words, skip the first -YYN actions for
+               this state because they are default actions.  */
+            int yyxbegin = yyn < 0 ? -yyn : 0;
+            // Stay within bounds of both yycheck and yytname.
+            int yychecklim = yylast_ - yyn + 1;
+            int yyxend = yychecklim < yyntokens_ ? yychecklim : yyntokens_;
+            for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
+              if (yycheck_[yyx + yyn] == yyx && yyx != yyterror_
+                  && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
+                {
+                  if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
+                    {
+                      yycount = 1;
+                      break;
+                    }
+                  else
+                    yyarg[yycount++] = yytname_[yyx];
+                }
+          }
+      }
+
+    char const* yyformat = YY_NULLPTR;
+    switch (yycount)
+      {
+#define YYCASE_(N, S)                         \
+        case N:                               \
+          yyformat = S;                       \
+        break
+        YYCASE_(0, YY_("syntax error"));
+        YYCASE_(1, YY_("syntax error, unexpected %s"));
+        YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
+        YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
+        YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
+        YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
+#undef YYCASE_
+      }
+
+    // Argument number.
+    size_t yyi = 0;
+    for (char const* yyp = yyformat; *yyp; ++yyp)
+      if (yyp[0] == '%' && yyp[1] == 's' && yyi < yycount)
+        {
+          yyres += yytnamerr_ (yyarg[yyi++]);
+          ++yyp;
+        }
+      else
+        yyres += *yyp;
+    return yyres;
   }
 
 
@@ -1143,19 +1287,19 @@ namespace Parser {
   BisonParser::yypact_[] =
   {
       -7,     6,    31,  -123,    -7,    13,  -123,  -123,    23,    24,
-      18,    29,    32,   488,    48,    67,  -123,  -123,  -123,  -123,
-     -17,   488,   488,   488,   488,   488,   488,  -123,   216,    54,
-    -123,    46,    47,   488,    68,    57,    69,    67,    67,    70,
-     117,   488,  -123,   -11,   -26,   247,   -26,   414,   414,   488,
-     488,   488,    29,   488,   488,   488,   488,   488,   488,   488,
-     488,   488,   488,   488,   488,   488,  -123,  -123,   488,   488,
-     488,   488,   488,   488,    58,   488,   488,   371,    -8,  -123,
-      67,  -123,  -123,    67,    67,    64,   151,  -123,   -11,   428,
-     454,  -123,   402,    80,   371,   494,   501,   501,   501,   501,
-     414,   414,   -11,   -11,   -11,   371,   371,   371,   371,   371,
-     494,    29,   278,   309,   488,    73,  -123,  -123,  -123,  -123,
-     488,  -123,    48,    32,    32,   185,    78,  -123,   151,  -123,
-      86,  -123,  -123,     3,  -123,    74,    89,   488,    73,   488,
+      18,    29,    32,   573,    48,    67,  -123,  -123,  -123,  -123,
+     -17,   573,   573,   573,   573,   573,   573,  -123,   216,    54,
+    -123,    46,    47,   573,    68,    57,    69,    67,    67,    70,
+     117,   573,  -123,   -11,   -26,   247,   -26,   445,   445,   573,
+     573,   573,    29,   573,   573,   573,   573,   573,   573,   573,
+     573,   573,   573,   573,   573,   573,  -123,  -123,   573,   573,
+     573,   573,   573,   573,    58,   573,   573,   371,    -8,  -123,
+      67,  -123,  -123,    67,    67,    64,   151,  -123,   -11,   513,
+     539,  -123,   487,    80,   461,   579,   607,   607,   590,   590,
+     445,   445,   -11,   -11,   -11,   433,   433,   402,   402,   371,
+     579,    29,   278,   309,   573,    73,  -123,  -123,  -123,  -123,
+     573,  -123,    48,    32,    32,   185,    78,  -123,   151,  -123,
+      86,  -123,  -123,     3,  -123,    74,    89,   573,    73,   573,
       32,   185,  -123,   340,  -123,  -123,    32,    86,  -123
   };
 
@@ -1238,19 +1382,29 @@ namespace Parser {
       51,     0,     0,     0,     0,     0,     0,    53,    54,     0,
       55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
       65,    66,    67,    68,    69,    70,    71,    72,    49,    73,
-      50,    51,     0,     0,     0,     0,     0,     0,     0,     0,
-      49,     0,    56,    57,    58,    59,    60,    61,    62,    63,
-      64,    65,    66,    67,    49,     0,     0,    51,     0,     0,
-      73,    63,    64,    65,    66,    67,     0,     0,    56,    57,
-      58,    59,    60,    61,    62,    63,    64,    65,    66,    67,
-      49,     0,     0,     0,     0,     0,    73,     0,     0,     0,
-       0,     0,     0,     0,    56,    57,    58,    59,    60,    61,
-      62,    63,    64,    65,    66,    67,    17,    18,    19,    20,
-       0,     0,    73,     0,    21,    22,     0,     0,    23,     0,
-      49,     0,     0,     0,     0,     0,    24,    49,     0,     0,
-       0,     0,     0,    25,    26,    57,    58,    59,    60,    61,
-      62,    63,    64,    65,    66,    67,    61,    62,    63,    64,
-      65,    66,    67
+      50,    51,     0,     0,     0,     0,     0,     0,    53,    54,
+       0,    55,    56,    57,    58,    59,    60,    61,    62,    63,
+      64,    65,    66,    67,    68,    69,    70,    71,     0,    49,
+      73,    50,    51,     0,     0,     0,     0,     0,     0,    53,
+      54,    49,    55,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,    69,    49,     0,    50,
+      51,    73,    63,    64,    65,    66,    67,    53,    54,     0,
+      55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
+      65,    66,    67,    49,     0,    50,    51,     0,     0,    73,
+       0,     0,     0,     0,     0,     0,     0,    56,    57,    58,
+      59,    60,    61,    62,    63,    64,    65,    66,    67,    49,
+       0,     0,    51,     0,     0,    73,     0,     0,     0,     0,
+       0,     0,     0,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    49,     0,     0,     0,     0,
+       0,    73,     0,     0,     0,     0,     0,     0,     0,    56,
+      57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
+      67,    17,    18,    19,    20,     0,     0,    73,     0,    21,
+      22,     0,     0,    23,     0,    49,     0,     0,     0,     0,
+       0,    24,     0,     0,     0,     0,    49,     0,    25,    26,
+      57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
+      67,    57,    58,    49,     0,    61,    62,    63,    64,    65,
+      66,    67,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,    61,    62,    63,    64,    65,    66,    67
   };
 
   const short int
@@ -1298,19 +1452,29 @@ namespace Parser {
       19,    -1,    -1,    -1,    -1,    -1,    -1,    26,    27,    -1,
       29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
       39,    40,    41,    42,    43,    44,    45,    46,    16,    48,
-      18,    19,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      16,    -1,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39,    40,    41,    16,    -1,    -1,    19,    -1,    -1,
-      48,    37,    38,    39,    40,    41,    -1,    -1,    30,    31,
-      32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
-      16,    -1,    -1,    -1,    -1,    -1,    48,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,    40,    41,     8,     9,    10,    11,
-      -1,    -1,    48,    -1,    16,    17,    -1,    -1,    20,    -1,
-      16,    -1,    -1,    -1,    -1,    -1,    28,    16,    -1,    -1,
-      -1,    -1,    -1,    35,    36,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,    40,    41,    35,    36,    37,    38,
-      39,    40,    41
+      18,    19,    -1,    -1,    -1,    -1,    -1,    -1,    26,    27,
+      -1,    29,    30,    31,    32,    33,    34,    35,    36,    37,
+      38,    39,    40,    41,    42,    43,    44,    45,    -1,    16,
+      48,    18,    19,    -1,    -1,    -1,    -1,    -1,    -1,    26,
+      27,    16,    29,    30,    31,    32,    33,    34,    35,    36,
+      37,    38,    39,    40,    41,    42,    43,    16,    -1,    18,
+      19,    48,    37,    38,    39,    40,    41,    26,    27,    -1,
+      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    40,    41,    16,    -1,    18,    19,    -1,    -1,    48,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    30,    31,    32,
+      33,    34,    35,    36,    37,    38,    39,    40,    41,    16,
+      -1,    -1,    19,    -1,    -1,    48,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    30,    31,    32,    33,    34,    35,    36,
+      37,    38,    39,    40,    41,    16,    -1,    -1,    -1,    -1,
+      -1,    48,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    30,
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      41,     8,     9,    10,    11,    -1,    -1,    48,    -1,    16,
+      17,    -1,    -1,    20,    -1,    16,    -1,    -1,    -1,    -1,
+      -1,    28,    -1,    -1,    -1,    -1,    16,    -1,    35,    36,
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      41,    31,    32,    16,    -1,    35,    36,    37,    38,    39,
+      40,    41,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    35,    36,    37,    38,    39,    40,    41
   };
 
   const unsigned char
@@ -1358,7 +1522,7 @@ namespace Parser {
   };
 
 
-#if YYDEBUG
+
   // YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
   // First, the terminals, then, starting at \a yyntokens_, nonterminals.
   const char*
@@ -1379,17 +1543,17 @@ namespace Parser {
   "MFORM_PARAMS", "EXPR", YY_NULLPTR
   };
 
-
-  const unsigned char
+#if YYDEBUG
+  const unsigned short int
   BisonParser::yyrline_[] =
   {
-       0,   150,   150,   153,   154,   157,   160,   161,   164,   165,
-     168,   170,   171,   172,   173,   174,   175,   178,   179,   182,
-     183,   184,   187,   188,   191,   194,   197,   198,   201,   202,
-     205,   208,   209,   212,   213,   216,   217,   218,   219,   220,
-     221,   222,   223,   224,   225,   226,   227,   228,   229,   230,
-     231,   232,   233,   234,   235,   236,   237,   238,   239,   240,
-     241,   242,   243,   244,   245,   246,   247,   248,   249,   250
+       0,   175,   175,   178,   179,   182,   185,   186,   189,   190,
+     193,   195,   196,   197,   198,   199,   200,   203,   204,   207,
+     208,   209,   212,   213,   216,   219,   222,   223,   226,   227,
+     230,   233,   234,   237,   238,   241,   242,   243,   244,   245,
+     246,   247,   248,   249,   250,   251,   252,   253,   254,   255,
+     256,   257,   258,   259,   260,   261,   262,   263,   264,   265,
+     266,   267,   268,   269,   270,   271,   272,   273,   274,   275
   };
 
   // Print the state stack on the debug stream.
@@ -1475,8 +1639,8 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:1155
 } // Parser
-#line 1479 "Parsin.tab.cc" // lalr1.cc:1155
-#line 253 "Parsin.yy" // lalr1.cc:1156
+#line 1643 "Parsin.tab.cc" // lalr1.cc:1155
+#line 278 "Parsin.yy" // lalr1.cc:1156
 
 
 

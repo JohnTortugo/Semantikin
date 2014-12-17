@@ -177,6 +177,8 @@ public:
 	void translateArithmeticExpr(Parser::UnaryExpr* unary);
 	void translateBooleanExp(Parser::UnaryExpr* unary);
 
+	void emitBranchesBasedOnExpValue(shared_ptr<SymbolTableEntry>, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse);
+
 	template<typename T>
 	shared_ptr<STConstantDef> newConstant(T value);
 

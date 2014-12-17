@@ -1,0 +1,78 @@
+void fun1() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a || b);
+}
+
+void fun2() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a || b) && (a || b);
+}
+
+
+void fun3() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a && b) && (a && b);
+}
+
+void fun4() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a || b) || (a || b);
+}
+
+void fun5() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a <= b) || (a == b);
+}
+
+void fun6() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a <= b || b == a) && (a != b && a == b);
+}
+
+
+void fun7() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (3 + 3 < 4) || (4 < 5 * 5) && a;
+}
+
+void fun8() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = ((3 + 3 < 4) || (4 < 5 * 5)) && a;
+}
+
+void fun9() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a + 3 < b) || (4 < a * 5) && (a * b);
+}
+
+void fun10() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = a || 3 || b || (a || b) && (a && b) && (!a);
+}
+
+void fun11() {
+	int a = 3 * 3;
+	float b = 1 / 3;
+
+	float c = (a && (a || a || a)) && (b || (a && b && a));
+}

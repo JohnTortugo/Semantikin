@@ -1,3 +1,9 @@
-void fun13(int a, int b, int c, int d, int e, int f) {
-	int final = (a && b) || (c && d);
+void fun17() {
+
+    if (3 < 4) {
+	
+		int a ======== 30;;
+	
+	}
+        
 }

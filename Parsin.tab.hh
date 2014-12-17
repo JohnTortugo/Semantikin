@@ -46,7 +46,7 @@
       class Driver;
       class FlexScanner;
    }
-#line 22 "Parsin.yy" // lalr1.cc:372
+#line 25 "Parsin.yy" // lalr1.cc:372
 
 	#include "AbstractSyntaxTree.h"
 
@@ -135,7 +135,7 @@ namespace Parser {
     /// Symbol semantic values.
     union semantic_type
     {
-    #line 44 "Parsin.yy" // lalr1.cc:372
+    #line 65 "Parsin.yy" // lalr1.cc:372
 
 	int integer;
 	float floating;
@@ -410,12 +410,15 @@ namespace Parser {
   static const unsigned char yyr2_[];
 
 
-#if YYDEBUG
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *n);
+
+
     /// For a symbol, its name in clear.
     static const char* const yytname_[];
-
+#if YYDEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned char yyrline_[];
+  static const unsigned short int yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
@@ -509,7 +512,7 @@ namespace Parser {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 542,     ///< Last index in yytable_.
+      yylast_ = 648,     ///< Last index in yytable_.
       yynnts_ = 19,  ///< Number of nonterminal symbols.
       yyempty_ = -2,
       yyfinal_ = 6, ///< Termination state number.
@@ -528,7 +531,7 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:372
 } // Parser
-#line 532 "Parsin.tab.hh" // lalr1.cc:372
+#line 535 "Parsin.tab.hh" // lalr1.cc:372
 
 
 

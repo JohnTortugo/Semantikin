@@ -10,6 +10,9 @@
 
 #include "Parsin.tab.hh"
 #include "AbstractSyntaxTree.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 namespace Parser {
 	class FlexScanner : public yyFlexLexer {
@@ -17,12 +20,18 @@ namespace Parser {
 			int yylex();
 
 			Parser::BisonParser::semantic_type *tokenValue;
+			Parser::BisonParser::location_type *location;
+			std::string _currentLine;
 
 		public:
-			FlexScanner(std::istream *in) : yyFlexLexer(in), tokenValue(nullptr) {}
 
-			int yylex(Parser::BisonParser::semantic_type *_tokenValue) {
+			FlexScanner(std::istream *in) : yyFlexLexer(in), tokenValue(nullptr), location(nullptr), _currentLine("") {}
+
+			string currentLine() const { return this->_currentLine; }
+
+			int yylex(Parser::BisonParser::semantic_type *_tokenValue, Parser::BisonParser::location_type *_location) {
 				tokenValue = _tokenValue;
+				location = _location;
 				return yylex();
 			}
 	};

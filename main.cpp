@@ -24,7 +24,7 @@ int main(const int argc, const char **argv) {
 	   irModule->dump();
    }
    else {
-	   std::cout << "Parsing error!" << std::endl;
+	   /* Parsing error. */
    }
 
    return 0;
