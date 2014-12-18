@@ -9,8 +9,8 @@
 	#include <stdlib.h>
 	#include "FlexScanner.h"
 	#include "Parsin.tab.hh"
+	#include "ErrorReporting.h"
 
-//	extern int GetNextChar(char *b, int maxBuffer);
 %}
 
 %{
@@ -87,7 +87,7 @@
 [0-9]+\.[0-9]*	{ tokenValue->floating = atof(yytext); 	return Parser::BisonParser::token::TK_FLOAT; 	}
 [0-9a-zA-Z]*	{ tokenValue->str = strdup(yytext); 	return Parser::BisonParser::token::TK_ID; 		}
 
-.				{ printf("Unrecognized token '%s'\n", yytext); }
+.				{ ParsingError::printParsingError(currentLine(), "Unrecognized token `" + string(yytext) + "`", location->begin.line, location->begin.column, location->end.line, location->end.column); exit(0); }
 <<EOF>>			{ return 0; }
 
 

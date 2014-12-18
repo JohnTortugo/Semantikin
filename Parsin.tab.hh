@@ -49,8 +49,9 @@
 #line 25 "Parsin.yy" // lalr1.cc:372
 
 	#include "AbstractSyntaxTree.h"
+	#include "ErrorReporting.h"
 
-#line 54 "Parsin.tab.hh" // lalr1.cc:372
+#line 55 "Parsin.tab.hh" // lalr1.cc:372
 
 
 # include <vector>
@@ -121,7 +122,7 @@
 
 #line 5 "Parsin.yy" // lalr1.cc:372
 namespace Parser {
-#line 125 "Parsin.tab.hh" // lalr1.cc:372
+#line 126 "Parsin.tab.hh" // lalr1.cc:372
 
 
 
@@ -135,7 +136,7 @@ namespace Parser {
     /// Symbol semantic values.
     union semantic_type
     {
-    #line 65 "Parsin.yy" // lalr1.cc:372
+    #line 48 "Parsin.yy" // lalr1.cc:372
 
 	int integer;
 	float floating;
@@ -156,7 +157,7 @@ namespace Parser {
 	list<std::shared_ptr<Function>>* listFuncs;
 	CompilationUnit* module;
 
-#line 160 "Parsin.tab.hh" // lalr1.cc:372
+#line 161 "Parsin.tab.hh" // lalr1.cc:372
     };
 #else
     typedef YYSTYPE semantic_type;
@@ -531,7 +532,7 @@ namespace Parser {
 
 #line 5 "Parsin.yy" // lalr1.cc:372
 } // Parser
-#line 535 "Parsin.tab.hh" // lalr1.cc:372
+#line 536 "Parsin.tab.hh" // lalr1.cc:372
 
 
 

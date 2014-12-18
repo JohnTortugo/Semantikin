@@ -1,9 +1,12 @@
 void fun17() {
+	int a = 3, b = 4;
 
-    if (3 < 4) {
+    if (a == b) {
 	
-		int a ======== 30;;
+		int c = a * 4*a*b;
+	
+		printStr("igual\n");
 	
 	}
-        
+
 }

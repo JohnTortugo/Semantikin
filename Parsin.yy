@@ -24,6 +24,7 @@
 
 %code requires {
 	#include "AbstractSyntaxTree.h"
+	#include "ErrorReporting.h"
 }
 
 %{
@@ -31,31 +32,13 @@
 	#include <iostream>
 	#include <memory>
 	#include <string>
-	#include <iomanip>
 	#include "Driver.h"
 	#include "FlexScanner.h"
 
-	static int findPos(const std::string& msg, int virtPos) {
-		int actPos = 0;
-
-		for (int i=0; i<virtPos; i++) {
-			if (msg[i] == '\t') actPos += 4;
-			else actPos++;
-		}
-
-		return actPos;
-	}
-
 	void Parser::BisonParser::error(const location_type& loc, const std::string& msg) {
-		int beg = findPos(scanner.currentLine(), loc.begin.column) - 1;
-		int end = findPos(scanner.currentLine(), loc.end.column);
-		int dif = end - beg;
-		
-		std::cerr << loc.begin.line << ":" << loc.begin.column << "-" << loc.end.column << ": " << msg << endl;
-		std::cerr << scanner.currentLine() << endl;
-		std::cerr << std::setw(beg) << std::setfill('.') << "" << std::setw(dif) << std::setfill('^') << "" << endl;
+		ParsingError::printParsingError(scanner.currentLine(), msg, loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
 	}
-	
+		
 	static int yylex(Parser::BisonParser::semantic_type *tokenVal, Parser::BisonParser::location_type *location, Parser::FlexScanner &scanner, Parser::Driver &driver) {
 		return scanner.yylex(tokenVal, location);	
 	}
@@ -99,55 +82,55 @@
 %type <listFuncs> FUNCTIONS;
 %type <module> MODULE;
 
-%token TK_IF
-%token TK_ELSE			
-%token TK_ELSEIF		
-%token TK_WHILE			
-%token TK_RETURN		
+%token TK_IF						"if keyword"
+%token TK_ELSE						"else keyword"
+%token TK_ELSEIF					"elseif keyword"
+%token TK_WHILE						"while keyword"
+%token TK_RETURN					"return keyword"
 
-%token <str> TK_STRING
-%token <integer> TK_INTEGER
-%token <floating> TK_FLOAT
-%token <str> TK_ID
+%token <str> TK_STRING				"string literal"
+%token <integer> TK_INTEGER			"integer literal"
+%token <floating> TK_FLOAT			"floating literal"
+%token <str> TK_ID					"identifier"
 
-%token TK_SEMICOLON
-%token TK_COMMA			
-%token TK_DOUBLE_QUOTE	
-%token TK_SINGLE_QUOTE	
-%token TK_AMPERSAND
-%token TK_BIT_NOT
-%token TK_BIT_OR
-%token TK_BIT_XOR
+%token TK_SEMICOLON					"semicolon"
+%token TK_COMMA						"comma"
+%token TK_DOUBLE_QUOTE				"double quote"
+%token TK_SINGLE_QUOTE				"single quote"
+%token TK_AMPERSAND					"address-of operator"
+%token TK_BIT_NOT					"not binary operator"
+%token TK_BIT_OR					"or binary operator"
+%token TK_BIT_XOR					"xor binary operator"
 
-%token TK_L_PAREN		
-%token TK_R_PAREN		
-%token TK_L_BRACE		
-%token TK_R_BRACE		
-%token TK_L_SQBRACE		
-%token TK_R_SQBRACE		
+%token TK_L_PAREN					"left parenthesis"
+%token TK_R_PAREN					"right parenthesis"
+%token TK_L_BRACE					"left brace"
+%token TK_R_BRACE					"right brace"
+%token TK_L_SQBRACE					"left square bracket"
+%token TK_R_SQBRACE					"right square bracket"
 
-%token TK_AND
-%token TK_OR
-%token TK_NOT
-%token TK_ASSIGN		
-%token TK_COMPARE		
-%token TK_LT			
-%token TK_LTE			
-%token TK_GT			
-%token TK_GTE			
+%token TK_AND						"logical and"
+%token TK_OR						"logical or"
+%token TK_NOT						"logical not"
+%token TK_ASSIGN					"assignment"
+%token TK_COMPARE					"comparison"
+%token TK_LT						"less-than operator"
+%token TK_LTE						"less-than-or-equal operator"
+%token TK_GT						"greater-than operator"
+%token TK_GTE						"greater-than-or-equal operator"
 
-%token TK_PLUS			
-%token TK_MINUS			
-%token TK_TIMES			
-%token TK_DIV		
-%token TK_MOD			
-%token TK_DPLUS			
-%token TK_DMINUS		
-%token TK_PLUS_EQUAL	
-%token TK_MINUS_EQUAL	
-%token TK_TIMES_EQUAL	
-%token TK_DIV_EQUAL	
-%token TK_MOD_EQUAL		
+%token TK_PLUS						"plus operator"
+%token TK_MINUS						"minus operator"
+%token TK_TIMES						"times operator"
+%token TK_DIV						"quotient operator"
+%token TK_MOD						"modulo operator"
+%token TK_DPLUS						"increment operator"
+%token TK_DMINUS					"decrement operator"
+%token TK_PLUS_EQUAL				"plus-equal operator"
+%token TK_MINUS_EQUAL				"minus-equal operator"
+%token TK_TIMES_EQUAL				"times-equal operator"
+%token TK_DIV_EQUAL					"quotient-equal operator"
+%token TK_MOD_EQUAL					"modulo-equal operator"
 
 %right TK_MOD_EQUAL 
 %right TK_TIMES_EQUAL TK_DIV_EQUAL
@@ -179,18 +162,18 @@ FUNCTIONS		: FUNCTION FUNCTIONS														{ ($2)->push_front(std::shared_ptr<
 				|																			{ $$ = new list<std::shared_ptr<Function>>(); }
 				;
 
-FUNCTION		: TK_ID TK_ID TK_L_PAREN ARGS TK_R_PAREN CODE_BLOCK							{ $$ = new Function($1, $2, shared_ptr<list<shared_ptr<ParamDecl>>>($4), $6); }
+FUNCTION		: TK_ID TK_ID TK_L_PAREN ARGS TK_R_PAREN CODE_BLOCK							{ $$ = new Function(@1, @2, $1, $2, shared_ptr<list<shared_ptr<ParamDecl>>>($4), $6); }
 				;
 
-ARGS			: TK_ID TK_ID MAT_DIMS MARGS												{ ($4)->push_front(std::shared_ptr<ParamDecl>(new ParamDecl($1, $2, shared_ptr<list<shared_ptr<Expression>>>($3)))); $$ = $4; }
+ARGS			: TK_ID TK_ID MAT_DIMS MARGS												{ ($4)->push_front(std::shared_ptr<ParamDecl>(new ParamDecl(@1, @2, $1, $2, shared_ptr<list<shared_ptr<Expression>>>($3)))); $$ = $4; }
 				|																			{ $$ = new list<std::shared_ptr<ParamDecl>>(); }
 				;
 
-MARGS			: TK_COMMA TK_ID TK_ID MAT_DIMS MARGS										{ ($5)->push_front(std::shared_ptr<ParamDecl>(new ParamDecl($2, $3, shared_ptr<list<shared_ptr<Expression>>>($4)))); $$ = $5; }
+MARGS			: TK_COMMA TK_ID TK_ID MAT_DIMS MARGS										{ ($5)->push_front(std::shared_ptr<ParamDecl>(new ParamDecl(@2, @3, $2, $3, shared_ptr<list<shared_ptr<Expression>>>($4)))); $$ = $5; }
 				|																			{ $$ = new list<std::shared_ptr<ParamDecl>>(); }
 				;
 
-CODE_BLOCK		: TK_L_BRACE CODE TK_R_BRACE												{ $$ = new CodeBlock($2); };
+CODE_BLOCK		: TK_L_BRACE CODE TK_R_BRACE												{ $$ = new CodeBlock(@$, $2); };
 
 CODE			: VAR_DECL TK_SEMICOLON CODE												{ ($3)->push_front(std::shared_ptr<Statement>($1)); $$ = $3; }
 				| LOOP CODE																	{ ($2)->push_front(std::shared_ptr<Statement>($1)); $$ = $2; }
@@ -200,12 +183,12 @@ CODE			: VAR_DECL TK_SEMICOLON CODE												{ ($3)->push_front(std::shared_pt
 				|																			{ $$ = new list<std::shared_ptr<Statement>>(); }
 				;
 
-VAR_DECL		: TK_ID TK_ID MAT_DIMS MULT_VARS_DECL										{ ($4)->push_front(std::shared_ptr<VarSpec>(new VarSpec($2, $3, nullptr))); $$ = new VarDecl($1, $4); }
-				| TK_ID TK_ID TK_ASSIGN EXPR MULT_VARS_DECL									{ ($5)->push_front(std::shared_ptr<VarSpec>(new VarSpec($2, nullptr, $4))); $$ = new VarDecl($1, $5); }
+VAR_DECL		: TK_ID TK_ID MAT_DIMS MULT_VARS_DECL										{ ($4)->push_front(std::shared_ptr<VarSpec>(new VarSpec(@2, $2, $3, nullptr))); $$ = new VarDecl(@1, $1, $4); }
+				| TK_ID TK_ID TK_ASSIGN EXPR MULT_VARS_DECL									{ ($5)->push_front(std::shared_ptr<VarSpec>(new VarSpec(@2, $2, nullptr, $4))); $$ = new VarDecl(@1, $1, $5); }
 				;
 
-MULT_VARS_DECL	: TK_COMMA TK_ID MAT_DIMS MULT_VARS_DECL									{ ($4)->push_front(std::shared_ptr<VarSpec>(new VarSpec($2, $3, nullptr))); $$ = $4; }
-				| TK_COMMA TK_ID TK_ASSIGN EXPR MULT_VARS_DECL								{ ($5)->push_front(std::shared_ptr<VarSpec>(new VarSpec($2, nullptr, $4))); $$ = $5; }
+MULT_VARS_DECL	: TK_COMMA TK_ID MAT_DIMS MULT_VARS_DECL									{ ($4)->push_front(std::shared_ptr<VarSpec>(new VarSpec(@2, $2, $3, nullptr))); $$ = $4; }
+				| TK_COMMA TK_ID TK_ASSIGN EXPR MULT_VARS_DECL								{ ($5)->push_front(std::shared_ptr<VarSpec>(new VarSpec(@2, $2, nullptr, $4))); $$ = $5; }
 				|																			{ $$ = new list<std::shared_ptr<VarSpec>>(); }
 				;
 
@@ -213,21 +196,21 @@ MAT_DIMS		: TK_L_SQBRACE EXPR TK_R_SQBRACE MAT_DIMS									{ ($4)->push_front(s
 				|																			{ $$ = new list<std::shared_ptr<Expression>>(); }
 				;
 
-FUN_CALL		: TK_ID TK_L_PAREN FORM_PARAMS TK_R_PAREN									{ $$ = new FunctionCall($1, $3); }
+FUN_CALL		: TK_ID TK_L_PAREN FORM_PARAMS TK_R_PAREN									{ $$ = new FunctionCall(@1, $1, $3); }
 				;
 
-LOOP			: TK_WHILE TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK							{ $$ = new LoopStmt($3, $5); }
+LOOP			: TK_WHILE TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK							{ $$ = new LoopStmt(@1, $3, $5); }
 				;
 
-COND			: TK_IF TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK COND_ELSES					{ $$ = new IfStmt($3, $5, nullptr, $6); }
-				| TK_IF TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK COND_ELSES TK_ELSE CODE_BLOCK	{ $$ = new IfStmt($3, $5, $8, $6); }
+COND			: TK_IF TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK COND_ELSES					{ $$ = new IfStmt(@1, $3, $5, nullptr, $6); }
+				| TK_IF TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK COND_ELSES TK_ELSE CODE_BLOCK	{ $$ = new IfStmt(@1, $3, $5, $8, $6); }
 				;
 
-COND_ELSES		: TK_ELSEIF TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK COND_ELSES				{ ($6)->push_front(std::shared_ptr<ElseIfStmt>(new ElseIfStmt($3, $5))); $$ = $6; }
+COND_ELSES		: TK_ELSEIF TK_L_PAREN EXPR TK_R_PAREN CODE_BLOCK COND_ELSES				{ ($6)->push_front(std::shared_ptr<ElseIfStmt>(new ElseIfStmt(@1, $3, $5))); $$ = $6; }
 				|																			{ $$ = new list<std::shared_ptr<ElseIfStmt>>(); }
 				;
 
-RETURN			: TK_RETURN EXPR															{ $$ = new ReturnStmt($2); }
+RETURN			: TK_RETURN EXPR															{ $$ = new ReturnStmt(@1, $2); }
 				;
 
 FORM_PARAMS		: EXPR MFORM_PARAMS															{ ($2)->push_front(std::shared_ptr<Expression>($1)); $$ = $2; }
@@ -238,40 +221,40 @@ MFORM_PARAMS	: TK_COMMA EXPR MFORM_PARAMS												{ ($3)->push_front(std::sha
 				|																			{ $$ = new list<std::shared_ptr<Expression>>(); }
 				;
 
-EXPR			: EXPR TK_COMPARE EXPR														{ $$ = new BinaryExpr(BinaryExpr::COMPARE, $1, $3); }
-				| EXPR TK_DIFFERENCE EXPR													{ $$ = new BinaryExpr(BinaryExpr::DIFFERENCE, $1, $3); }
-				| EXPR TK_ASSIGN EXPR														{ $$ = new BinaryExpr(BinaryExpr::ASSIGN, $1, $3); }
-				| EXPR TK_AND EXPR															{ $$ = new BinaryExpr(BinaryExpr::LOG_AND, $1, $3); }
-				| EXPR TK_OR EXPR															{ $$ = new BinaryExpr(BinaryExpr::LOG_OR, $1, $3); }
-				| EXPR TK_AMPERSAND EXPR													{ $$ = new BinaryExpr(BinaryExpr::BIT_AND, $1, $3); }
-				| EXPR TK_BIT_OR EXPR														{ $$ = new BinaryExpr(BinaryExpr::BIT_OR, $1, $3); }
-				| EXPR TK_BIT_XOR EXPR														{ $$ = new BinaryExpr(BinaryExpr::BIT_XOR, $1, $3); }
-				| EXPR TK_LT EXPR															{ $$ = new BinaryExpr(BinaryExpr::LT, $1, $3); }
-				| EXPR TK_LTE EXPR															{ $$ = new BinaryExpr(BinaryExpr::LTE, $1, $3); }
-				| EXPR TK_GT EXPR															{ $$ = new BinaryExpr(BinaryExpr::GT, $1, $3); }
-				| EXPR TK_GTE EXPR															{ $$ = new BinaryExpr(BinaryExpr::GTE, $1, $3); }
-				| EXPR TK_PLUS EXPR															{ $$ = new BinaryExpr(BinaryExpr::ADDITION, $1, $3); }
-				| EXPR TK_MINUS EXPR														{ $$ = new BinaryExpr(BinaryExpr::SUBTRACTION, $1, $3); }
-				| EXPR TK_TIMES EXPR														{ $$ = new BinaryExpr(BinaryExpr::TIMES, $1, $3); }
-				| EXPR TK_DIV EXPR															{ $$ = new BinaryExpr(BinaryExpr::DIV, $1, $3); }
-				| EXPR TK_MOD EXPR															{ $$ = new BinaryExpr(BinaryExpr::MOD, $1, $3); }
-				| EXPR TK_PLUS_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::PLUS_EQUAL, $1, $3); }
-				| EXPR TK_MINUS_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::MINUS_EQUAL, $1, $3); }
-				| EXPR TK_TIMES_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::TIMES_EQUAL, $1, $3); }
-				| EXPR TK_DIV_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::DIV_EQUAL, $1, $3); }
-				| EXPR TK_MOD_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::MOD_EQUAL, $1, $3); }
+EXPR			: EXPR TK_COMPARE EXPR														{ $$ = new BinaryExpr(BinaryExpr::COMPARE, @2, $1, $3); }
+				| EXPR TK_DIFFERENCE EXPR													{ $$ = new BinaryExpr(BinaryExpr::DIFFERENCE, @2, $1, $3); }
+				| EXPR TK_ASSIGN EXPR														{ $$ = new BinaryExpr(BinaryExpr::ASSIGN, @2, $1, $3); }
+				| EXPR TK_AND EXPR															{ $$ = new BinaryExpr(BinaryExpr::LOG_AND, @2, $1, $3); }
+				| EXPR TK_OR EXPR															{ $$ = new BinaryExpr(BinaryExpr::LOG_OR, @2, $1, $3); }
+				| EXPR TK_AMPERSAND EXPR													{ $$ = new BinaryExpr(BinaryExpr::BIT_AND, @2, $1, $3); }
+				| EXPR TK_BIT_OR EXPR														{ $$ = new BinaryExpr(BinaryExpr::BIT_OR, @2, $1, $3); }
+				| EXPR TK_BIT_XOR EXPR														{ $$ = new BinaryExpr(BinaryExpr::BIT_XOR, @2, $1, $3); }
+				| EXPR TK_LT EXPR															{ $$ = new BinaryExpr(BinaryExpr::LT, @2, $1, $3); }
+				| EXPR TK_LTE EXPR															{ $$ = new BinaryExpr(BinaryExpr::LTE, @2, $1, $3); }
+				| EXPR TK_GT EXPR															{ $$ = new BinaryExpr(BinaryExpr::GT, @2, $1, $3); }
+				| EXPR TK_GTE EXPR															{ $$ = new BinaryExpr(BinaryExpr::GTE, @2, $1, $3); }
+				| EXPR TK_PLUS EXPR															{ $$ = new BinaryExpr(BinaryExpr::ADDITION, @2, $1, $3); }
+				| EXPR TK_MINUS EXPR														{ $$ = new BinaryExpr(BinaryExpr::SUBTRACTION, @2, $1, $3); }
+				| EXPR TK_TIMES EXPR														{ $$ = new BinaryExpr(BinaryExpr::TIMES, @2, $1, $3); }
+				| EXPR TK_DIV EXPR															{ $$ = new BinaryExpr(BinaryExpr::DIV, @2, $1, $3); }
+				| EXPR TK_MOD EXPR															{ $$ = new BinaryExpr(BinaryExpr::MOD, @2, $1, $3); }
+				| EXPR TK_PLUS_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::PLUS_EQUAL, @2, $1, $3); }
+				| EXPR TK_MINUS_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::MINUS_EQUAL, @2, $1, $3); }
+				| EXPR TK_TIMES_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::TIMES_EQUAL, @2, $1, $3); }
+				| EXPR TK_DIV_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::DIV_EQUAL, @2, $1, $3); }
+				| EXPR TK_MOD_EQUAL EXPR													{ $$ = new BinaryExpr(BinaryExpr::MOD_EQUAL, @2, $1, $3); }
 				| TK_L_PAREN EXPR TK_R_PAREN												{ $$ = $2; }
-				| TK_BIT_NOT EXPR 															{ $$ = new UnaryExpr(UnaryExpr::BIT_NOT, $2); }
-				| TK_NOT EXPR 																{ $$ = new UnaryExpr(UnaryExpr::NOT, $2); }
-				| TK_MINUS EXPR 															{ $$ = new UnaryExpr(UnaryExpr::MINUS, $2); }
-				| TK_PLUS EXPR 																{ $$ = new UnaryExpr(UnaryExpr::PLUS, $2); }
-				| TK_AMPERSAND EXPR 														{ $$ = new UnaryExpr(UnaryExpr::ADDR, $2); }
-				| EXPR TK_DPLUS																{ $$ = new UnaryExpr(UnaryExpr::INCREMENT, $1); }
-				| EXPR TK_DMINUS															{ $$ = new UnaryExpr(UnaryExpr::DECREMENT, $1); }
-				| TK_INTEGER																{ $$ = new IntegerExpr($1); }
-				| TK_FLOAT																	{ $$ = new FloatExpr($1); }
-				| TK_STRING																	{ $$ = new StringExpr($1); }
-				| TK_ID MAT_DIMS															{ $$ = new IdentifierExpr($1, $2); }
+				| TK_BIT_NOT EXPR 															{ $$ = new UnaryExpr(UnaryExpr::BIT_NOT, @1, $2); }
+				| TK_NOT EXPR 																{ $$ = new UnaryExpr(UnaryExpr::NOT, @1, $2); }
+				| TK_MINUS EXPR 															{ $$ = new UnaryExpr(UnaryExpr::MINUS, @1, $2); }
+				| TK_PLUS EXPR 																{ $$ = new UnaryExpr(UnaryExpr::PLUS, @1, $2); }
+				| TK_AMPERSAND EXPR 														{ $$ = new UnaryExpr(UnaryExpr::ADDR, @1, $2); }
+				| EXPR TK_DPLUS																{ $$ = new UnaryExpr(UnaryExpr::INCREMENT, @2, $1); }
+				| EXPR TK_DMINUS															{ $$ = new UnaryExpr(UnaryExpr::DECREMENT, @2, $1); }
+				| TK_INTEGER																{ $$ = new IntegerExpr(@1, $1); }
+				| TK_FLOAT																	{ $$ = new FloatExpr(@1, $1); }
+				| TK_STRING																	{ $$ = new StringExpr(@1, $1); }
+				| TK_ID MAT_DIMS															{ $$ = new IdentifierExpr(@1, $1, $2); }
 				| FUN_CALL																	{ $$ = $1; }
 				;
 

@@ -498,8 +498,8 @@ static yyconst flex_int32_t yy_rule_can_match_eol[51] =
 	#include <stdlib.h>
 	#include "FlexScanner.h"
 	#include "Parsin.tab.hh"
+	#include "ErrorReporting.h"
 
-//	extern int GetNextChar(char *b, int maxBuffer);
 #line 17 "Lexin.l"
     
 	#define YY_USER_ACTION  {													\
@@ -957,7 +957,7 @@ YY_RULE_SETUP
 case 49:
 YY_RULE_SETUP
 #line 90 "Lexin.l"
-{ printf("Unrecognized token '%s'\n", yytext); }
+{ ParsingError::printParsingError(currentLine(), "Unrecognized token `" + string(yytext) + "`", location->begin.line, location->begin.column, location->end.line, location->end.column); exit(0); }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 91 "Lexin.l"

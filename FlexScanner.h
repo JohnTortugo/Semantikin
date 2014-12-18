@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <iomanip>
 
 namespace Parser {
 	class FlexScanner : public yyFlexLexer {
@@ -35,6 +37,7 @@ namespace Parser {
 				return yylex();
 			}
 	};
+
 }
 
 #endif

@@ -2,6 +2,7 @@
 #define ABSTRACTSYNTAXTREE_H_
 
 #include "SymbolTable.h"
+#include "location.hh"
 
 #include <iostream>
 #include <fstream>
@@ -21,7 +22,19 @@ class AstNodeVisitor;
 
 namespace Parser {
 	class AstNode {
+	private:
+		location _loc;
+
 	public:
+		AstNode()
+		{ }
+
+		AstNode(location loc) : _loc(loc)
+		{ }
+
+		virtual const location& loc() { return this->_loc; }
+		virtual void loc(location loct) { this->_loc = loct; }
+
 		virtual void accept(AstNodeVisitor* visitor) = 0;
 
 		virtual ~AstNode() { };
@@ -33,14 +46,20 @@ namespace Parser {
 		shared_ptr<STLabelDef> _next = nullptr;
 
 	public:
+		Statement()
+		{ }
+
+		Statement(location loc) : AstNode(loc)
+		{ }
+
 		void next(shared_ptr<STLabelDef> label) { this->_next = label; }
 		shared_ptr<STLabelDef> next() { return this->_next; }
 	};
 
 	class Expression : public Statement {
 	protected:
-		NativeType _type;
-		shared_ptr<SymbolTableEntry> _addr;
+		NativeType _type = NOT_A_TYPE;
+		shared_ptr<SymbolTableEntry> _addr = nullptr;
 
 		/* This indicate if the current expression being decoded is a left-hand
 		 * or right-hand. If it is left-hand then, if the expression is a identifier
@@ -59,6 +78,12 @@ namespace Parser {
 		shared_ptr<STLabelDef> _fLabel = nullptr;
 
 	public:
+		Expression()
+		{ }
+
+		Expression(location loc) : Statement(loc)
+		{ }
+
 		NativeType type() const { return _type; }
 		void type(NativeType _etype) { _type = _etype; }
 
@@ -107,23 +132,24 @@ namespace Parser {
 
 	private:
 		ExprType _opr;
-		shared_ptr<Expression> exp1;
-		shared_ptr<Expression> exp2;
+		shared_ptr<Expression> _exp1;
+		shared_ptr<Expression> _exp2;
 
 	public:
-		BinaryExpr(ExprType _type, Expression* _exp1, Expression* _exp2) {
-			this->_opr = _type;
-			this->exp1 = shared_ptr<Expression>(_exp1);
-			this->exp2 = shared_ptr<Expression>(_exp2);
-		}
+		BinaryExpr(ExprType opr, location loc, Expression* exp1, Expression* exp2) :
+			Expression(loc),
+			_opr(opr),
+			_exp1(exp1),
+			_exp2(exp2)
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
 		ExprType opr() const { return this->_opr; }
 
-		Expression* getExp1() const { return this->exp1.get(); }
+		Expression* getExp1() const { return this->_exp1.get(); }
 
-		Expression* getExp2() const { return this->exp2.get(); }
+		Expression* getExp2() const { return this->_exp2.get(); }
 	};
 
 	class UnaryExpr : public Expression {
@@ -143,10 +169,11 @@ namespace Parser {
 		shared_ptr<Expression> _exp;
 
 	public:
-		UnaryExpr(ExprType _type, Expression* _exp) {
-			this->_opr = _type;
-			this->_exp = shared_ptr<Expression>(_exp);
-		}
+		UnaryExpr(ExprType type, location loc, Expression* exp) :
+			Expression(loc),
+			_opr(type),
+			_exp(shared_ptr<Expression>(exp))
+		{ }
 
 		ExprType opr() const { return this->_opr; }
 
@@ -161,10 +188,11 @@ namespace Parser {
 		shared_ptr<list<shared_ptr<Expression>>> _arguments;
 
 	public:
-		FunctionCall(string _name, list<shared_ptr<Expression>>* _arguments) {
-			this->_name = _name;
-			this->_arguments = shared_ptr<list<shared_ptr<Expression>>>(_arguments);
-		}
+		FunctionCall(location loc, string name, list<shared_ptr<Expression>>* arguments) :
+			Expression(loc),
+			_name(name),
+			_arguments(shared_ptr<list<shared_ptr<Expression>>>(arguments))
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
@@ -179,10 +207,11 @@ namespace Parser {
 		shared_ptr<list<shared_ptr<Expression>>> _dimExprs;
 
 	public:
-		IdentifierExpr(string _value,  list<shared_ptr<Expression>>* _dimExprs) {
-			this->_value			= _value;
-			this->_dimExprs		= shared_ptr<list<shared_ptr<Expression>>>(_dimExprs);
-		}
+		IdentifierExpr(location loc, string value,  list<shared_ptr<Expression>>* dimExprs) :
+			Expression(loc),
+			_value(value),
+			_dimExprs(shared_ptr<list<shared_ptr<Expression>>>(dimExprs))
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
@@ -196,7 +225,7 @@ namespace Parser {
 		int _value;
 
 	public:
-		IntegerExpr(int _value) : _value(_value) {}
+		IntegerExpr(location loc, int _value) : Expression(loc), _value(_value) {}
 
 		void accept(AstNodeVisitor* visitor);
 
@@ -208,7 +237,7 @@ namespace Parser {
 		float _value;
 
 	public:
-		FloatExpr(float _value) : _value(_value) {}
+		FloatExpr(location loc, float _value) : Expression(loc), _value(_value) {}
 
 		void accept(AstNodeVisitor* visitor);
 
@@ -220,7 +249,7 @@ namespace Parser {
 		string _value;
 
 	public:
-		StringExpr(string _value) : _value(_value) {}
+		StringExpr(location loc, string _value) : Expression(loc), _value(_value) {}
 
 		void accept(AstNodeVisitor* visitor);
 
@@ -229,188 +258,205 @@ namespace Parser {
 
 	class CodeBlock : public Statement {
 	private:
-		shared_ptr<SymbolTable> symbTable;
-		shared_ptr<list<shared_ptr<Statement>>> statements;
+		shared_ptr<SymbolTable> _symbTable;
+		shared_ptr<list<shared_ptr<Statement>>> _statements;
 
 	public:
-		CodeBlock(list<shared_ptr<Statement>>* _stmts) {
-			this->statements 	= shared_ptr<list<shared_ptr<Statement>>>(_stmts);
-		}
+		CodeBlock(location loc, list<shared_ptr<Statement>>* _stmts) :
+			Statement(loc),
+			_statements(shared_ptr<list<shared_ptr<Statement>>>(_stmts))
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
-		shared_ptr<SymbolTable> getSymbTable() const { return this->symbTable; }
+		shared_ptr<SymbolTable> getSymbTable() const { return this->_symbTable; }
 
-		void setSymbTable(shared_ptr<SymbolTable> _symbTable) { this->symbTable = _symbTable; }
+		void setSymbTable(shared_ptr<SymbolTable> _symbTable) { this->_symbTable = _symbTable; }
 
-		list<shared_ptr<Statement>>* getStatements() const { return this->statements.get(); }
+		list<shared_ptr<Statement>>* getStatements() const { return this->_statements.get(); }
 	};
 
 	class ReturnStmt : public Statement {
 	private:
-		shared_ptr<Expression> expression;
+		shared_ptr<Expression> _expression;
 
 	public:
-		ReturnStmt(Expression* _exp) {
-			this->expression = shared_ptr<Expression>(_exp);
-		}
+		ReturnStmt(location loc, Expression* _exp) :
+			Statement(loc),
+			_expression(shared_ptr<Expression>(_exp))
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
-		Expression* getExpression() const { return this->expression.get(); }
+		Expression* getExpression() const { return this->_expression.get(); }
 	};
 
 	class ElseIfStmt : public Statement {
 	private:
-		shared_ptr<Expression> condition;
-		shared_ptr<CodeBlock> elseIfBlock;
+		shared_ptr<Expression> _condition;
+		shared_ptr<CodeBlock> _elseIfBlock;
 
 	public:
-		ElseIfStmt(Expression* _condition, CodeBlock* _elseIfBlock) {
-			this->condition = shared_ptr<Expression>(_condition);
-			this->elseIfBlock = shared_ptr<CodeBlock>(_elseIfBlock);
-		}
+		ElseIfStmt(location loc, Expression* _condition, CodeBlock* _elseIfBlock) :
+			Statement(loc),
+			_condition(shared_ptr<Expression>(_condition)),
+			_elseIfBlock(shared_ptr<CodeBlock>(_elseIfBlock))
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
-		Expression* getCondition() const { return this->condition.get(); }
+		Expression* getCondition() const { return this->_condition.get(); }
 
-		CodeBlock* getElseIfBlock() const { return this->elseIfBlock.get(); }
+		CodeBlock* getElseIfBlock() const { return this->_elseIfBlock.get(); }
 	};
 
 	class IfStmt : public Statement {
 	private:
-		shared_ptr<Expression> condition;
-		shared_ptr<CodeBlock> thenBlock;
-		shared_ptr<list<shared_ptr<ElseIfStmt>>> elseIfChain;
-		shared_ptr<CodeBlock> elseBlock;
+		shared_ptr<Expression> _condition;
+		shared_ptr<CodeBlock> _thenBlock;
+		shared_ptr<list<shared_ptr<ElseIfStmt>>> _elseIfChain;
+		shared_ptr<CodeBlock> _elseBlock;
 
 	public:
-		IfStmt(Expression* _condition, CodeBlock* _then, CodeBlock* _else, list<shared_ptr<ElseIfStmt>>* _elseIfChain) {
-			this->condition 	= shared_ptr<Expression>(_condition);
-			this->thenBlock 	= shared_ptr<CodeBlock>(_then);
-			this->elseBlock 	= shared_ptr<CodeBlock>(_else);
-			this->elseIfChain 	= shared_ptr<list<shared_ptr<ElseIfStmt>>>(_elseIfChain);
-		}
+		IfStmt(location loc, Expression* _condition, CodeBlock* _then, CodeBlock* _else, list<shared_ptr<ElseIfStmt>>* _elseIfChain) :
+			Statement(loc),
+			_condition(shared_ptr<Expression>(_condition)),
+			_thenBlock(shared_ptr<CodeBlock>(_then)),
+			_elseBlock(shared_ptr<CodeBlock>(_else)),
+			_elseIfChain(shared_ptr<list<shared_ptr<ElseIfStmt>>>(_elseIfChain))
+		{ }
 
-		Expression* getCondition() const { return this->condition.get(); }
+		Expression* getCondition() const { return this->_condition.get(); }
 
-		CodeBlock* getThenBlock() const { return this->thenBlock.get(); }
+		CodeBlock* getThenBlock() const { return this->_thenBlock.get(); }
 
-		list<shared_ptr<ElseIfStmt>>* getElseIfChain() const { return this->elseIfChain.get(); }
+		list<shared_ptr<ElseIfStmt>>* getElseIfChain() const { return this->_elseIfChain.get(); }
 
-		CodeBlock* getElseBlock() const { return this->elseBlock.get(); }
+		CodeBlock* getElseBlock() const { return this->_elseBlock.get(); }
 
 		void accept(AstNodeVisitor* visitor);
 	};
 
 	class LoopStmt : public Statement {
 	private:
-		shared_ptr<Expression> condition;
-		shared_ptr<CodeBlock> body;
+		shared_ptr<Expression> _condition;
+		shared_ptr<CodeBlock> _body;
 
 	public:
-		LoopStmt(Expression* _condition, CodeBlock* _body) {
-			this->condition = shared_ptr<Expression>(_condition);
-			this->body 		= shared_ptr<CodeBlock>(_body);
-		}
+		LoopStmt(location loc, Expression* condition, CodeBlock* body) :
+			Statement(loc),
+			_condition(shared_ptr<Expression>(condition)),
+			_body(shared_ptr<CodeBlock>(body))
+		{ }
 
 		void accept(AstNodeVisitor* visitor);
 
-		Expression* getCondition() const { return this->condition.get(); }
+		Expression* getCondition() const { return this->_condition.get(); }
 
-		CodeBlock* getBody() const { return this->body.get(); }
+		CodeBlock* getBody() const { return this->_body.get(); }
 	};
 
 	class VarSpec : public Statement {
 	private:
-		string name;
-		shared_ptr<list<shared_ptr<Expression>>> dimsExprs;
-		shared_ptr<Expression> initializer;
+		string _name;
+		shared_ptr<list<shared_ptr<Expression>>> _dimsExprs;
+		shared_ptr<Expression> _initializer;
 
 	public:
-		VarSpec(string _name, list<shared_ptr<Expression>>* _dims, Expression* _init) {
-			this->name 			= _name;
-			this->dimsExprs 	= shared_ptr<list<shared_ptr<Expression>>>(_dims);
-			this->initializer 	= shared_ptr<Expression>(_init);
-		}
+		VarSpec(location loc, string name, list<shared_ptr<Expression>>* dims, Expression* init) :
+			Statement(loc),
+			_name(name),
+			_dimsExprs(shared_ptr<list<shared_ptr<Expression>>>(dims)),
+			_initializer(shared_ptr<Expression>(init))
+		{ }
 
-		string getName() const { return this->name; }
+		string getName() const { return this->_name; }
 
-		Expression* getInitializer() const { return this->initializer.get(); }
+		Expression* getInitializer() const { return this->_initializer.get(); }
 
-		list<shared_ptr<Expression>>* getDimsExpr() const { return this->dimsExprs.get(); }
+		list<shared_ptr<Expression>>* getDimsExpr() const { return this->_dimsExprs.get(); }
 
 		void accept(AstNodeVisitor* visitor);
 	};
 
 	class VarDecl : public Statement {
 	private:
-		string type;
-		shared_ptr<list<shared_ptr<VarSpec>>> vars;
+		string _type;
+		shared_ptr<list<shared_ptr<VarSpec>>> _vars;
 
 	public:
-		VarDecl(string _type, list<shared_ptr<VarSpec>>* _vars) {
-			this->type = _type;
-			this->vars = shared_ptr<list<shared_ptr<VarSpec>>>(_vars);
-		}
+		VarDecl(location loc, string type, list<shared_ptr<VarSpec>>* vars) :
+			Statement(loc),
+			_type(type),
+			_vars(shared_ptr<list<shared_ptr<VarSpec>>>(vars))
+		{ }
 
-		string getType() const { return this->type; }
+		string getType() const { return this->_type; }
 
-		list<shared_ptr<VarSpec>>* getVars() const { return this->vars.get(); }
+		list<shared_ptr<VarSpec>>* getVars() const { return this->_vars.get(); }
 
 		void accept(AstNodeVisitor* visitor);
 	};
 
 	class ParamDecl : public Statement {
 	private:
-		string type;
-		string name;
-		shared_ptr<list<shared_ptr<Expression>>> dims;
+		string _type;
+		string _name;
+		location _nmLoc;
+		shared_ptr<list<shared_ptr<Expression>>> _dims;
 
 	public:
-		ParamDecl(string _type, string _name, shared_ptr<list<shared_ptr<Expression>>> _dims) {
-			this->type = _type;
-			this->name = _name;
-			this->dims = _dims;
-		}
+		ParamDecl(location tpLoc, location nmLoc, string type, string name, shared_ptr<list<shared_ptr<Expression>>> dims) :
+			Statement(tpLoc),
+			_nmLoc(nmLoc),
+			_type(type),
+			_name(name),
+			_dims(dims)
+		{ }
 
-		list<shared_ptr<Expression>>* getDims() const { return dims.get(); }
+		list<shared_ptr<Expression>>* getDims() const { return _dims.get(); }
 
-		const string& getName() const { return name; }
+		const location& tpLoc() { return this->loc(); }
+		const location& nmLoc() { return this->_nmLoc; }
 
-		const string& getType() const { return type; }
+		const string& getName() const { return _name; }
+
+		const string& getType() const { return _type; }
 
 		void accept(AstNodeVisitor* visitor);
 	};
 
 	class Function : public AstNode {
 	private:
-		string returnType;
-		string name;
-		shared_ptr<list<shared_ptr<ParamDecl>>> params;
-		shared_ptr<CodeBlock> body;
-		shared_ptr<SymbolTable> symbTable;
+		string _returnType;
+		string _name;
+		location _nmLoc;
+		shared_ptr<list<shared_ptr<ParamDecl>>> _params;
+		shared_ptr<CodeBlock> _body;
+		shared_ptr<SymbolTable> _symbTable;
 
 	public:
-		Function(string _type, string _name, shared_ptr<list<shared_ptr<ParamDecl>>> _params, CodeBlock* _body) {
-			this->returnType = _type;
-			this->name = _name;
-			this->params = _params;
-			this->body = shared_ptr<CodeBlock>(_body);
-		}
+		Function(location tpLoc, location nmLoc, string type, string name, shared_ptr<list<shared_ptr<ParamDecl>>> params, CodeBlock* body) :
+			AstNode(tpLoc),
+			_nmLoc(nmLoc),
+			_returnType(type),
+			_name(name),
+			_params(params),
+			_body(shared_ptr<CodeBlock>(body)),
+			_symbTable(nullptr)
+		{ }
 
-		string getName() const { return this->name; }
+		string getName() const { return this->_name; }
 
-		string getReturnType() const { return this->returnType; }
+		string getReturnType() const { return this->_returnType; }
 
-		list<shared_ptr<ParamDecl>>* getParams() const { return this->params.get(); }
+		list<shared_ptr<ParamDecl>>* getParams() const { return this->_params.get(); }
 
-		CodeBlock* getBody() const { return this->body.get(); }
+		CodeBlock* getBody() const { return this->_body.get(); }
 
-		shared_ptr<SymbolTable> getSymbTable() const { return this->symbTable; }
+		shared_ptr<SymbolTable> getSymbTable() const { return this->_symbTable; }
 
-		void setSymbTable(shared_ptr<SymbolTable> _symbTable) { this->symbTable = _symbTable; }
+		void setSymbTable(shared_ptr<SymbolTable> _symbTable) { this->_symbTable = _symbTable; }
 
 		void accept(AstNodeVisitor* visitor);
 	};

@@ -398,7 +398,7 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 		int remainder = (dims == nullptr) ? varDecl->getNumDims() : varDecl->getNumDims() - dims->size();
 
 		for (int i=0; i<remainder; i++)
-			dims->push_back(shared_ptr<Parser::IntegerExpr>(new Parser::IntegerExpr(0)));
+			dims->push_back(shared_ptr<Parser::IntegerExpr>(new Parser::IntegerExpr(location(), 0)));
 	}
 
 	/* Continue visiting. */
