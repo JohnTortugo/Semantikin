@@ -1,6 +1,8 @@
 #ifndef IR_H_
 #define IR_H_
 
+#include "Semantikin.h"
+#include "ControlFlowGraph.h"
 #include "AbstractSyntaxTree.h"
 
 #include <string>
@@ -453,8 +455,10 @@ namespace IR {
 	/* Represent function definitions. */
 	class Function {
 	private:
+		/* Pointer to the symbol table entry describing this function. */
 		shared_ptr<SymbolTableEntry> _addr;
 
+		/* Pointer to this function's symbol table. */
 		shared_ptr<SymbolTable> _symbTable;
 
 		/* Keep track of how many times each name was used inside the
@@ -468,23 +472,39 @@ namespace IR {
 		bool _labelPendingSlot = false;
 
 		/* The instructions that compose this function. */
-		shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>> _instrs;
+		shared_ptr<list< pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>> >> _instrs;
 
 	public:
-		Function(shared_ptr<SymbolTable> st) : _symbTable(st), _instrs(shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>>(new list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>()))
+		Function(shared_ptr<SymbolTable> st) :
+			_symbTable(st),
+			_instrs(shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>>(new list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>()))
 		{ }
 
+
+		/* Methods related to Control Flow Graph construction. */
+		ControlFlowGraph_sptr cfg();
+
+		/* Methods related to setting/getting the function's declaration. */
 		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
+
 		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
 
+
+		/* Methods related to Linear IR construction. */
 		void appendLabel(shared_ptr<STLabelDef> label);
 
 		void appendInstruction(shared_ptr<IR::Instruction> instr);
 
+
+		/* Symbol Table Management Methods. */
 		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
+
 		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
+
 		void addSymbolTable(shared_ptr<SymbolTable> st);
 
+
+		/* Mostly debug related methods. */
 		void dump(stringstream& buffer);
 	};
 
@@ -493,14 +513,16 @@ namespace IR {
 	/* Represent a whole compilation unit. */
 	class Module {
 	private:
-		shared_ptr<list<shared_ptr<Function>>> functions;
+		shared_ptr<list<shared_ptr<Function>>> _functions;
 
 		shared_ptr<SymbolTable> _symbTable;
 
 	public:
-		Module() : functions(shared_ptr<list<shared_ptr<Function>>>(new list<shared_ptr<Function>>())) { }
+		Module() : _functions(shared_ptr<list<shared_ptr<Function>>>(new list<shared_ptr<Function>>())) { }
 
-		void addFunction(shared_ptr<Function> fun) { this->functions->push_back(fun); }
+		void addFunction(shared_ptr<Function> fun) { this->_functions->push_back(fun); }
+
+		Function_sptr_list_sptr functions() const { return this->_functions; }
 
 		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
 		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }

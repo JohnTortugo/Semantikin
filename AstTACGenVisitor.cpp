@@ -55,6 +55,9 @@ void AstTACGenVisitor::visit(Parser::Function* function) {
 	/* We need to keep a pointer to the current function definition, right? */
 	this->_currentFunction->addr( function->getSymbTable()->getParent()->lookup(function->getName()) );
 
+	/* The first instruction of every function needs to have a label. */
+	this->_currentFunction->appendLabel( this->newLabel("entry") );
+
 	/* Produce IR instructions for the statements in the function's code block. */
 	function->getBody()->accept(this);
 }

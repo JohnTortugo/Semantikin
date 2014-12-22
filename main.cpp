@@ -21,6 +21,8 @@ int main(const int argc, const char **argv) {
 
 	   shared_ptr<IR::Module> irModule = irgen.module();
 
+	   irModule->functions()->front()->cfg();
+
 	   irModule->dump();
    }
    else {

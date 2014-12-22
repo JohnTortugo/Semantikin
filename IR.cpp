@@ -1,4 +1,47 @@
 #include "IR.h"
+#include "BasicBlock.h"
+
+#include <set>
+
+using std::set;
+
+namespace Util {
+	enum ControlInstructionType {
+		NoControlInstruction = 0,
+		BranchInstruction = 1,
+		CallInstruction = 2,
+		ReturnInstruction = 3
+	};
+
+	unsigned char isControlInstr(Instruction_sptr instruction) {
+		if (dynamic_cast<IR::BranchInstruction*>(instruction.get())) {
+			return BranchInstruction;
+		}
+		else if (dynamic_cast<IR::Call*>(instruction.get())) {
+			return CallInstruction;
+		}
+		else if (dynamic_cast<IR::Return*>(instruction.get())) {
+			return ReturnInstruction;
+		}
+		else
+			return NoControlInstruction;
+	}
+
+	STLabelDef_sptr branchTarget(Instruction_sptr instruction) {
+		if (auto branch = dynamic_cast<IR::CondTrueJump*>(instruction.get())) {
+			return std::dynamic_pointer_cast<STLabelDef>( branch->tgt() );
+		}
+		else if (auto branch = dynamic_cast<IR::CondFalseJump*>(instruction.get())) {
+			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
+		}
+		else if (auto branch = dynamic_cast<IR::Jump*>(instruction.get())) {
+			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
+		}
+		else
+			return nullptr;
+	}
+}
+
 
 namespace IR {
 
@@ -218,28 +261,9 @@ namespace IR {
 	}
 
 
-
-	void Module::dump() {
-	   std::stringstream buffer;
-
-	   buffer << "This is the IR: " << endl;
-	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
-
-		for (auto function : *this->functions) {
-			function->dump(buffer);
-			buffer << endl << endl;
-		}
-
-		cout << buffer.str();
-	}
-
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {
 		if (this->_labelPendingSlot) {
 			this->_instrs->back().second = nullptr;
-//			cout << endl << "IR-TAC-Gen:" << endl;
-//			cout << "\tAppending label but there is already one at this position." << endl;
-//			cout << "New would be: \t\t \"" << label->getName() << "\"" << endl;
-//			exit(1);
 		}
 
 		/* Set the "address" to which the label points to. */
@@ -247,8 +271,6 @@ namespace IR {
 
 		this->_instrs->push_back( make_pair(label, nullptr) );
 		this->_labelPendingSlot = true;
-
-//		cout << label->getName() << ": ";
 	}
 
 	void Function::appendInstruction(shared_ptr<IR::Instruction> instr) {
@@ -264,4 +286,130 @@ namespace IR {
 //		instr->dump(ss);
 //		cout << ss.str();
 	}
+
+	ControlFlowGraph_sptr Function::cfg() {
+		/* Index of leader/ender's instructions of each basic block.. */
+		vector<pair<int,int>> bbLimits;
+
+		/* Which instructions are leaders? */
+		set<int> leaders;
+
+		/* Map from instruction label to bb-id. */
+		map<STLabelDef_sptr, BasicBlock_sptr> labelToBB;
+
+		/* The CFG we are building */
+		auto newCfg = make_shared<Backend::ControlFlowGraph>();
+
+		/* If the current instruction is a control handling instruction
+		 * then the next one is a leader for the fallthrought case. */
+		bool nextIsLeader = false;
+
+		/* Identifiers for basic blocks. */
+		auto bbId = 1;
+
+		/* Find the leaders */
+		unsigned int instrInd = 0;
+		for (auto& irLine : *this->_instrs) {
+			if (irLine.first != nullptr || nextIsLeader) {
+				/* Save index of where the BB starts. */
+				bbLimits.push_back(make_pair(instrInd, 0));
+
+				/* We need to know later which instructions aren't leaders. */
+				leaders.insert(instrInd);
+			}
+
+			nextIsLeader = Util::isControlInstr(irLine.second);
+
+			instrInd++;
+		}
+
+		/* Find the "enders". */
+		for (auto& ldrIndx : bbLimits) {
+			instrInd = ldrIndx.first + 1; // next instruction after the leader (i.e., first in the BB)
+
+			// Find the end of the BB
+			while (instrInd < this->_instrs->size() && leaders.find(instrInd) == leaders.end())
+				instrInd++;
+
+			// second points to one after end
+			ldrIndx.second = instrInd;
+		}
+
+		/* Construct the nodes of the CFG. */
+		BasicBlock_sptr prevBB = nullptr;
+		for (auto& bbBorder : bbLimits) {
+			auto beg = this->_instrs->begin();
+			auto end = this->_instrs->begin();
+
+			std::advance(beg, bbBorder.first);
+			std::advance(end, bbBorder.second);
+
+			auto newBB = make_shared<Backend::BasicBlock>(bbId++, make_shared<list<IRLine>>( list<IRLine>(beg, end) ));
+
+			/* If the current basic block header may be a target of a jump (i.e.,
+			 * the first instruction have a label, then we need to keep that
+			 * information for later we need to add these edges to the CFG. */
+			if (beg->first != nullptr)
+				labelToBB[beg->first] = newBB;
+
+			/* We check if the previous basic block may fallthrought to the
+			 * current basic block. */
+			if (prevBB != nullptr && prevBB->instructions()->size() > 0) {
+				auto prevLastInstr 		= prevBB->instructions()->back();
+				auto typePrevLastInstr 	= Util::isControlInstr(prevLastInstr.second);
+
+				/* Does the last instruction of the previous BB have a fallthrought?
+				 * Only when it is a return instruction that it does not. */
+				if (typePrevLastInstr != Util::ReturnInstruction)
+					prevBB->jmpFall(newBB);
+			}
+
+			/* Add BB to CFG. */
+			newCfg->addBasicBlock(newBB);
+			
+			/* Update the previous BB. */
+			prevBB = newBB;
+		}
+
+		/* Every function has exactly one exit basic block. */
+		auto exitBasicBlock = make_shared<Backend::BasicBlock>(bbId++, make_shared<list<IRLine>>( list<IRLine>() ));
+
+		/* jumping/branching edges. Fallthrought edges have already
+		 * been added. */
+		for (auto& bb : newCfg->nodes()) {
+			/* If the block have instructions. */
+			if (bb->instructions() != nullptr && bb->instructions()->size() > 0) {
+				auto lastInstr = bb->instructions()->back().second;
+				auto typeLastInstr = Util::isControlInstr(lastInstr);
+
+				if (typeLastInstr == Util::ReturnInstruction)
+					bb->jmpLabel(exitBasicBlock);
+				else if (typeLastInstr == Util::BranchInstruction)
+					bb->jmpLabel( labelToBB[ Util::branchTarget(lastInstr) ] );
+			}
+		}
+
+		/* Add BB to CFG. */
+		newCfg->addBasicBlock(exitBasicBlock);
+
+		return newCfg;
+	}
+
+
+	void Module::dump() {
+	   std::stringstream buffer;
+
+	   buffer << "This is the IR: " << endl;
+	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
+
+		for (auto function : *this->_functions) {
+			function->dump(buffer);
+			buffer << endl << endl;
+		}
+
+		cout << buffer.str();
+	}
+
+
+
 }

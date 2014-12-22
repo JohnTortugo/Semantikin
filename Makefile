@@ -1,7 +1,9 @@
 
 ###### Of course this should be improved...
 
-SOURCES = Parsin.tab.cc lex.yy.cc Driver.cpp main.cpp AbstractSyntaxTree.cpp AstToDotVisitor.cpp SymbolTable.cpp AstSemaVisitor.cpp AstTACGenVisitor.cpp IR.cpp ErrorReporting.cpp
+SOURCES = 	Parsin.tab.cc lex.yy.cc Driver.cpp main.cpp AbstractSyntaxTree.cpp AstToDotVisitor.cpp \
+			SymbolTable.cpp AstSemaVisitor.cpp AstTACGenVisitor.cpp IR.cpp ErrorReporting.cpp	\
+			ControlFlowGraph.cpp BasicBlock.cpp
 OBJS1	= $(SOURCES:.cc=.o)
 OBJS	= $(OBJS1:.cpp=.o)
 
