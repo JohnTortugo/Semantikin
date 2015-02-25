@@ -15,7 +15,7 @@ namespace Backend {
 		vector<BasicBlock_sptr> _nodes;
 
 	public:
-		void dumpToAst(string targetFileName);
+		void dumpToDot(string targetFileName);
 
 		void addBasicBlock(BasicBlock_sptr newBB) { _nodes.push_back(newBB); }
 

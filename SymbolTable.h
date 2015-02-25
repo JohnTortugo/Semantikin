@@ -58,8 +58,13 @@ namespace Parser {
 		virtual ~SymbolTableEntry() {};
 	};
 
+	/* This is a base class for all r-values: instructions(!),
+	 * variables and contants(!). */
+	class RValue {
+	};
+
 	/* Represent any kind of variable: parameter, temporary, local. */
-	class STVariableDeclaration : public SymbolTableEntry {
+	class LValue : public SymbolTableEntry, public RValue {
 	protected:
 		/* How many bytes this variable occupy. */
 		int width;
@@ -74,10 +79,10 @@ namespace Parser {
 
 
 	public:
-		STVariableDeclaration() : SymbolTableEntry("", Parser::NOT_A_TYPE), width(0), offset(0)
+		LValue() : SymbolTableEntry("", Parser::NOT_A_TYPE), width(0), offset(0)
 		{ }
 
-		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), width(wd), offset(off)
+		LValue(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), width(wd), offset(off)
 		{ }
 
 		const vector<int>& dims() const { return _dims; }
@@ -95,9 +100,9 @@ namespace Parser {
 
 
 	/* This represent a local variable declaration. */
-	class STLocalVarDecl : public STVariableDeclaration {
+	class STLocalVarDecl : public LValue {
 	public:
-		STLocalVarDecl(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
+		STLocalVarDecl(string nm, NativeType tp, int wd, int off) : LValue(nm, tp, wd, off)
 		{ }
 
 		void dump() const;
@@ -105,9 +110,9 @@ namespace Parser {
 
 
 	/* This represent a formal parameter declaration in a function. */
-	class STParamDecl : public STVariableDeclaration {
+	class STParamDecl : public LValue {
 	public:
-		STParamDecl(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
+		STParamDecl(string nm, NativeType tp, int wd, int off) : LValue(nm, tp, wd, off)
 		{ }
 
 		void dump() const;
@@ -115,9 +120,9 @@ namespace Parser {
 
 
 	/* This entry will represent a temporary variable used in the IR. */
-	class STTempVar : public STVariableDeclaration {
+	class STTempVar : public LValue {
 	public:
-		STTempVar(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
+		STTempVar(string nm, NativeType tp, int wd, int off) : LValue(nm, tp, wd, off)
 		{ }
 
 		void dump() const;
@@ -145,7 +150,7 @@ namespace Parser {
 
 
 	/* This is used to store the constants when representing the IR. */
-	class STConstantDef : public SymbolTableEntry {
+	class STConstantDef : public RValue, public SymbolTableEntry {
 	private:
 		/* TODO: make these fields part of a union */
 		int _integer;

@@ -59,7 +59,7 @@ namespace Parser {
 	class Expression : public Statement {
 	protected:
 		NativeType _type = NOT_A_TYPE;
-		shared_ptr<SymbolTableEntry> _addr = nullptr;
+		shared_ptr<RValue> _addr = nullptr;
 
 		/* This indicate if the current expression being decoded is a left-hand
 		 * or right-hand. If it is left-hand then, if the expression is a identifier
@@ -87,8 +87,8 @@ namespace Parser {
 		NativeType type() const { return _type; }
 		void type(NativeType _etype) { _type = _etype; }
 
-		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
-		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
+		void addr(shared_ptr<RValue> addr) { this->_addr = addr; }
+		shared_ptr<RValue> addr() { return this->_addr; }
 
 		void isExpLeftHand(bool isLeft) { this->_isExpLeftHand = isLeft; }
 		bool isExpLeftHand() { return this->_isExpLeftHand; }
