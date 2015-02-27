@@ -46,184 +46,184 @@ namespace Util {
 namespace IR {
 
 	void ScalarCopy::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << ";" << endl;
 	}
 
 	void CopyFromArray::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = *" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = *" << this->_src1->getResName() << ";" << endl;
 	}
 
 	void CopyToArray::dump(stringstream& buffer) {
-		buffer << "*" << this->_tgt->getName() << " = " << this->_src1->getName() << ";" << endl;
+		buffer << "*" << this->_tgt->getResName() << " = " << this->_src1->getResName() << ";" << endl;
 	}
 
 
 
 	void IAdd::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " + " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void ISub::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " - " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void IMul::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " * " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " * " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void IDiv::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " / " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " / " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void IMod::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " % " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " % " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void IMinus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = -" << this->_tgt->getResName() << ";" << endl;
 	}
 
 	void IPlus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = +" << this->_tgt->getResName() << ";" << endl;
 	}
 
 	void IInc::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_tgt->getResName() << " + 1;" << endl;
 	}
 
 	void IDec::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_tgt->getResName() << " - 1;" << endl;
 	}
 
 	void FAdd::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " + " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void FSub::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " - " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void FMul::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " * " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " * " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void FDiv::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " / " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " / " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void FMinus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = -" << this->_tgt->getResName() << ";" << endl;
 	}
 
 	void FPlus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = +" << this->_tgt->getResName() << ";" << endl;
 	}
 
 	void FInc::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_tgt->getResName() << " + 1;" << endl;
 	}
 
 	void FDec::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_tgt->getResName() << " - 1;" << endl;
 	}
 
 
 
 	void BinAnd::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " & " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " & " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void BinOr::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " | " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " | " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void BinXor::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " ^ " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " ^ " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void BinNot::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = ~ " << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = ~ " << this->_src1->getResName() << ";" << endl;
 	}
 
 
 
 	void LogAnd::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " && " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " && " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void LogOr::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " || " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " || " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void LogNot::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = ! " << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = ! " << this->_src1->getResName() << ";" << endl;
 	}
 
 
 
 	void RLesThan::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " < " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " < " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void RLesThanEqual::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " <= " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " <= " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void RGreaterThan::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " > " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " > " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void RGreaterThanEqual::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " >= " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " >= " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void REqual::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " == " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " == " << this->_src2->getResName() << ";" << endl;
 	}
 
 	void RNotEqual::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " != " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = " << this->_src1->getResName() << " != " << this->_src2->getResName() << ";" << endl;
 	}
 
 
 
 	void Jump::dump(stringstream& buffer) {
-		buffer << "goto " << this->_tgt->getName() << ";" << endl;
+		buffer << "goto " << this->target()->getName() << ";" << endl;
 	}
 
 	void CondTrueJump::dump(stringstream& buffer) {
-		buffer << "ifTrue " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
+		buffer << "ifTrue " << this->cond()->getResName() << " goto " << this->target()->getName() << ";" << endl;
 	}
 
 	void CondFalseJump::dump(stringstream& buffer) {
-		buffer << "ifFalse " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
+		buffer << "ifFalse " << this->cond()->getResName() << " goto " << this->target()->getName() << ";" << endl;
 	}
 
 
 
 	void Addr::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = &" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->getResName() << " = &" << this->_src1->getResName() << ";" << endl;
 	}
 
 	void Call::dump(stringstream& buffer) {
 		if (this->_tgt != nullptr)
-			buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "(";
+			buffer << this->_tgt->getResName() << " = " << this->callee()->getName() << "(";
 		else
-			buffer << this->_src1->getName() << "(";
+			buffer << this->callee()->getName() << "(";
 
 		auto arguments = this->arguments();
 
 		if (arguments->size() > 0)
-			buffer << (*arguments)[0]->getName();
+			buffer << (*arguments)[0]->getResName();
 
 		for (int i=1; i<arguments->size(); i++)
-			buffer << ", " << (*arguments)[i]->getName();
+			buffer << ", " << (*arguments)[i]->getResName();
 
 		buffer << ");" << endl;
 	}
 
 	void Return::dump(stringstream& buffer) {
-		buffer << "return " << this->_tgt->getName() << ";" << endl;
+		buffer << "return " << this->_src1->getResName() << ";" << endl;
 	}
 
 	void Phi::dump(stringstream& buffer) { buffer << "phi();" << endl; }

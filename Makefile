@@ -1,7 +1,17 @@
-###### Of course this should be improved...
-
-SOURCES 	= 	Parsin.tab.cc lex.yy.cc Driver.cpp main.cpp AbstractSyntaxTree.cpp ControlFlowGraph.cpp BasicBlock.cpp AstToDotVisitor.cpp \
-				SymbolTable.cpp AstSemaVisitor.cpp AstTACGenVisitor.cpp IR.cpp ErrorReporting.cpp			
+SOURCES 	= 	Parsin.tab.cc \
+				lex.yy.cc \
+				Driver.cpp \
+				main.cpp \
+				AbstractSyntaxTree.cpp \
+				SymbolTable.cpp \
+				AstSemaVisitor.cpp \
+				IR.cpp \
+				ErrorReporting.cpp \
+				AstToDotVisitor.cpp \
+				AstTACGenVisitor.cpp \
+				ControlFlowGraph.cpp \
+				BasicBlock.cpp
+							
 OBJS1		= $(SOURCES:.cc=.o)
 OBJS		= $(OBJS1:.cpp=.o)
 
@@ -12,13 +22,13 @@ ASTS		= $(shell ls "ast_"*".dot" 2> /dev/null)
 AST_FIGS	= $(ASTS:.dot=.png)
 
 all: $(OBJS)
-	g++ -g -std=c++0x $(OBJS) -o Semantikin
+	g++ -O0 -g -std=c++0x $(OBJS) -o Semantikin
 
 %.o: %.cpp
-	g++ -g -c -std=c++0x $<
+	g++ -O0 -g -c -std=c++0x $<
 	
 %.o: %.cc
-	g++ -g -c -std=c++0x $<
+	g++ -O0 -g -c -std=c++0x $<
 
 %.png: %.dot
 	dot -Tpng $< -o $@
@@ -40,3 +50,6 @@ view-cfg: $(CFGS_FIGS)
 
 clean:
 	rm -rf Semantikin Parsin.tab.cc Parsin.tab.hh Parsin.output location.hh position.hh stack.hh lex.yy.cc *.o tmp *.dot *.png
+
+###### Of course this should be improved...
+	
