@@ -41,10 +41,8 @@ namespace IR {
 		void src2(shared_ptr<RValue> src) { this->_src2 = src; }
 		shared_ptr<RValue> src2() { return this->_src2; }
 
-		string getResName() { return this->tgt()->getName(); }
-
-		virtual const shared_ptr<vector<shared_ptr<RValue>>> arguments() { return nullptr; }
-		virtual void addArgument(shared_ptr<RValue> argument) { }
+		virtual const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() { return nullptr; }
+		virtual void addArgument(shared_ptr<SymbolTableEntry> argument) { }
 
 		virtual void dump(stringstream& buffer) = 0;
 
@@ -376,17 +374,17 @@ namespace IR {
 	class BranchInstruction : public Instruction {
 	private:
 		shared_ptr<STLabelDef> _target;
-		shared_ptr<RValue> _cond;
+		shared_ptr<LValue> _cond;
 
 	public:
-		BranchInstruction(shared_ptr<RValue> cond, shared_ptr<STLabelDef> target) : Instruction(nullptr, nullptr, nullptr), _target(target), _cond(cond)
+		BranchInstruction(shared_ptr<LValue> cond, shared_ptr<STLabelDef> target) : Instruction(nullptr, nullptr, nullptr), _target(target), _cond(cond)
 		{ }
 
 		void target(shared_ptr<STLabelDef> target) { this->_target = target; }
 		shared_ptr<STLabelDef> target() const { return this->_target; }
 
-		void cond(shared_ptr<RValue> cond) { this->_cond = cond; }
-		shared_ptr<RValue> cond() const { return this->_cond; }
+		void cond(shared_ptr<LValue> cond) { this->_cond = cond; }
+		shared_ptr<LValue> cond() const { return this->_cond; }
 	};
 
 	class Jump : public BranchInstruction {
@@ -399,20 +397,15 @@ namespace IR {
 
 	class CondTrueJump : public BranchInstruction {
 	public:
-		CondTrueJump(shared_ptr<RValue> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt)
-		{
-			if (exp == nullptr)
-				cout << "got you!" << endl;
-
-			tgt->incrementUses();
-		}
+		CondTrueJump(shared_ptr<LValue> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt)
+		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
 	};
 
 	class CondFalseJump : public BranchInstruction {
 	public:
-		CondFalseJump(shared_ptr<RValue> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt)
+		CondFalseJump(shared_ptr<LValue> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -438,8 +431,6 @@ namespace IR {
 	public:
 		Call(shared_ptr<STFunctionDeclaration> callee, shared_ptr<LValue> returnVar) : Instruction(returnVar, nullptr, nullptr), _callee(callee)
 		{ }
-
-		shared_ptr<STFunctionDeclaration> callee() { return this->_callee; }
 
 		const shared_ptr<vector<shared_ptr<RValue>>> arguments() const { return _arguments; }
 

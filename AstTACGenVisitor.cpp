@@ -361,7 +361,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 			shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), sizes[factIndex]));
 
 			/* multiply index*DIM_SIZE and store it. */
-			auto newInstruction = shared_ptr<IR::Instruction>( new IR::IMul(this->newTemporary(Parser::INT), cttEntry, ind) );
+			auto newInstruction = make_shared<IR::Instruction>( new IR::IMul(this->newTemporary(Parser::INT), cttEntry, ind) );
 
 			this->_currentFunction->appendInstruction( newInstruction );
 
@@ -375,7 +375,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		auto prev = indExpsFacts[0];
 		for (factIndex=1; factIndex < indExpsFacts.size(); factIndex++) {
 			/* Sum prev factor with current. */
-			auto newInstruction = shared_ptr<IR::Instruction>( new IR::IAdd(this->newTemporary(Parser::INT), prev, indExpsFacts[factIndex]) );
+			auto newInstruction = make_shared<IR::Instruction>( new IR::IAdd(this->newTemporary(Parser::INT), prev, indExpsFacts[factIndex]) );
 
 			this->_currentFunction->appendInstruction( newInstruction );
 
@@ -384,18 +384,18 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 
 		/* Now we need to consider the base type size. */
 		shared_ptr<Parser::STConstantDef> cttBaseType(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), AstSemaVisitor::typeWidth(decl->type())));
-		auto indAccess = shared_ptr<IR::Instruction>( new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev) );
+		auto indAccess = make_shared<IR::Instruction>( new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev) );
 		this->_currentFunction->appendInstruction( indAccess );
 
 		/* Now we have to sum with the base pointer (id). */
-		auto arrAccess = shared_ptr<IR::Instruction>( new IR::IAdd(this->newTemporary(Parser::INT), decl, indAccess) );
+		auto arrAccess = make_shared<IR::Instruction>( new IR::IAdd(this->newTemporary(Parser::INT), decl, indAccess) );
 		this->_currentFunction->appendInstruction( arrAccess );
 
 		/* If we are parsing a right-hand side expression we will de-refer the pointer and load
 		 * the array value in a temporary. Otherwise, we will just return the address to the previous
 		 * expression, and it will take care of dereferencing. 									   */
 		if (!id->isExpLeftHand()) {
-			auto derefer = shared_ptr<IR::Instruction>( new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess) );
+			auto derefer = make_shared<IR::Instruction>( new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess) );
 			this->_currentFunction->appendInstruction( derefer );
 
 			id->addr( derefer );
@@ -426,10 +426,10 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 }
 
 void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
-	auto decl 	= this->_currentFunction->symbolTable()->lookup(funCall->name());
+	auto decl 	 = this->_currentFunction->symbolTable()->lookup(funCall->name());
 	auto tmpRes = this->newTemporary( decl->type() );
 
-	auto newInstruction = make_shared<IR::Call>( std::dynamic_pointer_cast<STFunctionDeclaration>(decl), tmpRes);
+	auto newInstruction = make_shared<IR::Call>( new IR::Call(decl, tmpRes) );
 
 	for (auto argument : *funCall->arguments()) {
 		/* Visit the argument, produce address for them.*/
@@ -452,21 +452,21 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 		unary->exp()->isExpLeftHand(false);
 		unary->exp()->accept(this);
 
-		auto newInstruction = new IR::Addr(this->newTemporary(unary->type()), unary->exp()->addr());
+		auto newInstruction = make_shared<IR::Instruction>( new IR::Addr(this->newTemporary(unary->type()), unary->exp()->addr()) );
 
-		unary->addr( shared_ptr<IR::Addr>(newInstruction) );
+		unary->addr( newInstruction );
 
-		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
+		this->_currentFunction->appendInstruction( newInstruction );
 	}
 	else if (unary->opr() == UnaryExpr::BIT_NOT) {
 		unary->exp()->isExpLeftHand(false);
 		unary->exp()->accept(this);
 
-		auto newInstruction = new IR::BinNot(this->newTemporary(unary->type()), unary->exp()->addr());
+		auto newInstruction = make_shared<IR::Instruction>( new IR::BinNot(this->newTemporary(unary->type()), unary->exp()->addr()) );
 
-		unary->addr( shared_ptr<IR::BinNot>(newInstruction) );
+		unary->addr( newInstruction );
 
-		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
+		this->_currentFunction->appendInstruction( newInstruction );
 	}
 	else {
 		translateArithmeticExpr(unary);
@@ -516,9 +516,9 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 }
 
 void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
-	shared_ptr<IR::Instruction> newInstruction = nullptr;
-	Expression* exp 	= unary->exp();
-	NativeType tgtType 	= unary->type();
+	IR::Instruction* newInstruction = nullptr;
+	Expression* exp 				= unary->exp();
+	NativeType tgtType 				= unary->type();
 
 	exp->isExpLeftHand(false);
 	exp->accept(this);
@@ -526,46 +526,38 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 	if (tgtType == Parser::INT) {
 		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
-				if (std::dynamic_pointer_cast<LValue>(exp->addr()))
-					newInstruction = make_shared<IR::IMinus>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
-				else
-					newInstruction = make_shared<IR::ISub>(this->newTemporary(tgtType), this->newConstant(0), exp->addr());
-
+				newInstruction = new IR::IMinus(exp->addr());
 				break;
 
 			case UnaryExpr::PLUS:
-				if (std::dynamic_pointer_cast<LValue>(exp->addr()))
-					newInstruction = make_shared<IR::IPlus>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
-				else
-					newInstruction = make_shared<IR::IAdd>(this->newTemporary(tgtType), this->newConstant(0), exp->addr());
-
+				newInstruction = new IR::IPlus(exp->addr());
 				break;
 
 			case UnaryExpr::INCREMENT:
-				newInstruction = make_shared<IR::IInc>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
+				newInstruction = new IR::IInc(exp->addr());
 				break;
 
 			case UnaryExpr::DECREMENT:
-				newInstruction = make_shared<IR::IDec>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
+				newInstruction = new IR::IDec(exp->addr());
 				break;
 		}
 	}
 	else if (tgtType == Parser::FLOAT) {
 		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
-				newInstruction = make_shared<IR::FMinus>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
+				newInstruction = new IR::FMinus(exp->addr());
 				break;
 
 			case UnaryExpr::PLUS:
-				newInstruction = make_shared<IR::FPlus>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
+				newInstruction = new IR::FPlus(exp->addr());
 				break;
 
 			case UnaryExpr::INCREMENT:
-				newInstruction = make_shared<IR::FInc>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
+				newInstruction = new IR::FInc(exp->addr());
 				break;
 
 			case UnaryExpr::DECREMENT:
-				newInstruction = make_shared<IR::FDec>( std::dynamic_pointer_cast<LValue>(exp->addr()) );
+				newInstruction = new IR::FDec(exp->addr());
 				break;
 		}
 	}
@@ -667,11 +659,10 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 }
 
 void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
-	shared_ptr<IR::Instruction> newInstruction = nullptr;
+	IR::Instruction* newInstruction = nullptr;
 	auto exp1 	 = binop->getExp1();
 	auto exp2 	 = binop->getExp2();
 	auto tgtType = binop->type();
-	shared_ptr<LValue> exp1AsTarget = std::dynamic_pointer_cast<LValue>(exp1->addr());
 
 	exp1->isExpLeftHand(binop->opr() == BinaryExpr::ASSIGN);
 	exp1->accept(this);
@@ -683,61 +674,61 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 		switch (binop->opr()) {
 			case BinaryExpr::ASSIGN:
 				if (exp1->isArrayAccess())
-					newInstruction = make_shared<IR::CopyToArray>( exp1AsTarget, exp2->addr());
+					newInstruction = new IR::CopyToArray(exp1->addr(), exp2->addr());
 				else
-					newInstruction = make_shared<IR::ScalarCopy>( exp1AsTarget, exp2->addr());
+					newInstruction = new IR::ScalarCopy(exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::BIT_AND:
-				newInstruction = make_shared<IR::BinAnd>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::BinAnd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::BIT_OR:
-				newInstruction = make_shared<IR::BinOr>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::BinOr(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::BIT_XOR:
-				newInstruction = make_shared<IR::BinXor>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::BinXor(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::ADDITION:
-				newInstruction = make_shared<IR::IAdd>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::IAdd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::SUBTRACTION:
-				newInstruction = make_shared<IR::ISub>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::ISub(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::TIMES:
-				newInstruction = make_shared<IR::IMul>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::IMul(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::DIV:
-				newInstruction = make_shared<IR::IDiv>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::IDiv(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::MOD:
-				newInstruction = make_shared<IR::IMod>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::IMod(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::PLUS_EQUAL:
-				newInstruction = make_shared<IR::IAdd>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::IAdd(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::MINUS_EQUAL:
-				newInstruction = make_shared<IR::ISub>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::ISub(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::TIMES_EQUAL:
-				newInstruction = make_shared<IR::IMul>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::IMul(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::DIV_EQUAL:
-				newInstruction = make_shared<IR::IDiv>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::IDiv(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::MOD_EQUAL:
-				newInstruction = make_shared<IR::IMod>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::IMod(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 		}
 	}
@@ -745,48 +736,48 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 		switch (binop->opr()) {
 			case BinaryExpr::ASSIGN:
 				if (exp1->isArrayAccess())
-					newInstruction = make_shared<IR::CopyToArray>(exp1AsTarget, exp2->addr());
+					newInstruction = new IR::CopyToArray(exp1->addr(), exp2->addr());
 				else
-					newInstruction = make_shared<IR::ScalarCopy>(exp1AsTarget, exp2->addr());
+					newInstruction = new IR::ScalarCopy(exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::ADDITION:
-				newInstruction = make_shared<IR::FAdd>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::FAdd(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::SUBTRACTION:
-				newInstruction = make_shared<IR::FSub>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::FSub(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::TIMES:
-				newInstruction = make_shared< IR::FMul>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::FMul(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::DIV:
-				newInstruction = make_shared< IR::FDiv>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+				newInstruction = new IR::FDiv(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::PLUS_EQUAL:
-				newInstruction = make_shared< IR::FAdd>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::FAdd(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::MINUS_EQUAL:
-				newInstruction = make_shared< IR::FSub>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::FSub(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::TIMES_EQUAL:
-				newInstruction = make_shared< IR::FMul>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::FMul(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 
 			case BinaryExpr::DIV_EQUAL:
-				newInstruction = make_shared< IR::FDiv>(exp1AsTarget, exp1->addr(), exp2->addr());
+				newInstruction = new IR::FDiv(exp1->addr(), exp1->addr(), exp2->addr());
 				break;
 		}
 	}
 	else if (tgtType == Parser::STRING) {
 		if (binop->opr() == BinaryExpr::ASSIGN) {
 			auto st 	   = this->_currentFunction->symbolTable();
-			newInstruction = make_shared<IR::Call>( std::dynamic_pointer_cast<STFunctionDeclaration>(st->lookup(System::NAT_FUN_STRCPY)), this->newTemporary(Parser::STRING));
+			newInstruction = new IR::Call(st->lookup(System::NAT_FUN_STRCPY), this->newTemporary(Parser::STRING));
 
 			newInstruction->addArgument( exp1->addr() );
 			newInstruction->addArgument( exp2->addr() );
@@ -805,7 +796,7 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 }
 
 void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
-	shared_ptr<IR::Instruction> newInstruction = nullptr;
+	IR::Instruction* newInstruction = nullptr;
 	auto exp1 	 = binop->getExp1();
 	auto exp2 	 = binop->getExp2();
 	auto tgtType = binop->type();
@@ -822,27 +813,27 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 
 	switch (binop->opr()) {
 		case BinaryExpr::COMPARE:
-			newInstruction = make_shared<IR::REqual>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			newInstruction = new IR::REqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 
 		case BinaryExpr::DIFFERENCE:
-			newInstruction = make_shared<IR::RNotEqual>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			newInstruction = new IR::RNotEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 
 		case BinaryExpr::LT:
-			newInstruction = make_shared<IR::RLesThan>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			newInstruction = new IR::RLesThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 
 		case BinaryExpr::LTE:
-			newInstruction = make_shared<IR::RLesThanEqual>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			newInstruction = new IR::RLesThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 
 		case BinaryExpr::GT:
-			newInstruction = make_shared<IR::RGreaterThan>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			newInstruction = new IR::RGreaterThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 
 		case BinaryExpr::GTE:
-			newInstruction = make_shared<IR::RGreaterThanEqual>(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
+			newInstruction = new IR::RGreaterThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
 			break;
 	}
 
@@ -861,14 +852,14 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 		 * may happen when this expression is part of a larger expression
 		 * that is inside conditionals. */
 		if (tLabel != fall && fLabel != fall) {
-			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump( binop->addr(), tLabel) ) );
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), tLabel) ) );
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(fLabel) ) );
 		}
 		else if (tLabel != fall) {
-			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump( binop->addr(), tLabel) ) );
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), tLabel) ) );
 		}
 		else if (fLabel != fall) {
-			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump( binop->addr(), fLabel) ) );
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(binop->addr(), fLabel) ) );
 		}
 		else {
 			/* I do not expect this to happen, but better be
