@@ -16,6 +16,8 @@ using std::pair;
  ******************************************************************************/
 namespace Parser {
 	class STLabelDef;
+	class SymbolTable;
+	class SymbolTableEntry;
 }
 
 namespace IR {
@@ -84,6 +86,19 @@ namespace Util {
 	 * the target of a jump/branch. If the instruction is a call/ret or
 	 * not a control instruction the function returns nullptr. */
 	static STLabelDef_sptr branchTarget(Instruction_sptr instruction);
+
+	/* This functions transforms double-quotes and slashes in escaped
+	 * sequences of characters. That is:
+	 *
+	 * Behavior:
+	 * "	->	\"
+	 * \	-> 	\\
+	 * >	->	&gt;
+	 * <	-> 	&lt;
+	 * &	-> 	&amp;
+	 *
+	 */
+	string escapeStr(string str);
 }
 
 

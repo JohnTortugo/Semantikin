@@ -29,13 +29,13 @@ namespace Util {
 
 	STLabelDef_sptr branchTarget(Instruction_sptr instruction) {
 		if (auto branch = dynamic_cast<IR::CondTrueJump*>(instruction.get())) {
-			return std::dynamic_pointer_cast<STLabelDef>( branch->tgt() );
+			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
 		}
 		else if (auto branch = dynamic_cast<IR::CondFalseJump*>(instruction.get())) {
 			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
 		}
 		else if (auto branch = dynamic_cast<IR::Jump*>(instruction.get())) {
-			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
+			return std::dynamic_pointer_cast<STLabelDef>( branch->tgt() );
 		}
 		else
 			return nullptr;
@@ -300,6 +300,10 @@ namespace IR {
 		/* The CFG we are building */
 		auto newCfg = make_shared<Backend::ControlFlowGraph>();
 
+		/* We still need information about the "vars" inside this function, right? */
+		newCfg->addr(this->_addr);
+		newCfg->symbTable(this->_symbTable);
+
 		/* If the current instruction is a control handling instruction
 		 * then the next one is a leader for the fallthrought case. */
 		bool nextIsLeader = false;
@@ -387,6 +391,9 @@ namespace IR {
 				else if (typeLastInstr == Util::BranchInstruction)
 					bb->jmpLabel( labelToBB[ Util::branchTarget(lastInstr) ] );
 			}
+
+			if (bb->jmpFall() == nullptr && bb->jmpLabel() == nullptr)
+				bb->jmpFall(exitBasicBlock);
 		}
 
 		/* Add BB to CFG. */

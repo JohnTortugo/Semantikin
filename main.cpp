@@ -7,27 +7,37 @@ int main(const int argc, const char **argv) {
    Parser::Driver driver;
    Parser::CompilationUnit* astModule = nullptr;
 
-   if (driver.parse(argv[1], astModule)) {
-	   AstToDotVisitor ast("Semantikin.dot");
-	   astModule->accept(&ast);
+   /* Parsing. */
+   if (!driver.parse(argv[1], astModule)) return -1;
 
-	   AstSemaVisitor semantic;
-	   astModule->accept(&semantic);
+   /* Do semantic analyzis. */
+   AstSemaVisitor semantic;
+   astModule->accept(&semantic);
 
-	   AstTACGenVisitor irgen(semantic.currentOffset());
-	   astModule->accept(&irgen);
+   /* Generate TAC-SSA IR. */
+   AstTACGenVisitor irgen(semantic.currentOffset());
+   astModule->accept(&irgen);
 
-	   delete astModule;
+   /* Obtain pointer to the IR generated module. */
+   shared_ptr<IR::Module> irModule = irgen.module();
 
-	   shared_ptr<IR::Module> irModule = irgen.module();
 
-	   irModule->functions()->front()->cfg();
-
-	   irModule->dump();
+   // Just print out the AST of the function
+   for (auto& func : *astModule->getFunctions()) {
+	   AstToDotVisitor ast("ast_" + func->getName() + ".dot");
+	   func->accept(&ast);
    }
-   else {
-	   /* Parsing error. */
-   }
+
+
+   // print out the cfg of the function
+   for (auto& func : *irModule->functions()) {
+	   auto cfg = func->cfg();
+   	   cfg->dumpToDot("cfg_" + func->addr()->getName() + ".dot");
+	}
+
+
+   // Just dump the IR
+   irModule->dump();
 
    return 0;
 }

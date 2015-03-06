@@ -2,6 +2,28 @@
 #include <memory>
 #include <list>
 
+namespace Util {
+
+	string escapeStr(string str) {
+		string ret;
+		string::iterator it = str.begin();
+
+		while (it != str.end()) {
+			if (*it == '"') ret += "\\\"";
+			else if (*it == '\\') ret += "\\\\";
+			else if (*it == '<') ret += "&lt;";
+			else if (*it == '>') ret += "&gt;";
+			else if (*it == '&') ret += "&amp;";
+			else ret += *it;
+
+			it++;
+		}
+
+		return ret;
+	}
+
+}
+
 void AstToDotVisitor::visit(Parser::CompilationUnit* module) {
 	list<shared_ptr<Parser::Function>>::iterator it = module->getFunctions()->begin();
 	while (it != module->getFunctions()->end()) {
@@ -11,6 +33,9 @@ void AstToDotVisitor::visit(Parser::CompilationUnit* module) {
 }
 
 void AstToDotVisitor::visit(Parser::Function* function) {
+	/* Label of the graph */
+	this->dotfile << "\tlabel = \"This is the AST graph for function " << function->getName() << "\";" << endl;
+
 	/* The function header node. */
 	this->dotfile << "\t\"" << function << "\" [shape=record, label=\"{FuncDecl|Name:" << function->getName() << "|Return:" << function->getReturnType() << "}\"];" << endl;
 

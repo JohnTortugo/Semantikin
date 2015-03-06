@@ -37,7 +37,6 @@ public:
 		this->dotfile.open(filename);
 
 		this->dotfile << "digraph AstGraph {" << endl;
-		this->dotfile << "\ttitle = \"This is the AST of Astzin\";" << endl;
 	}
 
 	~AstToDotVisitor() {
