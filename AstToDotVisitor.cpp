@@ -2,28 +2,6 @@
 #include <memory>
 #include <list>
 
-namespace Util {
-
-	string escapeStr(string str) {
-		string ret;
-		string::iterator it = str.begin();
-
-		while (it != str.end()) {
-			if (*it == '"') ret += "\\\"";
-			else if (*it == '\\') ret += "\\\\";
-			else if (*it == '<') ret += "&lt;";
-			else if (*it == '>') ret += "&gt;";
-			else if (*it == '&') ret += "&amp;";
-			else ret += *it;
-
-			it++;
-		}
-
-		return ret;
-	}
-
-}
-
 void AstToDotVisitor::visit(Parser::CompilationUnit* module) {
 	list<shared_ptr<Parser::Function>>::iterator it = module->getFunctions()->begin();
 	while (it != module->getFunctions()->end()) {
@@ -263,7 +241,7 @@ void AstToDotVisitor::visit(Parser::CodeBlock* block) {
 
 void AstToDotVisitor::visit(Parser::StringExpr* str) {
 	/* The main node information. */
-	string value = Util::escapeStr(str->value());
+	string value = escapeStr(str->value());
 	value = (value.length() > 10) ? value.substr(0, 10)  + "...\\\"" : value;
 
 	this->dotfile << "\t\"" << str << "\" [shape=rect, label=\"" << value<< "\"];" << endl;
@@ -398,4 +376,18 @@ string AstToDotVisitor::translateUnop(Parser::UnaryExpr::ExprType type) {
 	}
 }
 
+string AstToDotVisitor::escapeStr(string str) {
+	string ret;
+	string::iterator it = str.begin();
+
+	while (it != str.end()) {
+		if (*it == '"') ret += "\\\"";
+		else if (*it == '\\') ret += "\\\\";
+		else ret += *it;
+
+		it++;
+	}
+
+	return ret;
+}
 

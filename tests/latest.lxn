@@ -1,15 +1,12 @@
-void fun7(int a, int b) {
-	if (a && b || a && b) {
-		a++;
+void fun17() {
+	int a = 3, b = 4;
+
+    if (a == b) {
+	
+		int c = a * 4*a*b;
+	
+		printStr("igual\n");
+	
 	}
-	elseif (a || b && a || b) {
-		b = b + 1;
-	}
-	elseif (a || b && a || b) {
-		b = b + 2;
-	}
-	else {
-		a++;
-		b++;
-	}
+
 }

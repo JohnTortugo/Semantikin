@@ -30,9 +30,6 @@ namespace Backend {
 			_fallLabel(nullptr)
 		{ }
 
-		int id() const { return _id; }
-		void id(int id) { _id = id; }
-
 		IRLine_list_sptr instructions() const { return _instructions; }
 
 		BasicBlock_sptr jmpLabel() const { return _jmpLabel; }
@@ -50,7 +47,7 @@ namespace Backend {
 				_predecessors.erase(predPos);
 		}
 
-		void dumpToDot(stringstream& buffer);
+
 	};
 
 }

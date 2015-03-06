@@ -29,13 +29,13 @@ namespace Util {
 
 	STLabelDef_sptr branchTarget(Instruction_sptr instruction) {
 		if (auto branch = dynamic_cast<IR::CondTrueJump*>(instruction.get())) {
-			return std::dynamic_pointer_cast<STLabelDef>( branch->target() );
+			return std::dynamic_pointer_cast<STLabelDef>( branch->tgt() );
 		}
 		else if (auto branch = dynamic_cast<IR::CondFalseJump*>(instruction.get())) {
-			return std::dynamic_pointer_cast<STLabelDef>( branch->target() );
+			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
 		}
 		else if (auto branch = dynamic_cast<IR::Jump*>(instruction.get())) {
-			return std::dynamic_pointer_cast<STLabelDef>( branch->target() );
+			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
 		}
 		else
 			return nullptr;
@@ -88,11 +88,11 @@ namespace IR {
 	}
 
 	void IInc::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "++;" << endl;
 	}
 
 	void IDec::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "--;" << endl;
 	}
 
 	void FAdd::dump(stringstream& buffer) {
@@ -120,11 +120,11 @@ namespace IR {
 	}
 
 	void FInc::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "++;" << endl;
 	}
 
 	void FDec::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "--;" << endl;
 	}
 
 
@@ -360,7 +360,7 @@ namespace IR {
 
 				/* Does the last instruction of the previous BB have a fallthrought?
 				 * Only when it is a return instruction that it does not. */
-				if (typePrevLastInstr != Util::ReturnInstruction && !dynamic_cast<IR::Jump*>(prevLastInstr.second.get()))
+				if (typePrevLastInstr != Util::ReturnInstruction)
 					prevBB->jmpFall(newBB);
 			}
 
@@ -384,17 +384,8 @@ namespace IR {
 
 				if (typeLastInstr == Util::ReturnInstruction)
 					bb->jmpLabel(exitBasicBlock);
-				else if (typeLastInstr == Util::BranchInstruction) {
-					auto v1 = Util::branchTarget(lastInstr);
-					auto v2 = labelToBB[v1];
-					bb->jmpLabel( v2 );
-				}
-
-				/* In this case there is no basic block succedding this BB,
-				 * it is the last of the function, thus we need to forward it
-				 * the exitBasicBlock. */
-				if (bb->jmpFall() == nullptr && bb->jmpLabel() == nullptr)
-					bb->jmpLabel(exitBasicBlock);
+				else if (typeLastInstr == Util::BranchInstruction)
+					bb->jmpLabel( labelToBB[ Util::branchTarget(lastInstr) ] );
 			}
 		}
 

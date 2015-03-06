@@ -22,24 +22,24 @@ using namespace Parser;
 
 namespace IR {
 	/* This class is the parent of all Three-address-code (TAC) IR instructions. */
-	class Instruction : public RValue {
+	class Instruction {
 	protected:
-		shared_ptr<LValue> _tgt;
-		shared_ptr<RValue> _src1;
-		shared_ptr<RValue> _src2;
+		shared_ptr<SymbolTableEntry> _tgt;
+		shared_ptr<SymbolTableEntry> _src1;
+		shared_ptr<SymbolTableEntry> _src2;
 
 	public:
-		Instruction(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : _tgt(tgt), _src1(src1), _src2(src2)
+		Instruction(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : _tgt(tgt), _src1(src1), _src2(src2)
 		{ }
 
-		void tgt(shared_ptr<LValue> tgt) { this->_tgt = tgt; }
-		shared_ptr<LValue> tgt() { return this->_tgt; }
+		void tgt(shared_ptr<SymbolTableEntry> tgt) { this->_tgt = tgt; }
+		shared_ptr<SymbolTableEntry> tgt() { return this->_tgt; }
 
-		void src1(shared_ptr<RValue> src) { this->_src1 = src; }
-		shared_ptr<RValue> src1() { return this->_src1; }
+		void src1(shared_ptr<SymbolTableEntry> src) { this->_src1 = src; }
+		shared_ptr<SymbolTableEntry> src1() { return this->_src1; }
 
-		void src2(shared_ptr<RValue> src) { this->_src2 = src; }
-		shared_ptr<RValue> src2() { return this->_src2; }
+		void src2(shared_ptr<SymbolTableEntry> src) { this->_src2 = src; }
+		shared_ptr<SymbolTableEntry> src2() { return this->_src2; }
 
 		virtual const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() { return nullptr; }
 		virtual void addArgument(shared_ptr<SymbolTableEntry> argument) { }
@@ -49,16 +49,18 @@ namespace IR {
 		virtual ~Instruction() {};
 	};
 
+
+
 	/* Parent class of all data movement instructions. */
 	class Copy : public Instruction {
 	public:
-		Copy(shared_ptr<LValue> tgt, shared_ptr<RValue> src1) : Instruction(tgt, src1, nullptr)
+		Copy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Instruction(tgt, src1, nullptr)
 		{ }
 	};
 
 	class ScalarCopy : public Copy {
 	public:
-		ScalarCopy(shared_ptr<LValue> tgt, shared_ptr<RValue> src) : Copy(tgt, src)
+		ScalarCopy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Copy(tgt, src)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -66,7 +68,7 @@ namespace IR {
 
 	class CopyFromArray : public Copy {
 	public:
-		CopyFromArray(shared_ptr<LValue> tgt, shared_ptr<RValue> src1) : Copy(tgt, src1)
+		CopyFromArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -74,7 +76,7 @@ namespace IR {
 
 	class CopyToArray : public Copy {
 	public:
-		CopyToArray(shared_ptr<LValue> tgt, shared_ptr<RValue> src1) : Copy(tgt, src1)
+		CopyToArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -85,19 +87,19 @@ namespace IR {
 	/* Parent class of all integer arithmetic instructions. */
 	class IntegerArithmetic : public Instruction {
 	public:
-		IntegerArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : Instruction(tgt, src1, src2)
+		IntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
 		{ }
 	};
 
 	class BinaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		BinaryIntegerArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : IntegerArithmetic(tgt, src1, src2)
+		BinaryIntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : IntegerArithmetic(tgt, src1, src2)
 		{ }
 	};
 
 	class UnaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		UnaryIntegerArithmetic(shared_ptr<LValue> tgt) : IntegerArithmetic(tgt, nullptr, nullptr)
+		UnaryIntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : IntegerArithmetic(tgt, src, nullptr)
 		{ }
 	};
 
@@ -169,19 +171,19 @@ namespace IR {
 	/* Parent class of all floating point arithmetic instructions. */
 	class FloatingArithmetic : public Instruction {
 	public:
-		FloatingArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : Instruction(tgt, src1, src2)
+		FloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
 		{ }
 	};
 
 	class BinaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		BinaryFloatingArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : FloatingArithmetic(tgt, src1, src2)
+		BinaryFloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : FloatingArithmetic(tgt, src1, src2)
 		{ }
 	};
 
 	class UnaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		UnaryFloatingArithmetic(shared_ptr<LValue> tgt) : FloatingArithmetic(tgt, nullptr, nullptr)
+		UnaryFloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : FloatingArithmetic(tgt, src, nullptr)
 		{ }
 	};
 
@@ -246,7 +248,7 @@ namespace IR {
 	/* Parent class of all binary arithmetic instructions. */
 	class BitArithmetic : public Instruction {
 	public:
-		BitArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : Instruction(tgt, src1, src2)
+		BitArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
 		{ }
 	};
 
@@ -273,7 +275,7 @@ namespace IR {
 
 	class BinNot : public BitArithmetic {
 	public:
-		BinNot(shared_ptr<LValue> tgt, shared_ptr<RValue> src) : BitArithmetic(tgt, src, nullptr)
+		BinNot(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : BitArithmetic(tgt, src, nullptr)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -284,7 +286,7 @@ namespace IR {
 	/* Parent class of all logical arithmetic instructions. */
 	class LogicalArithmetic : public Instruction {
 	public:
-		LogicalArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : Instruction(tgt, src1, src2)
+		LogicalArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
 		{ }
 	};
 
@@ -311,7 +313,7 @@ namespace IR {
 
 	class LogNot : public LogicalArithmetic {
 	public:
-		LogNot(shared_ptr<LValue> tgt, shared_ptr<RValue> src) : LogicalArithmetic(tgt, src, nullptr)
+		LogNot(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : LogicalArithmetic(tgt, src, nullptr)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -322,7 +324,7 @@ namespace IR {
 	/* Parent class of all relational arithmetic instructions. */
 	class RelationalArithmetic : public Instruction {
 	public:
-		RelationalArithmetic(shared_ptr<LValue> tgt, shared_ptr<RValue> src1, shared_ptr<RValue> src2) : Instruction(tgt, src1, src2)
+		RelationalArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
 		{ }
 	};
 
@@ -372,24 +374,14 @@ namespace IR {
 
 	/* Base class for all instructions that change control flow. */
 	class BranchInstruction : public Instruction {
-	private:
-		shared_ptr<STLabelDef> _target;
-		shared_ptr<LValue> _cond;
-
 	public:
-		BranchInstruction(shared_ptr<LValue> cond, shared_ptr<STLabelDef> target) : Instruction(nullptr, nullptr, nullptr), _target(target), _cond(cond)
+		BranchInstruction(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
 		{ }
-
-		void target(shared_ptr<STLabelDef> target) { this->_target = target; }
-		shared_ptr<STLabelDef> target() const { return this->_target; }
-
-		void cond(shared_ptr<LValue> cond) { this->_cond = cond; }
-		shared_ptr<LValue> cond() const { return this->_cond; }
 	};
 
 	class Jump : public BranchInstruction {
 	public:
-		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(nullptr, tgt)
+		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(tgt, nullptr, nullptr)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -397,7 +389,7 @@ namespace IR {
 
 	class CondTrueJump : public BranchInstruction {
 	public:
-		CondTrueJump(shared_ptr<LValue> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt)
+		CondTrueJump(shared_ptr<SymbolTableEntry> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt, nullptr)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -405,7 +397,7 @@ namespace IR {
 
 	class CondFalseJump : public BranchInstruction {
 	public:
-		CondFalseJump(shared_ptr<LValue> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt)
+		CondFalseJump(shared_ptr<SymbolTableEntry> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt, nullptr)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -416,7 +408,7 @@ namespace IR {
 	/* Represent taking the address of a variable. */
 	class Addr : public Instruction {
 	public:
-		Addr(shared_ptr<LValue> tgt, shared_ptr<RValue> src) : Instruction(tgt, src, nullptr)
+		Addr(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Instruction(tgt, src, nullptr)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -425,18 +417,17 @@ namespace IR {
 	/* Represent the call to a function. */
 	class Call : public Instruction {
 	private:
-		shared_ptr<vector<shared_ptr<RValue>>> _arguments;
-		shared_ptr<STFunctionDeclaration> _callee;
+		shared_ptr<vector<shared_ptr<SymbolTableEntry>>> _arguments;
 
 	public:
-		Call(shared_ptr<STFunctionDeclaration> callee, shared_ptr<LValue> returnVar) : Instruction(returnVar, nullptr, nullptr), _callee(callee)
+		Call(shared_ptr<SymbolTableEntry> callee, shared_ptr<SymbolTableEntry> resTgt) : Instruction(resTgt, callee, nullptr)
 		{ }
 
-		const shared_ptr<vector<shared_ptr<RValue>>> arguments() const { return _arguments; }
+		const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() const { return _arguments; }
 
-		void addArgument(shared_ptr<RValue> argument) {
+		void addArgument(shared_ptr<SymbolTableEntry> argument) {
 			if (this->_arguments == nullptr)
-				this->_arguments = make_shared<vector<shared_ptr<RValue>>>();
+				this->_arguments = make_shared<vector<shared_ptr<SymbolTableEntry>>>();
 
 			_arguments->push_back(argument);
 		}
@@ -447,7 +438,7 @@ namespace IR {
 	/* Represent a return instruction. */
 	class Return : public Instruction {
 	public:
-		Return(shared_ptr<RValue> exp) : Instruction(nullptr, exp, nullptr)
+		Return(shared_ptr<SymbolTableEntry> exp) : Instruction(exp, nullptr, nullptr)
 		{ }
 
 		void dump(stringstream& buffer);

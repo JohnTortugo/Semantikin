@@ -22,7 +22,7 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
 	/* This label is just a sentinel pointer to convey the
 	 * information that the expression should consider a fallthrough
 	 * path. */
-	this->_fallLabel = this->newLabel();
+	this->_fallLabel = this->newLabel("fallthrough");
 
 	/* Continue visiting children. */
 	for (auto function : *module->getFunctions()) {
@@ -56,7 +56,7 @@ void AstTACGenVisitor::visit(Parser::Function* function) {
 	this->_currentFunction->addr( function->getSymbTable()->getParent()->lookup(function->getName()) );
 
 	/* The first instruction of every function needs to have a label. */
-	this->_currentFunction->appendLabel( this->newLabel() );
+	this->_currentFunction->appendLabel( this->newLabel("entry") );
 
 	/* Produce IR instructions for the statements in the function's code block. */
 	function->getBody()->accept(this);
@@ -78,12 +78,12 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 			initializer->accept(this);
 
 			if (initializer->type() == Parser::INT || initializer->type() == Parser::FLOAT) {
-				this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy( std::dynamic_pointer_cast<LValue>(st->lookup(spec->getName())), initializer->addr())));
+				this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy(st->lookup(spec->getName()), initializer->addr())));
 			}
 			else if (initializer->type() == Parser::STRING) {
-				shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call( std::dynamic_pointer_cast<STFunctionDeclaration>(st->lookup(System::NAT_FUN_STRCPY)), nullptr) );
+				shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(st->lookup(System::NAT_FUN_STRCPY), nullptr) );
 
-				newInstruction->addArgument( std::dynamic_pointer_cast<RValue>(st->lookup(spec->getName())));
+				newInstruction->addArgument(st->lookup(spec->getName()));
 				newInstruction->addArgument(initializer->addr());
 
 				this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
@@ -100,13 +100,13 @@ void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
 	auto condition 	= loop->getCondition();
 	auto codeBlock 	= loop->getBody();
 
-	condition->tLabel( this->_fallLabel );
+	condition->tLabel( this->newLabel() );
 	condition->fLabel( loop->next() );
 	codeBlock->next( begin );
 
 	this->_currentFunction->appendLabel(begin);
 	condition->accept(this);
-//	this->_currentFunction->appendLabel(condition->tLabel());
+	this->_currentFunction->appendLabel(condition->tLabel());
 	codeBlock->accept(this);
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(begin) ) );
 }
@@ -130,7 +130,7 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
 		/* Only have else block. */
 
-		condition->tLabel( this->_fallLabel );
+		condition->tLabel( this->newLabel() );
 		condition->fLabel( this->newLabel() );
 
 		thenBlock->next( ifStmt->next() );
@@ -148,14 +148,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		/* Only have else-if blocks. */
 		auto nextCondLabel = this->newLabel();
 
-		condition->tLabel( this->_fallLabel );
+		condition->tLabel( this->newLabel() );
 		condition->fLabel( nextCondLabel );
 
 		/* Process the condition. */
 		condition->accept(this);
 
 		/* Then block appended. */
-		//this->_currentFunction->appendLabel(condition->tLabel());
+		this->_currentFunction->appendLabel(condition->tLabel());
 		thenBlock->accept(this);
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -169,14 +169,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 			nextCondLabel = (indx < size) ? this->newLabel() : ifStmt->next();
 
 			/* As usual.. */
-			elseif->getCondition()->tLabel( this->_fallLabel );
+			elseif->getCondition()->tLabel( this->newLabel() );
 			elseif->getCondition()->fLabel( nextCondLabel );
 
 			/* Process the condition. */
 			elseif->getCondition()->accept(this);
 
 			/* Then block appended. */
-			//this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
+			this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
 			elseif->getElseIfBlock()->accept(this);
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -191,14 +191,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		auto nextCondLabel = this->newLabel();
 		auto elseLabel = this->newLabel();
 
-		condition->tLabel( this->_fallLabel );
+		condition->tLabel( this->newLabel() );
 		condition->fLabel( nextCondLabel );
 
 		/* Process the condition. */
 		condition->accept(this);
 
 		/* Then block appended. */
-//		this->_currentFunction->appendLabel(condition->tLabel());
+		this->_currentFunction->appendLabel(condition->tLabel());
 		thenBlock->accept(this);
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -212,14 +212,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 			nextCondLabel = (indx < size) ? this->newLabel() : elseLabel;
 
 			/* As usual.. */
-			elseif->getCondition()->tLabel( this->_fallLabel );
+			elseif->getCondition()->tLabel( this->newLabel() );
 			elseif->getCondition()->fLabel( nextCondLabel );
 
 			/* Process the condition. */
 			elseif->getCondition()->accept(this);
 
 			/* Then block appended. */
-//			this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
+			this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
 			elseif->getElseIfBlock()->accept(this);
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -336,10 +336,10 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 
 		/* We look into the symbol table to find the dimensions sizes. */
 		shared_ptr<SymbolTableEntry> entry = this->_currentFunction->symbolTable()->lookup(id->value());
-		auto decl = std::dynamic_pointer_cast<LValue>( entry );
+		STVariableDeclaration* decl = dynamic_cast<STVariableDeclaration*>( entry.get() );
 
 		/* Here we are going to store the factors for each index. */
-		vector<shared_ptr<IR::Instruction>> indExpsFacts;
+		vector<shared_ptr<SymbolTableEntry>> indExpsFacts;
 
 		/* Here we are going to store the accumulated (from right to left) size of each dimension. */
 		vector<int> sizes(decl->dims());
@@ -357,56 +357,56 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 			dimExpr->accept(this);
 
 			/* This represent the index used to make the access and the dimension size. */
-			auto ind = dimExpr->addr();
+			shared_ptr<SymbolTableEntry> ind = dimExpr->addr();
 			shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), sizes[factIndex]));
 
 			/* multiply index*DIM_SIZE and store it. */
-			auto newInstruction = make_shared<IR::Instruction>( new IR::IMul(this->newTemporary(Parser::INT), cttEntry, ind) );
+			IR::Instruction* newInstruction = new IR::IMul(this->newTemporary(Parser::INT), cttEntry, ind);
 
-			this->_currentFunction->appendInstruction( newInstruction );
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( newInstruction ) );
 
 			/* We store back the target because at the end we need to sum up the partial factors. */
-			indExpsFacts.push_back( newInstruction );
+			indExpsFacts.push_back( newInstruction->tgt() );
 
 			factIndex++;
 		}
 
 		/* Accumulate the value of the factors. */
-		auto prev = indExpsFacts[0];
+		shared_ptr<SymbolTableEntry> prev = indExpsFacts[0];
 		for (factIndex=1; factIndex < indExpsFacts.size(); factIndex++) {
 			/* Sum prev factor with current. */
-			auto newInstruction = make_shared<IR::Instruction>( new IR::IAdd(this->newTemporary(Parser::INT), prev, indExpsFacts[factIndex]) );
+			IR::Instruction* newInstruction = new IR::IAdd(this->newTemporary(Parser::INT), prev, indExpsFacts[factIndex]);
 
-			this->_currentFunction->appendInstruction( newInstruction );
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( newInstruction ) );
 
-			prev = newInstruction;
+			prev = newInstruction->tgt();
 		}
 
 		/* Now we need to consider the base type size. */
 		shared_ptr<Parser::STConstantDef> cttBaseType(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), AstSemaVisitor::typeWidth(decl->type())));
-		auto indAccess = make_shared<IR::Instruction>( new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev) );
-		this->_currentFunction->appendInstruction( indAccess );
+		IR::Instruction* indAccess = new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev);
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( indAccess ) );
 
 		/* Now we have to sum with the base pointer (id). */
-		auto arrAccess = make_shared<IR::Instruction>( new IR::IAdd(this->newTemporary(Parser::INT), decl, indAccess) );
-		this->_currentFunction->appendInstruction( arrAccess );
+		IR::Instruction* arrAccess = new IR::IAdd(this->newTemporary(Parser::INT), entry, indAccess->tgt());
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( arrAccess ) );
 
 		/* If we are parsing a right-hand side expression we will de-refer the pointer and load
 		 * the array value in a temporary. Otherwise, we will just return the address to the previous
 		 * expression, and it will take care of dereferencing. 									   */
 		if (!id->isExpLeftHand()) {
-			auto derefer = make_shared<IR::Instruction>( new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess) );
-			this->_currentFunction->appendInstruction( derefer );
+			IR::Instruction* derefer = new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess->tgt());
+			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( derefer ) );
 
-			id->addr( derefer );
+			id->addr( derefer->tgt() );
 		}
 		else {
-			id->addr( arrAccess );
+			id->addr( arrAccess->tgt() );
 		}
 	}
 	else {
 		id->isArrayAccess(false);
-		id->addr( std::dynamic_pointer_cast<LValue>(this->_currentFunction->symbolTable()->lookup(id->value())) );
+		id->addr( this->_currentFunction->symbolTable()->lookup(id->value()) );
 		/* No need to code gen. */
 		/* Address was already computed in Sema. */
 	}
@@ -429,7 +429,7 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 	auto decl 	 = this->_currentFunction->symbolTable()->lookup(funCall->name());
 	auto tmpRes = this->newTemporary( decl->type() );
 
-	auto newInstruction = make_shared<IR::Call>( new IR::Call(decl, tmpRes) );
+	shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(decl, tmpRes) );
 
 	for (auto argument : *funCall->arguments()) {
 		/* Visit the argument, produce address for them.*/
@@ -439,7 +439,7 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 		newInstruction->addArgument(argument->addr());
 	}
 
-	this->_currentFunction->appendInstruction(newInstruction);
+	this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
 
 	funCall->addr(tmpRes);
 }
@@ -452,21 +452,21 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 		unary->exp()->isExpLeftHand(false);
 		unary->exp()->accept(this);
 
-		auto newInstruction = make_shared<IR::Instruction>( new IR::Addr(this->newTemporary(unary->type()), unary->exp()->addr()) );
+		auto newInstruction = new IR::Addr(this->newTemporary(unary->type()), unary->exp()->addr());
 
-		unary->addr( newInstruction );
+		unary->addr( newInstruction->tgt() );
 
-		this->_currentFunction->appendInstruction( newInstruction );
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 	}
 	else if (unary->opr() == UnaryExpr::BIT_NOT) {
 		unary->exp()->isExpLeftHand(false);
 		unary->exp()->accept(this);
 
-		auto newInstruction = make_shared<IR::Instruction>( new IR::BinNot(this->newTemporary(unary->type()), unary->exp()->addr()) );
+		auto newInstruction = new IR::BinNot(this->newTemporary(unary->type()), unary->exp()->addr());
 
-		unary->addr( newInstruction );
+		unary->addr( newInstruction->tgt() );
 
-		this->_currentFunction->appendInstruction( newInstruction );
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 	}
 	else {
 		translateArithmeticExpr(unary);
@@ -526,43 +526,43 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 	if (tgtType == Parser::INT) {
 		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
-				newInstruction = new IR::IMinus(exp->addr());
+				newInstruction = new IR::IMinus(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::PLUS:
-				newInstruction = new IR::IPlus(exp->addr());
+				newInstruction = new IR::IPlus(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::INCREMENT:
-				newInstruction = new IR::IInc(exp->addr());
+				newInstruction = new IR::IInc(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::DECREMENT:
-				newInstruction = new IR::IDec(exp->addr());
+				newInstruction = new IR::IDec(this->newTemporary(tgtType), exp->addr());
 				break;
 		}
 	}
 	else if (tgtType == Parser::FLOAT) {
 		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
-				newInstruction = new IR::FMinus(exp->addr());
+				newInstruction = new IR::FMinus(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::PLUS:
-				newInstruction = new IR::FPlus(exp->addr());
+				newInstruction = new IR::FPlus(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::INCREMENT:
-				newInstruction = new IR::FInc(exp->addr());
+				newInstruction = new IR::FInc(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::DECREMENT:
-				newInstruction = new IR::FDec(exp->addr());
+				newInstruction = new IR::FDec(this->newTemporary(tgtType), exp->addr());
 				break;
 		}
 	}
 
-	unary->addr( newInstruction );
+	unary->addr( newInstruction->tgt() );
 
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 }
@@ -784,7 +784,7 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 		}
 	}
 
-	binop->addr( newInstruction );
+	binop->addr( newInstruction->tgt() );
 
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 
@@ -837,7 +837,7 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 			break;
 	}
 
-	binop->addr( newInstruction );
+	binop->addr( newInstruction->tgt() );
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 
 	auto tLabel = binop->tLabel();
@@ -869,7 +869,7 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 	}
 }
 
-void AstTACGenVisitor::emitBranchesBasedOnExpValue(shared_ptr<RValue> result, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse) {
+void AstTACGenVisitor::emitBranchesBasedOnExpValue(shared_ptr<SymbolTableEntry> result, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse) {
 	auto cmpInstr = new IR::REqual(this->newTemporary(Parser::INT), result, this->newConstant<int>(0));
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( cmpInstr ) );
 

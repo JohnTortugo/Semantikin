@@ -37,7 +37,7 @@ public:
 		this->dotfile.open(filename);
 
 		this->dotfile << "digraph AstGraph {" << endl;
-		this->dotfile << "\ttitle = \"This is the AST\";" << endl;
+		this->dotfile << "\ttitle = \"This is the AST of Astzin\";" << endl;
 	}
 
 	~AstToDotVisitor() {
@@ -49,6 +49,8 @@ public:
 	string translateBinop(Parser::BinaryExpr::ExprType type);
 
 	string translateUnop(Parser::UnaryExpr::ExprType type);
+
+	string escapeStr(string str);
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);
@@ -175,7 +177,7 @@ public:
 	void translateArithmeticExpr(Parser::UnaryExpr* unary);
 	void translateBooleanExp(Parser::UnaryExpr* unary);
 
-	void emitBranchesBasedOnExpValue(shared_ptr<RValue>, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse);
+	void emitBranchesBasedOnExpValue(shared_ptr<SymbolTableEntry>, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse);
 
 	template<typename T>
 	shared_ptr<STConstantDef> newConstant(T value);

@@ -377,7 +377,7 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 	}
 
 	/* Begin: Check matrix and variables indexing constraints. */
-	LValue* varDecl = dynamic_cast<LValue*>(decl.get());
+	STVariableDeclaration* varDecl = dynamic_cast<STVariableDeclaration*>(decl.get());
 
 	/* Specified indices for acessing scalar variable. */
 	if (varDecl->getNumDims() == 0 && dims != nullptr && dims->size() > 0) {
@@ -421,7 +421,7 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 
 	/* Register to which symbol table entry this 'id' refers to. This will
 	 * be helpfull when generating intermediate representation. 		*/
-	id->addr( std::dynamic_pointer_cast<LValue>(decl) );
+	id->addr(decl);
 
 	/* This reference to a variable has the type of the variable. */
 	id->type(varDecl->type());
@@ -486,8 +486,7 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 
 	/* Register to which symbol table entry this 'funCall' refers to.
 	 * This will be helpfull when generating intermediate representation. */
-//	funCall->addr(decl);
-	funCall->addr(nullptr);
+	funCall->addr(decl);
 
 	/* The type of the function call is the function return type. */
 	funCall->type(funDecl->type());
@@ -526,7 +525,7 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 	if (exp1->type() == Parser::STRING || exp2->type() == Parser::STRING) {
 		auto decl  = exp1->addr();
 
-		if (binop->opr() != BinaryExpr::ASSIGN || exp2->type() != Parser::STRING || decl == NULL || exp1->type() != Parser::STRING) {
+		if (binop->opr() != BinaryExpr::ASSIGN || exp2->type() != Parser::STRING || decl == NULL || decl->type() != Parser::STRING) {
 			cout << "Error in semantic analysis." << endl;
 			cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
 			exit(-1);

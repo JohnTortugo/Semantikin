@@ -78,25 +78,12 @@ namespace Util {
 	 * 		2 - A call instruction.
 	 * 		3 - A return instruction.
 	 */
-	unsigned char isControlInstr(Instruction_sptr instruction);
+	static unsigned char isControlInstr(Instruction_sptr instruction);
 
 	/* This function returns the target of the branch instruction, i.e.,
 	 * the target of a jump/branch. If the instruction is a call/ret or
 	 * not a control instruction the function returns nullptr. */
-	STLabelDef_sptr branchTarget(Instruction_sptr instruction);
-
-	/* This functions transforms double-quotes and slashes in escaped
-	 * sequences of characters. That is:
-	 *
-	 * Behavior:
-	 * "	->	\"
-	 * \	-> 	\\
-	 * >	->	&gt;
-	 * <	-> 	&lt;
-	 * &	-> 	&amp;
-	 *
-	 */
-	string escapeStr(string str);
+	static STLabelDef_sptr branchTarget(Instruction_sptr instruction);
 }
 
 
