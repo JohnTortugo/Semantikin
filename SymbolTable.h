@@ -61,10 +61,6 @@ namespace Parser {
 	/* This is a base class for all r-values: instructions(!),
 	 * variables and contants(!). */
 	class RValue {
-	public:
-		virtual string getResName() = 0;
-
-		virtual ~RValue() {}
 	};
 
 	/* Represent any kind of variable: parameter, temporary, local. */
@@ -92,8 +88,6 @@ namespace Parser {
 		const vector<int>& dims() const { return _dims; }
 		int getNumDims() const { return _dims.size(); }
 		void addDim(int size) { _dims.push_back(size); }
-
-		string getResName() { return this->name; }
 
 		int getOffset() const {
 			return offset;
@@ -178,8 +172,6 @@ namespace Parser {
 				case Parser::NOT_A_TYPE: throw System::EXCEPTION_UNEXPECTED_TYPE;
 			}
 		}
-
-		string getResName() { return this->getName(); }
 
 		void dump() const;
 	};

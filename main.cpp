@@ -15,29 +15,29 @@ int main(const int argc, const char **argv) {
    astModule->accept(&semantic);
 
    /* Generate TAC-SSA IR. */
-   AstTACGenVisitor irgen(semantic.currentOffset());
-   astModule->accept(&irgen);
-
-   /* Obtain pointer to the IR generated module. */
-   shared_ptr<IR::Module> irModule = irgen.module();
-
-
-// Just print out the AST of the function
-   for (auto& func : *astModule->getFunctions()) {
-	   AstToDotVisitor ast("ast_" + func->getName() + ".dot");
-	   func->accept(&ast);
-   }
-
-
-   // print out the cfg of the function
-   for (auto& func : *irModule->functions()) {
-	   auto cfg = func->cfg();
-   	   cfg->dumpToDot("cfg_" + func->addr()->getName() + ".dot");
-	}
+//   AstTACGenVisitor irgen(semantic.currentOffset());
+//   astModule->accept(&irgen);
+//
+//   /* Obtain pointer to the IR generated module. */
+//   shared_ptr<IR::Module> irModule = irgen.module();
+//
+//
+//   // Just print out the AST of the function
+//   for (auto& func : *astModule->getFunctions()) {
+//	   AstToDotVisitor ast("ast_" + func->getName() + ".dot");
+//	   func->accept(&ast);
+//   }
+//
+//
+//   // print out the cfg of the function
+//   for (auto& func : *irModule->functions()) {
+//	   auto cfg = func->cfg();
+//   	   cfg->dumpToDot("cfg_" + func->addr()->getName() + ".dot");
+//	}
 
 
    // Just dump the IR
-   irModule->dump();
+// irModule->dump();
 
    return 0;
 }
