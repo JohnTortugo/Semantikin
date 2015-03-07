@@ -100,13 +100,13 @@ void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
 	auto condition 	= loop->getCondition();
 	auto codeBlock 	= loop->getBody();
 
-	condition->tLabel( this->newLabel() );
+	condition->tLabel( this->_fallLabel );
 	condition->fLabel( loop->next() );
 	codeBlock->next( begin );
 
 	this->_currentFunction->appendLabel(begin);
 	condition->accept(this);
-	this->_currentFunction->appendLabel(condition->tLabel());
+//	this->_currentFunction->appendLabel(condition->tLabel());
 	codeBlock->accept(this);
 	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(begin) ) );
 }
@@ -130,7 +130,7 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
 		/* Only have else block. */
 
-		condition->tLabel( this->newLabel() );
+		condition->tLabel( this->_fallLabel );
 		condition->fLabel( this->newLabel() );
 
 		thenBlock->next( ifStmt->next() );
@@ -148,14 +148,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		/* Only have else-if blocks. */
 		auto nextCondLabel = this->newLabel();
 
-		condition->tLabel( this->newLabel() );
+		condition->tLabel( this->_fallLabel );
 		condition->fLabel( nextCondLabel );
 
 		/* Process the condition. */
 		condition->accept(this);
 
 		/* Then block appended. */
-		this->_currentFunction->appendLabel(condition->tLabel());
+		//this->_currentFunction->appendLabel(condition->tLabel());
 		thenBlock->accept(this);
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -169,14 +169,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 			nextCondLabel = (indx < size) ? this->newLabel() : ifStmt->next();
 
 			/* As usual.. */
-			elseif->getCondition()->tLabel( this->newLabel() );
+			elseif->getCondition()->tLabel( this->_fallLabel );
 			elseif->getCondition()->fLabel( nextCondLabel );
 
 			/* Process the condition. */
 			elseif->getCondition()->accept(this);
 
 			/* Then block appended. */
-			this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
+			//this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
 			elseif->getElseIfBlock()->accept(this);
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -191,14 +191,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		auto nextCondLabel = this->newLabel();
 		auto elseLabel = this->newLabel();
 
-		condition->tLabel( this->newLabel() );
+		condition->tLabel( this->_fallLabel );
 		condition->fLabel( nextCondLabel );
 
 		/* Process the condition. */
 		condition->accept(this);
 
 		/* Then block appended. */
-		this->_currentFunction->appendLabel(condition->tLabel());
+		//this->_currentFunction->appendLabel(condition->tLabel());
 		thenBlock->accept(this);
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
@@ -212,14 +212,14 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 			nextCondLabel = (indx < size) ? this->newLabel() : elseLabel;
 
 			/* As usual.. */
-			elseif->getCondition()->tLabel( this->newLabel() );
+			elseif->getCondition()->tLabel( this->_fallLabel );
 			elseif->getCondition()->fLabel( nextCondLabel );
 
 			/* Process the condition. */
 			elseif->getCondition()->accept(this);
 
 			/* Then block appended. */
-			this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
+			//this->_currentFunction->appendLabel( elseif->getCondition()->tLabel() );
 			elseif->getElseIfBlock()->accept(this);
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
 
