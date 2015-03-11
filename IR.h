@@ -46,6 +46,8 @@ namespace IR {
 
 		virtual void dump(stringstream& buffer) = 0;
 
+		virtual void linearDumpTox86(stringstream& buffer) = 0;
+
 		virtual ~Instruction() {};
 	};
 
@@ -64,6 +66,7 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyFromArray : public Copy {
@@ -72,6 +75,7 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyToArray : public Copy {
@@ -80,6 +84,7 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -108,6 +113,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class ISub : public BinaryIntegerArithmetic {
@@ -115,6 +121,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IMul : public BinaryIntegerArithmetic {
@@ -122,6 +129,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IDiv : public BinaryIntegerArithmetic {
@@ -129,6 +137,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IMod : public BinaryIntegerArithmetic {
@@ -136,6 +145,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IMinus : public UnaryIntegerArithmetic {
@@ -143,6 +153,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IPlus : public UnaryIntegerArithmetic {
@@ -150,6 +161,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IInc : public UnaryIntegerArithmetic {
@@ -157,6 +169,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IDec : public UnaryIntegerArithmetic {
@@ -164,6 +177,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -192,6 +206,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FSub : public BinaryFloatingArithmetic {
@@ -199,6 +214,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FMul : public BinaryFloatingArithmetic {
@@ -206,6 +222,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FDiv : public BinaryFloatingArithmetic {
@@ -213,6 +230,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FMinus : public UnaryFloatingArithmetic {
@@ -220,6 +238,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FPlus : public UnaryFloatingArithmetic {
@@ -227,6 +246,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FInc : public UnaryFloatingArithmetic {
@@ -234,6 +254,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FDec : public UnaryFloatingArithmetic {
@@ -241,6 +262,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -257,6 +279,7 @@ namespace IR {
 		using BitArithmetic::BitArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinOr : public BitArithmetic {
@@ -264,6 +287,7 @@ namespace IR {
 		using BitArithmetic::BitArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinXor : public BitArithmetic {
@@ -271,6 +295,7 @@ namespace IR {
 		using BitArithmetic::BitArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinNot : public BitArithmetic {
@@ -279,6 +304,7 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -295,6 +321,7 @@ namespace IR {
 		using LogicalArithmetic::LogicalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class LogOr : public LogicalArithmetic {
@@ -302,6 +329,7 @@ namespace IR {
 		using LogicalArithmetic::LogicalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class LogXor : public LogicalArithmetic {
@@ -309,6 +337,7 @@ namespace IR {
 		using LogicalArithmetic::LogicalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class LogNot : public LogicalArithmetic {
@@ -317,6 +346,7 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -333,6 +363,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RLesThanEqual : public RelationalArithmetic {
@@ -340,6 +371,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RGreaterThan : public RelationalArithmetic {
@@ -347,6 +379,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RGreaterThanEqual : public RelationalArithmetic {
@@ -354,6 +387,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class REqual : public RelationalArithmetic {
@@ -361,6 +395,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RNotEqual : public RelationalArithmetic {
@@ -368,6 +403,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -385,6 +421,7 @@ namespace IR {
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CondTrueJump : public BranchInstruction {
@@ -393,6 +430,7 @@ namespace IR {
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CondFalseJump : public BranchInstruction {
@@ -401,6 +439,7 @@ namespace IR {
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -412,6 +451,7 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	/* Represent the call to a function. */
@@ -433,6 +473,7 @@ namespace IR {
 		}
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	/* Represent a return instruction. */
@@ -442,12 +483,14 @@ namespace IR {
 		{ }
 
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	/* Represent SSA phi functions. */
 	class Phi : public Instruction {
 	public:
 		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -506,6 +549,9 @@ namespace IR {
 
 		/* Mostly debug related methods. */
 		void dump(stringstream& buffer);
+
+		/* Dump all instructions to x86. Use a list sweep algorithm on the flat IR. */
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -528,6 +574,9 @@ namespace IR {
 		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
 
 		void dump();
+
+		/* Dump all instructions to x86. Use a list sweep algorithm on the flat IR. */
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 }

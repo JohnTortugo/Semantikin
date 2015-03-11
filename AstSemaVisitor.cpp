@@ -139,7 +139,6 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 }
 
 void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
-	list<shared_ptr<Parser::Expression>>* dims = param->getDims();
 	list<shared_ptr<Parser::Expression>>::iterator it;
 
 	string type = param->getType();
@@ -169,8 +168,12 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 		exit(-1);
 	}
 
+	/* Multidimentional parameters are passed only as pointers, so we just need a pointer.*/
+	if (param->getDims() != nullptr && param->getDims()->size() > 0)
+		varSize = System::POINTER_SIZE;
+
 	/* Create the parameter definition. */
-	shared_ptr<Parser::STParamDecl> parDecl(new Parser::STParamDecl(name, translateType(type), varSize, this->_currentOffset));
+	auto parDecl = make_shared<Parser::STParamDecl>(name, translateType(type), varSize, this->_currentOffset);
 
 	/* Collect the number and size of each dimension. */
 	for (auto _par : *param->getDims()) {
@@ -477,8 +480,8 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 			/* If the argument is not a subtype of the parameter type it is an error. */
 			if ( ! IS_SUBTYPE(exp->type(), param->type()) ) {
 				cout << "Error in semantic analysis." << endl;
-				cout << "\tThe " << (i+1) << "'th parameter of the function \"" << funDecl->getName() << "\" is a \"" << typeName(param->type()) << "\"";
-				cout << " but an \"" << typeName(exp->type()) << "\" was informed." << endl;
+				cout << "\tThe " << (i+1) << "'th parameter of the function \"" << funDecl->getName() << "\" is a \"" << Util::typeName(param->type()) << "\"";
+				cout << " but an \"" << Util::typeName(exp->type()) << "\" was informed." << endl;
 				exit(-1);
 			}
 		}
@@ -600,7 +603,7 @@ bool AstSemaVisitor::isValidType(string name) {
 	else return false;
 }
 
-string AstSemaVisitor::typeName(Parser::NativeType type) {
+string Util::typeName(Parser::NativeType type) {
 	if (type == Parser::INT) return "int";
 	else if (type == Parser::FLOAT) return "float";
 	else if (type == Parser::STRING) return "string";

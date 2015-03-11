@@ -5,7 +5,6 @@
 #include <list>
 #include <memory>
 
-
 using std::shared_ptr;
 using std::string;
 using std::list;
@@ -15,6 +14,21 @@ using std::pair;
  ** A few forward declarations.		 										  **
  ******************************************************************************/
 namespace Parser {
+	enum TypeWidth {
+		VOID_WIDTH = 0,
+		INT_WIDTH = 4,
+		FLOAT_WIDTH = 8,
+		STRING_WIDTH = 4
+	};
+
+	enum NativeType {
+		NOT_A_TYPE,
+		VOID,
+		INT,
+		FLOAT,
+		STRING
+	};
+
 	class STLabelDef;
 	class SymbolTable;
 	class SymbolTableEntry;
@@ -60,6 +74,7 @@ typedef shared_ptr<list<IRLine>>					IRLine_list_sptr;
 namespace System {
 	const unsigned int EXCEPTION_UNEXPECTED_TYPE = 1001;
 	const unsigned int EXCEPTION_UNREACHABLE_CODE = 1002;
+	const unsigned int POINTER_SIZE = 8;
 
 	const string NAT_FUN_STRCPY = "strcpy";
 }
@@ -99,6 +114,12 @@ namespace Util {
 	 *
 	 */
 	string escapeStr(string str);
+
+
+	/*
+	 * Return the textual name of a type.
+	 */
+	string typeName(Parser::NativeType type);
 }
 
 

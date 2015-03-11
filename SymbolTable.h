@@ -18,21 +18,6 @@ using std::unique_ptr;
 using std::shared_ptr;
 
 namespace Parser {
-	enum NativeType {
-		NOT_A_TYPE,
-		VOID,
-		INT,
-		FLOAT,
-		STRING
-	};
-
-	enum TypeWidth {
-		VOID_WIDTH = 0,
-		INT_WIDTH = 4,
-		FLOAT_WIDTH = 8,
-		STRING_WIDTH = 4
-	};
-
 	class SymbolTableEntry {
 	protected:
 		/* Name the user gave to the variable/function. */
@@ -53,7 +38,7 @@ namespace Parser {
 
 		void rename(string newName) { this->name = newName; }
 
-		virtual void dump() const = 0;
+		virtual void dump(std::stringstream& buffer) const = 0;
 
 		virtual ~SymbolTableEntry() {};
 	};
@@ -100,7 +85,7 @@ namespace Parser {
 		STLocalVarDecl(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
 		{ }
 
-		void dump() const;
+		void dump(std::stringstream& buffer) const;
 	};
 
 
@@ -110,7 +95,7 @@ namespace Parser {
 		STParamDecl(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
 		{ }
 
-		void dump() const;
+		void dump(std::stringstream& buffer) const;
 	};
 
 
@@ -120,7 +105,7 @@ namespace Parser {
 		STTempVar(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
 		{ }
 
-		void dump() const;
+		void dump(std::stringstream& buffer) const;
 	};
 
 
@@ -140,7 +125,7 @@ namespace Parser {
 		int usageCounter() const { return this->_usageCounter; }
 		void incrementUses() { this->_usageCounter++; }
 
-		void dump() const;
+		void dump(std::stringstream& buffer) const;
 	};
 
 
@@ -168,7 +153,7 @@ namespace Parser {
 			}
 		}
 
-		void dump() const;
+		void dump(std::stringstream& buffer) const;
 	};
 
 	/* Represents the definition of a function. */
@@ -188,7 +173,7 @@ namespace Parser {
 		const vector<shared_ptr<SymbolTableEntry>>& params() const { return _params; }
 		void addParam(shared_ptr<SymbolTableEntry> newParam) { _params.push_back(newParam); }
 
-		void dump() const;
+		void dump(std::stringstream& buffer) const;
 	};
 
 
@@ -208,7 +193,7 @@ namespace Parser {
 
 		map<string, shared_ptr<SymbolTableEntry>> entries() { return this->_entries; }
 
-		void dump() const ;
+		void dump(std::stringstream& buffer) const ;
 	};
 
 }

@@ -394,7 +394,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		/* If we are parsing a right-hand side expression we will de-refer the pointer and load
 		 * the array value in a temporary. Otherwise, we will just return the address to the previous
 		 * expression, and it will take care of dereferencing. 									   */
-		if (!id->isExpLeftHand()) {
+		if (!id->isExpLeftHand() && !this->isAArgumentExpression) {
 			IR::Instruction* derefer = new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess->tgt());
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( derefer ) );
 
@@ -433,7 +433,11 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 
 	for (auto argument : *funCall->arguments()) {
 		/* Visit the argument, produce address for them.*/
+		bool prev = this->isAArgumentExpression;
+
+		this->isAArgumentExpression = true;
 		argument->accept(this);
+		this->isAArgumentExpression = prev;
 
 		/* Add the argument to the function call. */
 		newInstruction->addArgument(argument->addr());
@@ -534,11 +538,11 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 				break;
 
 			case UnaryExpr::INCREMENT:
-				newInstruction = new IR::IInc(this->newTemporary(tgtType), exp->addr());
+				newInstruction = new IR::IInc(exp->addr(), exp->addr());
 				break;
 
 			case UnaryExpr::DECREMENT:
-				newInstruction = new IR::IDec(this->newTemporary(tgtType), exp->addr());
+				newInstruction = new IR::IDec(exp->addr(), exp->addr());
 				break;
 		}
 	}
@@ -553,11 +557,11 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 				break;
 
 			case UnaryExpr::INCREMENT:
-				newInstruction = new IR::FInc(this->newTemporary(tgtType), exp->addr());
+				newInstruction = new IR::FInc(exp->addr(), exp->addr());
 				break;
 
 			case UnaryExpr::DECREMENT:
-				newInstruction = new IR::FDec(this->newTemporary(tgtType), exp->addr());
+				newInstruction = new IR::FDec(exp->addr(), exp->addr());
 				break;
 		}
 	}
@@ -901,7 +905,7 @@ shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
 shared_ptr<STLabelDef> AstTACGenVisitor::newLabel(string suffix) {
 	int tempId = this->labelCounter++;
 
-	return shared_ptr<STLabelDef>(new STLabelDef("_L" + suffix + std::to_string(tempId)));
+	return make_shared<STLabelDef>("_L" + suffix + std::to_string(tempId));
 }
 
 shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {
@@ -909,5 +913,9 @@ shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {
 	int tempId = this->tempCounter++;
 	int offset = this->_currentOffset += width;
 
-	return shared_ptr<STTempVar>(new STTempVar("_t" + std::to_string(tempId), type, width, offset));
+	auto tempVar = make_shared<STTempVar>("_t" + std::to_string(tempId), type, width, offset);
+
+	this->_currentFunction->symbolTable()->add(tempVar);
+
+	return tempVar;
 }

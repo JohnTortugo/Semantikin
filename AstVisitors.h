@@ -115,8 +115,6 @@ public:
 
 	static Parser::NativeType translateType(string name);
 
-	static string typeName(Parser::NativeType type);
-
 	static Parser::TypeWidth typeWidth(Parser::NativeType name);
 
 	static int variableSize(int typeSize, list<shared_ptr<Parser::Expression>>* param);
@@ -146,6 +144,15 @@ private:
 	unsigned int constCounter = 1;
 	unsigned int labelCounter = 1;
 	unsigned int tempCounter = 1;
+
+
+	/* This will be true whenever we are generating code for an expression that
+	 * is being used as an argument to a function call. This is helpful when generating
+	 * calls that receive matrixes as parameters. Usually multidimensional variable accesses
+	 * are dereferenced and the !value! is returned, but in the case of funcion calls the
+	 * matrix is not dereferenced, the pointer is passed as parameter, not the value. */
+	bool isAArgumentExpression = false;
+
 
 public:
 	AstTACGenVisitor(int currOffset) : _module(nullptr), _fallLabel(nullptr), _currentOffset(currOffset), constCounter(1), labelCounter(1), tempCounter(1) { }

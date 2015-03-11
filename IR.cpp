@@ -88,11 +88,11 @@ namespace IR {
 	}
 
 	void IInc::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "++;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
 	}
 
 	void IDec::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "--;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
 	}
 
 	void FAdd::dump(stringstream& buffer) {
@@ -120,11 +120,11 @@ namespace IR {
 	}
 
 	void FInc::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "++;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
 	}
 
 	void FDec::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "--;" << endl;
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
 	}
 
 
@@ -213,11 +213,13 @@ namespace IR {
 
 		auto arguments = this->arguments();
 
-		if (arguments->size() > 0)
-			buffer << (*arguments)[0]->getName();
+		if (arguments != nullptr) {
+			if (arguments->size() > 0)
+				buffer << (*arguments)[0]->getName();
 
-		for (int i=1; i<arguments->size(); i++)
-			buffer << ", " << (*arguments)[i]->getName();
+			for (int i=1; i<arguments->size(); i++)
+				buffer << ", " << (*arguments)[i]->getName();
+		}
 
 		buffer << ");" << endl;
 	}
@@ -261,6 +263,8 @@ namespace IR {
 	}
 
 
+
+
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {
 		if (this->_labelPendingSlot) {
 			this->_instrs->back().second = nullptr;
@@ -281,10 +285,6 @@ namespace IR {
 		else {
 			this->_instrs->push_back( make_pair(nullptr, instr) );
 		}
-
-//		stringstream ss;
-//		instr->dump(ss);
-//		cout << ss.str();
 	}
 
 	ControlFlowGraph_sptr Function::cfg() {
@@ -419,4 +419,152 @@ namespace IR {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	void ScalarCopy::linearDumpTox86(stringstream& buffer) { buffer << "x86_scalar_copy();" << endl; }
+
+	void CopyFromArray::linearDumpTox86(stringstream& buffer) { buffer << "x86_copy_from_array();" << endl; }
+
+	void CopyToArray::linearDumpTox86(stringstream& buffer) { buffer << "x86_copy_to_array();" << endl; }
+
+
+
+	void IAdd::linearDumpTox86(stringstream& buffer) { buffer << "x86_iadd();" << endl; }
+
+	void ISub::linearDumpTox86(stringstream& buffer) { buffer << "x86_isub();" << endl; }
+
+	void IMul::linearDumpTox86(stringstream& buffer) { buffer << "x86_imul();" << endl; }
+
+	void IDiv::linearDumpTox86(stringstream& buffer) { buffer << "x86_idiv();" << endl; }
+
+	void IMod::linearDumpTox86(stringstream& buffer) { buffer << "x86_imod();" << endl; }
+
+	void IMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_iminus();" << endl; }
+
+	void IPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_iplus();" << endl; }
+
+	void IInc::linearDumpTox86(stringstream& buffer) { buffer << "x86_iinc();" << endl; }
+
+	void IDec::linearDumpTox86(stringstream& buffer) { buffer << "x86_idec();" << endl; }
+
+	void FAdd::linearDumpTox86(stringstream& buffer) { buffer << "x86_fadd();" << endl; }
+
+	void FSub::linearDumpTox86(stringstream& buffer) { buffer << "x86_fsub();" << endl; }
+
+	void FMul::linearDumpTox86(stringstream& buffer) { buffer << "x86_fmul();" << endl; }
+
+	void FDiv::linearDumpTox86(stringstream& buffer) { buffer << "x86_fdiv();" << endl; }
+
+	void FMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fminus();" << endl; }
+
+	void FPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fplus();" << endl; }
+
+	void FInc::linearDumpTox86(stringstream& buffer) { buffer << "x86_finc();" << endl; }
+
+	void FDec::linearDumpTox86(stringstream& buffer) { buffer << "x86_fdec();" << endl; }
+
+
+
+	void BinAnd::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_and();" << endl; }
+
+	void BinOr::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_or();" << endl; }
+
+	void BinXor::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_xor();" << endl; }
+
+	void BinNot::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_not();" << endl; }
+
+
+
+	void LogAnd::linearDumpTox86(stringstream& buffer) { buffer << "x86_log_and();" << endl; }
+
+	void LogOr::linearDumpTox86(stringstream& buffer) { buffer << "x86_log_or();" << endl; }
+
+	void LogNot::linearDumpTox86(stringstream& buffer) { buffer << "x86_log_not();" << endl; }
+
+
+
+	void RLesThan::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_less_than();" << endl; }
+
+	void RLesThanEqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_less_than_equal();" << endl; }
+
+	void RGreaterThan::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_greter_than();" << endl; }
+
+	void RGreaterThanEqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_greater_than_equal();" << endl; }
+
+	void REqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_equal();" << endl; }
+
+	void RNotEqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_not_equal();" << endl; }
+
+
+
+	void Jump::linearDumpTox86(stringstream& buffer) { buffer << "x86_goto();" << endl; }
+
+	void CondTrueJump::linearDumpTox86(stringstream& buffer) { buffer << "x86_iftrue();" << endl; }
+
+	void CondFalseJump::linearDumpTox86(stringstream& buffer) { buffer << "x86_iffalse();" << endl; }
+
+
+
+	void Addr::linearDumpTox86(stringstream& buffer) { buffer << "x86_addr_of();" << endl; }
+
+	void Call::linearDumpTox86(stringstream& buffer) { buffer << "x86_call();" << endl; }
+
+	void Return::linearDumpTox86(stringstream& buffer) { buffer << "x86_return();" << endl; }
+
+	void Phi::linearDumpTox86(stringstream& buffer) { buffer << "x86_phi();" << endl; }
+
+
+	void Function::linearDumpTox86(stringstream& buffer) {
+		auto funDecl = std::dynamic_pointer_cast<STFunctionDeclaration>(this->_addr);
+		auto label 	 = funDecl->getLabel();
+
+		buffer << ".globl " << label << endl;
+		buffer << label << ":" << endl;
+
+		this->_symbTable->dump(buffer);
+
+		for (auto instruction : *this->_instrs) {
+			/* Do we have a label here?  */
+			if (instruction.first != nullptr)
+				buffer << std::setfill(' ') << std::setw(15) << instruction.first->getName() << ": ";
+			else
+				buffer << std::setfill(' ') << std::setw(17) << " ";
+
+			/* Is it just a label? */
+			if (instruction.second != nullptr)
+				instruction.second->linearDumpTox86(buffer);
+			else
+				buffer << endl;
+		}
+	}
+
+	void Module::linearDumpTox86(std::stringstream& buffer) {
+	   buffer << "This is the x86 Assembly: " << endl;
+	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
+
+		for (auto function : *this->_functions) {
+			function->linearDumpTox86(buffer);
+			buffer << endl << endl;
+		}
+	}
 }
