@@ -1,0 +1,10 @@
+/*.o
+/*.dot
+/*.png
+/Parsin.tab.cc
+/Parsin.tab.hh
+/lex.yy.cc
+/location.hh
+/position.hh
+/stack.hh
+/Semantikin

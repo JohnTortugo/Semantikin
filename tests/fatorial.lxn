@@ -23,7 +23,7 @@ int arithm1(int a, int b, float c) {
 	
 		else {
 		
-			int h = multiply(a,b,c[2][3]);
+			int h = arithm1(a,b,c);
 	
 			int b3[3][4][5];
 		}

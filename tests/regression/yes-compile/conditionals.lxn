@@ -1,0 +1,72 @@
+void fun1(int a, int b) {
+	if (a < b) {
+		a = 10;
+	}
+}
+
+void fun2(int a, int b) {
+	if (a || b) {
+		a = b;
+	}
+}
+
+void fun3(int a, int b) {
+	if (a && b) {
+		a = b;
+	}
+}
+
+void fun4(int a, int b) {
+	if (a || b && a || b) {
+		a = b;
+	}
+}
+
+void fun5(int a, int b) {
+	if (a && b || a && b) {
+		a = b;
+	}
+}
+
+
+void fun6(int a, int b) {
+	if (a && b || a && b) {
+		a = b;
+	}
+	else {
+		b = a;
+	}
+}
+
+void fun7(int a, int b) {
+	if (a && b || a && b) {
+		a++;
+	}
+	elseif (a || b && a || b) {
+		b++;
+	}
+	else {
+		a++;
+		b++;
+	}
+}
+
+
+void fun8(int a, int b) {
+	if (a < b) {
+		a++;
+	}
+	elseif (a == b) {
+		b++;
+	}
+	elseif (a + b < b * b) {
+		a++;
+	}
+	elseif (a - b >= b + a) {
+		b++;	
+	}
+	else {
+		a++;
+		b++;
+	}
+}

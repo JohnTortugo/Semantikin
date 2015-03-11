@@ -1,0 +1,41 @@
+void fun1(int a, int b) {
+	while (a < b) {
+		a = 10;
+	}
+}
+
+void fun2(int a, int b) {
+	while (a || b) {
+		a = 10;
+	}
+}
+
+
+void fun3(int a, int b) {
+	while (a && b) {
+		a = 10;
+	}
+}
+
+void fun4(int a, int b) {
+	while (a <= b) {
+		a = 10;
+	}
+}
+
+void fun5(int a, int b) {
+	while (a++ <= b || a < 100) {
+		a = 10;
+	}
+}
+
+void fun6(int vet[100], int N) {
+	int i = 0;
+	
+	while (i < N) {
+		vet[i] = 10;
+		i++;
+	}
+	
+	printInt(vet[N-1]);
+}
