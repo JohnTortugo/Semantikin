@@ -40,6 +40,61 @@ namespace Util {
 		else
 			return nullptr;
 	}
+
+	string linearDumpTox86ParamRegName(int paramIndex) {
+		switch (paramIndex) {
+			case 0:
+				return "%rdi";
+				break;
+			case 1:
+				return "%rsi";
+				break;
+			case 2:
+				return "%rdx";
+				break;
+			case 3:
+				return "%rcx";
+				break;
+			case 4:
+				return "%r8";
+				break;
+			case 5:
+				return "%r9";
+				break;
+			default:
+				return nullptr;
+		}
+	}
+
+	string linearDumpTox86VarLocation(shared_ptr<Parser::SymbolTableEntry> var) {
+		auto pDecl = std::dynamic_pointer_cast<STParamDecl>(var);
+		auto vDecl = std::dynamic_pointer_cast<STVariableDeclaration>(var);
+		auto cDecl = std::dynamic_pointer_cast<STConstantDef>(var);
+		stringstream ss;
+
+		if (pDecl != nullptr) {
+			if (pDecl->offset() <= 5)
+				return Util::linearDumpTox86ParamRegName(pDecl->offset());
+			else
+				ss << "+" << std::to_string(pDecl->offset()) << "(%rbp)";
+		}
+		else if (vDecl != nullptr) {
+			ss << "-" << std::to_string(vDecl->offset()) << "(%rbp)";
+		}
+		else if (cDecl != nullptr) {
+			if (cDecl->type() == Parser::INT) {
+				ss << "$" << cDecl->getName();
+			}
+			else {
+				ss << "!&*+";
+			}
+		}
+		else {
+			return "@#$%";
+		}
+
+		return ss.str();
+	}
 }
 
 
@@ -441,7 +496,9 @@ namespace IR {
 
 
 
-	void ScalarCopy::linearDumpTox86(stringstream& buffer) { buffer << "x86_scalar_copy();" << endl; }
+	void ScalarCopy::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
 	void CopyFromArray::linearDumpTox86(stringstream& buffer) { buffer << "x86_copy_from_array();" << endl; }
 
@@ -529,10 +586,61 @@ namespace IR {
 
 	void Call::linearDumpTox86(stringstream& buffer) { buffer << "x86_call();" << endl; }
 
-	void Return::linearDumpTox86(stringstream& buffer) { buffer << "x86_return();" << endl; }
+	void Return::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rax" << endl;
+	}
 
 	void Phi::linearDumpTox86(stringstream& buffer) { buffer << "x86_phi();" << endl; }
 
+	void Function::linearDumpTox86MemAllocs() {
+		auto entries 		= this->_symbTable->entries();
+		int paramTotSize 	= 0;
+		int paramIndex		= 0;
+		int paramOffset		= 16;
+
+		// Find total ammount of memory used by parameters
+		for (auto& entry : entries) {
+			auto pDecl = std::dynamic_pointer_cast<STParamDecl>(entry.second);
+			if (pDecl != nullptr) {
+				paramTotSize += pDecl->getWidth();
+
+				// If this parameter still fits in registers (i.e., < 6th
+				if (paramIndex <= 5) {
+					pDecl->offset(paramIndex++);
+				}
+				else {
+					// No, we have more than 6 parameters, put them in memory
+					pDecl->offset(paramOffset);
+					paramOffset += pDecl->getWidth();
+				}
+			}
+		}
+
+		// update the local variables offsets taking into consideration
+		// that now parameters are "outside" the function frame
+		for (auto& entry : entries) {
+			auto pDecl = std::dynamic_pointer_cast<STParamDecl>(entry.second);
+			auto vDecl = std::dynamic_pointer_cast<STVariableDeclaration>(entry.second);
+
+			if (pDecl == nullptr && vDecl != nullptr) {
+				vDecl->offset(vDecl->offset() - paramTotSize);
+			}
+		}
+	}
+
+	void Function::linearDumpTox86Prologue(stringstream& buffer) {
+		auto frameSize = this->_symbTable->stackFrameSize();
+
+		buffer << std::setfill(' ') << std::setw(17) << " " << "pushq %rbp" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq  %rsp, %rbp" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "subq  $" << frameSize << ", %rsp" << endl;
+	}
+
+	void Function::linearDumpTox86Epilogue(stringstream& buffer) {
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbp, %rsp" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "popq %rbp" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "ret" << endl;
+	}
 
 	void Function::linearDumpTox86(stringstream& buffer) {
 		auto funDecl = std::dynamic_pointer_cast<STFunctionDeclaration>(this->_addr);
@@ -541,7 +649,9 @@ namespace IR {
 		buffer << ".globl " << label << endl;
 		buffer << label << ":" << endl;
 
-		this->_symbTable->dump(buffer);
+		this->linearDumpTox86MemAllocs();
+
+		this->linearDumpTox86Prologue(buffer);
 
 		for (auto instruction : *this->_instrs) {
 			/* Do we have a label here?  */
@@ -556,11 +666,16 @@ namespace IR {
 			else
 				buffer << endl;
 		}
+
+		this->linearDumpTox86Epilogue(buffer);
 	}
 
 	void Module::linearDumpTox86(std::stringstream& buffer) {
 	   buffer << "This is the x86 Assembly: " << endl;
 	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
+
+	   buffer << "\t.file \"file.c\"" << endl;
+	   buffer << "\t.text" << endl << endl;
 
 		for (auto function : *this->_functions) {
 			function->linearDumpTox86(buffer);

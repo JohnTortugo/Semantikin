@@ -50,7 +50,7 @@ namespace Parser {
 		int width;
 
 		/* Offset within the function frame where this variable will be stored. */
-		int offset;
+		int _offset;
 
 		/* Is this variable scalar (dims.size() == 0) or a vector with N dimensions
 		 * (dims.size() == N)? If it is a vector, each index store the size of each
@@ -59,23 +59,22 @@ namespace Parser {
 
 
 	public:
-		STVariableDeclaration() : SymbolTableEntry("", Parser::NOT_A_TYPE), width(0), offset(0)
+		STVariableDeclaration() : SymbolTableEntry("", Parser::NOT_A_TYPE), width(0), _offset(0)
 		{ }
 
-		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), width(wd), offset(off)
+		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), width(wd), _offset(off)
 		{ }
 
 		const vector<int>& dims() const { return _dims; }
 		int getNumDims() const { return _dims.size(); }
 		void addDim(int size) { _dims.push_back(size); }
 
-		int getOffset() const {
-			return offset;
-		}
+		int offset() const { return _offset; }
+		void offset(int ofts) { this->_offset = ofts; }
 
-		int getWidth() const {
-			return width;
-		}
+		int getWidth() const { return width; }
+
+
 	};
 
 
@@ -194,6 +193,8 @@ namespace Parser {
 		map<string, shared_ptr<SymbolTableEntry>> entries() { return this->_entries; }
 
 		void dump(std::stringstream& buffer) const ;
+
+		int stackFrameSize() const ;
 	};
 
 }

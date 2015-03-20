@@ -434,6 +434,7 @@ namespace Parser {
 		shared_ptr<list<shared_ptr<ParamDecl>>> _params;
 		shared_ptr<CodeBlock> _body;
 		shared_ptr<SymbolTable> _symbTable;
+		int _currentOffset;
 
 	public:
 		Function(location tpLoc, location nmLoc, string type, string name, shared_ptr<list<shared_ptr<ParamDecl>>> params, CodeBlock* body) :
@@ -443,7 +444,8 @@ namespace Parser {
 			_name(name),
 			_params(params),
 			_body(shared_ptr<CodeBlock>(body)),
-			_symbTable(nullptr)
+			_symbTable(nullptr),
+			_currentOffset(0)
 		{ }
 
 		string getName() const { return this->_name; }
@@ -457,6 +459,9 @@ namespace Parser {
 		shared_ptr<SymbolTable> getSymbTable() const { return this->_symbTable; }
 
 		void setSymbTable(shared_ptr<SymbolTable> _symbTable) { this->_symbTable = _symbTable; }
+
+		int currentOffset() const { return this->_currentOffset; }
+		void currentOffset(int ofts) { this->_currentOffset = ofts; }
 
 		void accept(AstNodeVisitor* visitor);
 	};

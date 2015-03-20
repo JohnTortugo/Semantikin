@@ -38,7 +38,7 @@ int main(const int argc, const char **argv) {
 
 
    // Just dump the IR
-   // irModule->dump();
+//   irModule->dump();
 
    // print the x86 assembly of each instruction
    stringstream ss;

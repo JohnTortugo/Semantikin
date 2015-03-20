@@ -120,6 +120,10 @@ namespace Util {
 	 * Return the textual name of a type.
 	 */
 	string typeName(Parser::NativeType type);
+
+	string linearDumpTox86VarLocation(shared_ptr<Parser::SymbolTableEntry> var);
+
+	string linearDumpTox86ParamRegName(int paramIndex);
 }
 
 

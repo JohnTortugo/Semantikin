@@ -63,7 +63,7 @@ namespace Parser {
 		buffer << std::setw(10) << this->name << " |";
 		buffer << std::setw(5) << Util::typeName(this->_type) << " |";
 		buffer << std::setw(5) << this->width << " |";
-		buffer << std::setw(5) << this->offset << " |";
+		buffer << std::setw(5) << this->_offset << " |";
 		buffer << std::setw(5) << this->getNumDims() << " |";
 		buffer << std::setw(10) << "-" << " |";
 		buffer << std::setw(5)  << "-" << " |";
@@ -79,7 +79,7 @@ namespace Parser {
 		buffer << std::setw(10) << this->name << " |";
 		buffer << std::setw(5) << Util::typeName(this->_type) << " |";
 		buffer << std::setw(5) << this->width << " |";
-		buffer << std::setw(5) << this->offset << " |";
+		buffer << std::setw(5) << this->_offset << " |";
 		buffer << std::setw(5) << this->getNumDims() << " |";
 		buffer << std::setw(10) << "-" << " |";
 		buffer << std::setw(5)  << "-" << " |";
@@ -127,7 +127,7 @@ namespace Parser {
 		buffer << std::setw(10) << this->name << " |";
 		buffer << std::setw(5) << Util::typeName(this->_type) << " |";
 		buffer << std::setw(5) << this->width << " |";
-		buffer << std::setw(5) << this->offset << " |";
+		buffer << std::setw(5) << this->_offset << " |";
 		buffer << std::setw(5) << this->getNumDims() << " |";
 		buffer << std::setw(10) << "-" << " |";
 		buffer << std::setw(5)  << "-" << " |";
@@ -160,5 +160,23 @@ namespace Parser {
 		}
 
 		buffer << "+---------------------------------------------------------------------------------------------------------------+" << endl;
+	}
+
+	int SymbolTable::stackFrameSize() const {
+		int frameSize = 0;
+
+		for (auto& entry : _entries) {
+			auto var = std::dynamic_pointer_cast<STLocalVarDecl>(entry.second);
+			auto tmp = std::dynamic_pointer_cast<STTempVar>(entry.second);
+
+			if (var != nullptr) {
+				frameSize += var->getWidth();
+			}
+			else if (tmp != nullptr) {
+				frameSize += tmp->getWidth();
+			}
+		}
+
+		return frameSize;
 	}
 }

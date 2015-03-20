@@ -124,10 +124,6 @@ public:
 
 class AstTACGenVisitor : public AstNodeVisitor {
 private:
-	/* This is a parameter imported from the Semantic Analyzer, it indicates
-	 * the function frame index used to store new temporary variables.    */
-	int _currentOffset;
-
 	/* Pointer to the module currently being IR generated. */
 	shared_ptr<IR::Module> _module;
 
@@ -145,6 +141,9 @@ private:
 	unsigned int labelCounter = 1;
 	unsigned int tempCounter = 1;
 
+	/* This is a parameter imported from the Semantic Analyzer, it indicates
+	 * the function frame index used to store new temporary variables.    */
+	int _currentOffset;
 
 	/* This will be true whenever we are generating code for an expression that
 	 * is being used as an argument to a function call. This is helpful when generating

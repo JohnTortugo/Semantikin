@@ -134,6 +134,10 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 		exit(-1);
 	}
 
+	/* We save this because when we will emit temporaries we want their indices continue
+	 * after the indices of local vars and parameters. */
+	function->currentOffset(this->_currentOffset);
+
 	/* Reset pointer to previous symbol table. */
 	this->currentSymbTable = table->getParent();
 }

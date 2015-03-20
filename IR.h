@@ -552,6 +552,9 @@ namespace IR {
 
 		/* Dump all instructions to x86. Use a list sweep algorithm on the flat IR. */
 		void linearDumpTox86(stringstream& buffer);
+		void linearDumpTox86Prologue(stringstream& buffer);
+		void linearDumpTox86Epilogue(stringstream& buffer);
+		void linearDumpTox86MemAllocs();
 	};
 
 

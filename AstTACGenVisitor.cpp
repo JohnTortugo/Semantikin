@@ -33,6 +33,7 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
 		this->constCounter = 1;
 		this->labelCounter = 1;
 		this->tempCounter = 1;
+		this->_currentOffset = function->currentOffset();
 
 		/* Produce IR instructions for the components of function. */
 		function->accept(this);
@@ -893,11 +894,10 @@ void AstTACGenVisitor::emitBranchesBasedOnExpValue(shared_ptr<SymbolTableEntry> 
 
 template<typename T>
 shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
-	int tempId = this->constCounter++;
-
-	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("_ct" + std::to_string(tempId), value));
+	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("_ct" + std::to_string(this->constCounter), value));
 
 	this->_currentFunction->symbolTable()->add(cttEntry);
+	this->constCounter++;
 
 	return cttEntry;
 }
@@ -910,12 +910,12 @@ shared_ptr<STLabelDef> AstTACGenVisitor::newLabel(string suffix) {
 
 shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {
 	int width  = AstSemaVisitor::typeWidth(type);
-	int tempId = this->tempCounter++;
-	int offset = this->_currentOffset += width;
 
-	auto tempVar = make_shared<STTempVar>("_t" + std::to_string(tempId), type, width, offset);
+	auto tempVar = make_shared<STTempVar>("_t" + std::to_string(this->tempCounter), type, width, this->_currentOffset);
 
 	this->_currentFunction->symbolTable()->add(tempVar);
+	this->_currentOffset += width;
+	this->tempCounter++;
 
 	return tempVar;
 }
