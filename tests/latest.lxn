@@ -1,12 +1,10 @@
-void fun17() {
-	int a = 3, b = 4;
+int main(int x, int y, int z) {
+	int a = 50, b = 500;
 
-    if (a == b) {
-	
-		int c = a * 4*a*b;
-	
-		printStr("igual\n");
-	
+	if (a != b) {
+		return 1;
 	}
-
+	else {
+		return 0;
+	}
 }

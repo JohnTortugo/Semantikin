@@ -560,25 +560,76 @@ namespace IR {
 
 
 
-	void RLesThan::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_less_than();" << endl; }
+	void RLesThan::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_less_than" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "setl %al" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
+	}
 
-	void RLesThanEqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_less_than_equal();" << endl; }
+	void RLesThanEqual::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_less_than_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "setle %al" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
+	}
 
-	void RGreaterThan::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_greter_than();" << endl; }
+	void RGreaterThan::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_greater_than" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "setg %al" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
+	}
 
-	void RGreaterThanEqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_greater_than_equal();" << endl; }
+	void RGreaterThanEqual::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_greater_than_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "setge %al" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
+	}
 
-	void REqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_equal();" << endl; }
+	void REqual::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sete %al" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
+	}
 
-	void RNotEqual::linearDumpTox86(stringstream& buffer) { buffer << "x86_rel_not_equal();" << endl; }
+	void RNotEqual::linearDumpTox86(stringstream& buffer) {
+		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_not_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "setne %al" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
+	}
 
 
 
-	void Jump::linearDumpTox86(stringstream& buffer) { buffer << "x86_goto();" << endl; }
+	void Jump::linearDumpTox86(stringstream& buffer) {
+		// jump anyway
+		buffer << "jmp " << this->_tgt->getName() << endl;
+	}
 
-	void CondTrueJump::linearDumpTox86(stringstream& buffer) { buffer << "x86_iftrue();" << endl; }
+	void CondTrueJump::linearDumpTox86(stringstream& buffer) {
+		// jump if the "zero" flag is set
+		buffer << "jz " << this->_src1->getName() << endl;
+	}
 
-	void CondFalseJump::linearDumpTox86(stringstream& buffer) { buffer << "x86_iffalse();" << endl; }
+	void CondFalseJump::linearDumpTox86(stringstream& buffer) {
+		// jump if the "zero" flag is not set
+		buffer << "jnz " << this->_src1->getName() << endl;
+	}
 
 
 
@@ -587,10 +638,13 @@ namespace IR {
 	void Call::linearDumpTox86(stringstream& buffer) { buffer << "x86_call();" << endl; }
 
 	void Return::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rax" << endl;
 	}
 
-	void Phi::linearDumpTox86(stringstream& buffer) { buffer << "x86_phi();" << endl; }
+	void Phi::linearDumpTox86(stringstream& buffer) {
+		cout << "It is impossible to dump a PhiFun to x86." << endl;
+		exit(-1);
+	}
 
 	void Function::linearDumpTox86MemAllocs() {
 		auto entries 		= this->_symbTable->entries();
@@ -622,8 +676,9 @@ namespace IR {
 			auto pDecl = std::dynamic_pointer_cast<STParamDecl>(entry.second);
 			auto vDecl = std::dynamic_pointer_cast<STVariableDeclaration>(entry.second);
 
+			// this "-8" is because the "0(%rbp)" is the old %rbp
 			if (pDecl == nullptr && vDecl != nullptr) {
-				vDecl->offset(vDecl->offset() - paramTotSize);
+				vDecl->offset(vDecl->offset() - paramTotSize + 8);
 			}
 		}
 	}
@@ -651,6 +706,8 @@ namespace IR {
 
 		this->linearDumpTox86MemAllocs();
 
+		//this->_symbTable->dump(buffer);
+
 		this->linearDumpTox86Prologue(buffer);
 
 		for (auto instruction : *this->_instrs) {
@@ -671,9 +728,9 @@ namespace IR {
 	}
 
 	void Module::linearDumpTox86(std::stringstream& buffer) {
-	   buffer << "This is the x86 Assembly: " << endl;
-	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
-
+//	   buffer << "This is the x86 Assembly: " << endl;
+//	   buffer << std::setfill('-') << std::setw(80) << "-" << endl;
+//
 	   buffer << "\t.file \"file.c\"" << endl;
 	   buffer << "\t.text" << endl << endl;
 
