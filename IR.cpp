@@ -500,17 +500,60 @@ namespace IR {
 		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
-	void CopyFromArray::linearDumpTox86(stringstream& buffer) { buffer << "x86_copy_from_array();" << endl; }
+	void CopyFromArray::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax  	\t\t\t# x86_copy_from_array" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq (%rax), %rbx" << endl;
 
-	void CopyToArray::linearDumpTox86(stringstream& buffer) { buffer << "x86_copy_to_array();" << endl; }
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %ebx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
+
+	void CopyToArray::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax  	\t\t\t# x86_copy_to_array" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rbx" << endl;
+
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, (%rbx)" << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, (%rbx)" << endl;
+	}
 
 
 
-	void IAdd::linearDumpTox86(stringstream& buffer) { buffer << "x86_iadd();" << endl; }
+	void IAdd::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_iadd" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "add %eax, %ebx" << endl;
 
-	void ISub::linearDumpTox86(stringstream& buffer) { buffer << "x86_isub();" << endl; }
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %ebx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
-	void IMul::linearDumpTox86(stringstream& buffer) { buffer << "x86_imul();" << endl; }
+	void ISub::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_isub" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %ebx, %eax" << endl;
+
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
+
+	void IMul::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_imul" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "imul %eax, %ebx" << endl;
+
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %ebx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
 	void IDiv::linearDumpTox86(stringstream& buffer) { buffer << "x86_idiv();" << endl; }
 
@@ -520,9 +563,27 @@ namespace IR {
 
 	void IPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_iplus();" << endl; }
 
-	void IInc::linearDumpTox86(stringstream& buffer) { buffer << "x86_iinc();" << endl; }
+	void IInc::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_inc" << endl;
+		buffer << "inc %rax" << endl;
 
-	void IDec::linearDumpTox86(stringstream& buffer) { buffer << "x86_idec();" << endl; }
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
+
+	void IDec::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_dec" << endl;
+		buffer << "dec %rax" << endl;
+
+		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		else
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
+
+
 
 	void FAdd::linearDumpTox86(stringstream& buffer) { buffer << "x86_fadd();" << endl; }
 
@@ -635,7 +696,9 @@ namespace IR {
 
 	void Addr::linearDumpTox86(stringstream& buffer) { buffer << "x86_addr_of();" << endl; }
 
-	void Call::linearDumpTox86(stringstream& buffer) { buffer << "x86_call();" << endl; }
+	void Call::linearDumpTox86(stringstream& buffer) {
+		buffer << "x86_call();" << endl;
+	}
 
 	void Return::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rax" << endl;
@@ -665,7 +728,7 @@ namespace IR {
 				else {
 					// No, we have more than 6 parameters, put them in memory
 					pDecl->offset(paramOffset);
-					paramOffset += pDecl->getWidth();
+					paramOffset += 8; // all parameters are 64bits; pDecl->getWidth();
 				}
 			}
 		}

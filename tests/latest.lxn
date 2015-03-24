@@ -1,10 +1,5 @@
-int main(int x, int y, int z) {
-	int a = 50, b = 500;
+int main() {
 
-	if (a != b) {
-		return 1;
-	}
-	else {
-		return 0;
-	}
+	return 255 - 255;
+
 }
