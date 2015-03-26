@@ -76,7 +76,7 @@ namespace Util {
 			if (pDecl->offset() <= 5)
 				return Util::linearDumpTox86ParamRegName(pDecl->offset());
 			else
-				ss << "+" << std::to_string(pDecl->offset()) << "(%rbp)";
+				ss << std::to_string(pDecl->offset()) << "(%rbp)";
 		}
 		else if (vDecl != nullptr) {
 			ss << "-" << std::to_string(vDecl->offset()) << "(%rbp)";
@@ -321,9 +321,8 @@ namespace IR {
 
 
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {
-		if (this->_labelPendingSlot) {
+		if (this->_labelPendingSlot)
 			this->_instrs->back().second = nullptr;
-		}
 
 		/* Set the "address" to which the label points to. */
 		label->address((int)this->_instrs->size());
@@ -497,27 +496,20 @@ namespace IR {
 
 
 	void ScalarCopy::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax	\t\t\t# x86_scalar_copy" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 	void CopyFromArray::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax  	\t\t\t# x86_copy_from_array" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq (%rax), %rbx" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %ebx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 	void CopyToArray::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax  	\t\t\t# x86_copy_to_array" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rbx" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, (%rbx)" << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, (%rbx)" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, (%rbx)" << endl;
 	}
 
 
@@ -525,34 +517,22 @@ namespace IR {
 	void IAdd::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_iadd" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "add %eax, %ebx" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %ebx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "add %rax, %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 	void ISub::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_isub" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %ebx, %eax" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %rbx, %rax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 	void IMul::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_imul" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "imul %eax, %ebx" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %ebx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "imul %rax, %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 	void IDiv::linearDumpTox86(stringstream& buffer) { buffer << "x86_idiv();" << endl; }
@@ -566,21 +546,13 @@ namespace IR {
 	void IInc::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_inc" << endl;
 		buffer << "inc %rax" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 	void IDec::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_dec" << endl;
 		buffer << "dec %rax" << endl;
-
-		if ( std::dynamic_pointer_cast<STParamDecl>(this->_tgt) != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
-		else
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movl %eax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
 
@@ -622,54 +594,54 @@ namespace IR {
 
 
 	void RLesThan::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_less_than" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_rel_less_than" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpq %rbx, %rax" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "setl %al" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
 	}
 
 	void RLesThanEqual::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_less_than_equal" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_rel_less_than_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpq %rbx, %rax" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "setle %al" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
 	}
 
 	void RGreaterThan::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_greater_than" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_rel_greater_than" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpq %rbx, %rax" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "setg %al" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
 	}
 
 	void RGreaterThanEqual::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_greater_than_equal" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_rel_greater_than_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpq %rbx, %rax" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "setge %al" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
 	}
 
 	void REqual::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_equal" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_rel_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpq %rbx, %rax" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sete %al" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
 	}
 
 	void RNotEqual::linearDumpTox86(stringstream& buffer) {
-		buffer << "movl " << Util::linearDumpTox86VarLocation(this->_src1) << ", %eax 	\t\t\t# x86_rel_not_equal" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "movl " << Util::linearDumpTox86VarLocation(this->_src2) << ", %ebx" << endl;
-		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpl %ebx, %eax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_rel_not_equal" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "cmpq %rbx, %rax" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "setne %al" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "mov $1, %bl" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %al, %bl" << endl;
@@ -697,11 +669,56 @@ namespace IR {
 	void Addr::linearDumpTox86(stringstream& buffer) { buffer << "x86_addr_of();" << endl; }
 
 	void Call::linearDumpTox86(stringstream& buffer) {
-		buffer << "x86_call();" << endl;
+		auto calleeName = this->_src1->getName();
+		auto resVar 	= this->_tgt;
+		auto arguments 	= this->arguments();
+
+		buffer << endl;
+
+		/* Save register and push parameters */
+		if (resVar != nullptr)
+			buffer << std::setfill(' ') << std::setw(17) << " " << "pushq %rax" << endl;
+
+		if (arguments != nullptr) {
+			int i = 0;
+			int l = arguments->size() - 1;
+
+			// the first six parameters are by register
+			for (i=0; i<6 && i<=l; i++) {
+				buffer << std::setfill(' ') << std::setw(17) << " " << "pushq " << Util::linearDumpTox86ParamRegName(i) << endl;
+				buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation((*arguments)[i]) << ", " << Util::linearDumpTox86ParamRegName(i) << endl;
+			}
+
+			// the remaining parameters are passed through stack
+			for (; l>=i && l>=6; l--)
+				buffer << std::setfill(' ') << std::setw(17) << " " << "pushq " << Util::linearDumpTox86VarLocation((*arguments)[l]) << endl;
+		}
+
+		/* Do the actual call */
+		buffer << std::setfill(' ') << std::setw(17) << " " << "call " << calleeName << " \t\t\t # x86_call" << endl;
+
+		/* Restore register and pop parameters */
+		if (arguments != nullptr) {
+			int i = 0;
+			int l = arguments->size() - 1;
+
+			// the remaining parameters are passed through stack
+			for (; l>=6; l--)
+				buffer << std::setfill(' ') << std::setw(17) << " " << "popq " << Util::linearDumpTox86VarLocation((*arguments)[l]) << endl;
+
+			// the first six parameters are by register
+			for (i=l; i>=0; i--)
+				buffer << std::setfill(' ') << std::setw(17) << " " << "popq " << Util::linearDumpTox86ParamRegName(i) << endl;
+		}
+
+		if (resVar != nullptr) {
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(resVar) << endl;
+			buffer << std::setfill(' ') << std::setw(17) << " " << "popq %rax "<< endl;
+		}
 	}
 
 	void Return::linearDumpTox86(stringstream& buffer) {
-		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rax" << endl;
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_tgt) << ", %rax \t\t\t # x86_ret" << endl;
 	}
 
 	void Phi::linearDumpTox86(stringstream& buffer) {

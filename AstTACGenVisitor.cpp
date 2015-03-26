@@ -19,13 +19,13 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
 	/* The IR module owns the symbol table. */
 	this->_module->symbolTable(module->getSymbTable());
 
-	/* This label is just a sentinel pointer to convey the
-	 * information that the expression should consider a fallthrough
-	 * path. */
-	this->_fallLabel = this->newLabel("fallthrough");
-
 	/* Continue visiting children. */
 	for (auto function : *module->getFunctions()) {
+		/* This label is just a sentinel pointer to convey the
+		 * information that the expression should consider a fallthrough
+		 * path. */
+		this->_fallLabel = this->newLabel(function->getName(), "fallthrough");
+
 		/* Something like an inherited attribute. */
 		this->_currentFunction = shared_ptr<IR::Function>(new IR::Function(function->getSymbTable()));
 
@@ -57,7 +57,7 @@ void AstTACGenVisitor::visit(Parser::Function* function) {
 	this->_currentFunction->addr( function->getSymbTable()->getParent()->lookup(function->getName()) );
 
 	/* The first instruction of every function needs to have a label. */
-	this->_currentFunction->appendLabel( this->newLabel("entry") );
+	this->_currentFunction->appendLabel( this->newLabel(function->getName(), "entry") );
 
 	/* Produce IR instructions for the statements in the function's code block. */
 	function->getBody()->accept(this);
@@ -97,7 +97,7 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 }
 
 void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
-	auto begin 		= this->newLabel();
+	auto begin 		= this->newLabel(this->_currentFunction->addr()->getName());
 	auto condition 	= loop->getCondition();
 	auto codeBlock 	= loop->getBody();
 
@@ -132,7 +132,7 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		/* Only have else block. */
 
 		condition->tLabel( this->_fallLabel );
-		condition->fLabel( this->newLabel() );
+		condition->fLabel( this->newLabel(this->_currentFunction->addr()->getName()) );
 
 		thenBlock->next( ifStmt->next() );
 		elseBlock->next( ifStmt->next() );
@@ -147,7 +147,7 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 	}
 	else if (elseBlock == nullptr) {
 		/* Only have else-if blocks. */
-		auto nextCondLabel = this->newLabel();
+		auto nextCondLabel = this->newLabel(this->_currentFunction->addr()->getName());
 
 		condition->tLabel( this->_fallLabel );
 		condition->fLabel( nextCondLabel );
@@ -167,7 +167,7 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 			this->_currentFunction->appendLabel(nextCondLabel);
 
 			/* In the last else-if we jump off of the if it's false. */
-			nextCondLabel = (indx < size) ? this->newLabel() : ifStmt->next();
+			nextCondLabel = (indx < size) ? this->newLabel(this->_currentFunction->addr()->getName()) : ifStmt->next();
 
 			/* As usual.. */
 			elseif->getCondition()->tLabel( this->_fallLabel );
@@ -189,8 +189,8 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 		/* Have else and else-if blocks. */
 
 		/* Only have else-if blocks. */
-		auto nextCondLabel = this->newLabel();
-		auto elseLabel = this->newLabel();
+		auto nextCondLabel = this->newLabel(this->_currentFunction->addr()->getName());
+		auto elseLabel = this->newLabel(this->_currentFunction->addr()->getName());
 
 		condition->tLabel( this->_fallLabel );
 		condition->fLabel( nextCondLabel );
@@ -210,7 +210,7 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 			this->_currentFunction->appendLabel(nextCondLabel);
 
 			/* In the last else-if we jump off of the if it's false. */
-			nextCondLabel = (indx < size) ? this->newLabel() : elseLabel;
+			nextCondLabel = (indx < size) ? this->newLabel(this->_currentFunction->addr()->getName()) : elseLabel;
 
 			/* As usual.. */
 			elseif->getCondition()->tLabel( this->_fallLabel );
@@ -261,7 +261,7 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
 
 	/* Produce IR for each statement in the code block. */
 	for (auto statement : *block->getStatements()) {
-		statement->next( this->newLabel() );
+		statement->next( this->newLabel(this->_currentFunction->addr()->getName()) );
 		statement->accept(this);
 
 		/* If in fact happened to be some instruction branching
@@ -600,13 +600,13 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	if (binop->tLabel() == nullptr && binop->fLabel() == nullptr) {
 		notCond = true;
 		binop->tLabel( this->_fallLabel );
-		binop->fLabel( this->newLabel() );
+		binop->fLabel( this->newLabel(this->_currentFunction->addr()->getName()) );
 
 		/* We need to make sure that there is a target so we can jump over the
 		 * true/false blocks. */
 		if (binop->next() == nullptr) {
 			nextNull = true;
-			binop->next( this->newLabel() );
+			binop->next( this->newLabel(this->_currentFunction->addr()->getName()) );
 		}
 	}
 
@@ -614,7 +614,7 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	exp2->isExpLeftHand(false);
 
 	if (binop->opr() == BinaryExpr::LOG_AND) {
-		auto newLabel = (binop->fLabel() != this->_fallLabel) ? binop->fLabel() : this->newLabel();
+		auto newLabel = (binop->fLabel() != this->_fallLabel) ? binop->fLabel() : this->newLabel(this->_currentFunction->addr()->getName());
 
 		exp1->tLabel( this->_fallLabel );
 		exp1->fLabel( newLabel );
@@ -630,7 +630,7 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 		}
 	}
 	else if (binop->opr() == BinaryExpr::LOG_OR) {
-		auto newLabel = (binop->tLabel() != this->_fallLabel) ? binop->tLabel() : this->newLabel();
+		auto newLabel = (binop->tLabel() != this->_fallLabel) ? binop->tLabel() : this->newLabel(this->_currentFunction->addr()->getName());
 
 		exp1->tLabel( newLabel );
 		exp1->fLabel( this->_fallLabel );
@@ -902,10 +902,10 @@ shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
 	return cttEntry;
 }
 
-shared_ptr<STLabelDef> AstTACGenVisitor::newLabel(string suffix) {
+shared_ptr<STLabelDef> AstTACGenVisitor::newLabel(string scope, string suffix) {
 	int tempId = this->labelCounter++;
 
-	return make_shared<STLabelDef>("_L" + suffix + std::to_string(tempId));
+	return make_shared<STLabelDef>("_L" + scope + "." + suffix + std::to_string(tempId));
 }
 
 shared_ptr<STTempVar> AstTACGenVisitor::newTemporary(NativeType type) {

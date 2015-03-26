@@ -187,7 +187,7 @@ public:
 	template<typename T>
 	shared_ptr<STConstantDef> newConstant(T value);
 
-	shared_ptr<STLabelDef> newLabel(string suffix="");
+	shared_ptr<STLabelDef> newLabel(string scope, string suffix="");
 	shared_ptr<STTempVar> newTemporary(NativeType type);
 };
 

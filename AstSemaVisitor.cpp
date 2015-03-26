@@ -313,7 +313,7 @@ void AstSemaVisitor::visit(const Parser::ReturnStmt* ret) {
 
 	if ( ! IS_SUBTYPE(ret->getExpression()->type(), this->currentFunRetType) ) {
 		cout << "Error in semantic analysis." << endl;
-		cout << "\tAn return-statement's expression in function (\"" << this->_curFunDecl->getName()
+		cout << "\tA return-statement's expression in function (\"" << this->_curFunDecl->getName()
 				<< "\") is not a subtype of the function return type." << endl;
 		exit(-1);
 	}

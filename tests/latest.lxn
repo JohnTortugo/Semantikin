@@ -1,5 +1,37 @@
+int fun1(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
+	return a + b + c + d + e + f + g + h + i + j;
+}
+
+int fib(int n) {
+	if (n == 0) {
+		return 0;
+	}
+	elseif (n == 1) {
+		return 1;
+	}
+	else { 
+		return fib(n-1) + fib(n-2);
+	}
+}
+
+int fun2(int n) {
+	if (n <= 10) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
+void funv(int v[10]) {
+	v[5] = 555;
+}
+
+
 int main() {
+	int vet[10];
 
-	return 255 - 255;
+	funv(vet);
 
+	return 0;
 }
