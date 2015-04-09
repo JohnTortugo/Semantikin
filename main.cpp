@@ -21,7 +21,7 @@ bool cmdOptionExists(char** begin, char** end, const std::string& option) {
 }
 
 void printHeader() {
-	printf("This is Semantiking v. 0.1\n");
+	printf("This is Semantikin v. 0.1\n");
 	printf("--------------------------\n\n");
 }
 
@@ -29,6 +29,7 @@ void printHelp() {
 	printHeader();
 	printf("%10s | %s\n", "-h", 		"Print this help message.");
 	printf("%10s | %s\n", "-i", 		"[Mandatory] Specify the source input file.");
+	printf("%10s | %s\n", "-o", 		"Specify the executable output file.");
 	printf("%10s | %s\n", "-dumpAsts", 	"Dump the AST for all functions to DOT format.");
 	printf("%10s | %s\n", "-dumpCfgs", 	"Dump the CFG for all functions to DOT format.");
 	printf("%10s | %s\n", "-dumpIR", 	"Dump the Internal Representation for all functions.");
@@ -98,8 +99,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Call GCC to assembly and link */
-	char asmFileName[] = {"/tmp/Semantikin_XXXXXX"};
-	int asmFile = mkstemp(asmFileName);
+	char asmFileName[50] 	= {"/tmp/Semantikin_XXXXXX"};
+	int asmFile 			= mkstemp(asmFileName);
+
 	if (!asmFile || asmFile == -1) {
 		fprintf(stderr, "It was not possible to create a temporary file.\n");
 		exit(1);
@@ -108,11 +110,15 @@ int main(int argc, char *argv[]) {
 		write(asmFile, x86Stream.str().c_str(), x86Stream.str().size());
 		close(asmFile);
 
-		stringstream ss;
-		ss << "gcc -x assembler-with-cpp " << asmFileName << " -o " << getCmdOption(argv, argv+argc, "-i") << ".exe";
-		system(ss.str().c_str());
+		string outputName = "executable";
 
+		if (cmdOptionExists(argv, argv+argc, "-o"))
+			outputName = getCmdOption(argv, argv+argc, "-o");
+
+		stringstream ss;
+		ss << "gcc lib.c -x assembler " << asmFileName << " -o " << outputName;
 		cout << ss.str() << endl;
+		system(ss.str().c_str());
 	}
 
 	/* Finish */
