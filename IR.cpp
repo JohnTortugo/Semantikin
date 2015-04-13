@@ -66,6 +66,16 @@ namespace Util {
 		}
 	}
 
+	bool isRegisterParam(shared_ptr<Parser::SymbolTableEntry> var) {
+		auto pDecl = std::dynamic_pointer_cast<STParamDecl>(var);
+
+		if (pDecl != nullptr)
+			if (pDecl->offset() <= 5)
+				return true;
+
+		return false;
+	}
+
 	string linearDumpTox86VarLocation(shared_ptr<Parser::SymbolTableEntry> var) {
 		auto pDecl = std::dynamic_pointer_cast<STParamDecl>(var);
 		auto vDecl = std::dynamic_pointer_cast<STVariableDeclaration>(var);
@@ -666,7 +676,15 @@ namespace IR {
 
 
 
-	void Addr::linearDumpTox86(stringstream& buffer) { buffer << "x86_addr_of();" << endl; }
+	void Addr::linearDumpTox86(stringstream& buffer) {
+		if (Util::isRegisterParam(this->_src1)) {
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		}
+		else {
+			buffer << "lea " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax	\t\t\t # x86_addr_of" << endl;
+			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+		}
+	}
 
 	void Call::linearDumpTox86(stringstream& buffer) {
 		auto calleeName = this->_src1->getName();

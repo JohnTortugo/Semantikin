@@ -336,8 +336,8 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		id->isArrayAccess(true);
 
 		/* We look into the symbol table to find the dimensions sizes. */
-		shared_ptr<SymbolTableEntry> entry = this->_currentFunction->symbolTable()->lookup(id->value());
-		STVariableDeclaration* decl = dynamic_cast<STVariableDeclaration*>( entry.get() );
+		shared_ptr<SymbolTableEntry> entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
+		STVariableDeclaration* decl 		= dynamic_cast<STVariableDeclaration*>( entry.get() );
 
 		/* Here we are going to store the factors for each index. */
 		vector<shared_ptr<SymbolTableEntry>> indExpsFacts;
@@ -352,6 +352,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		}
 
 		/* Iterate computing the expressions for each index. */
+		bool fullDecoded = id->dimsExprs()->size() == id->dimsExprs()->size();
 		int factIndex = 0;
 		for (auto dimExpr : *id->dimsExprs()) {
 			/* Compute the index expression. */
@@ -388,21 +389,25 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		IR::Instruction* indAccess = new IR::IMul(this->newTemporary(Parser::INT), cttBaseType, prev);
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( indAccess ) );
 
+		/* Find the array base *address* (which is a pointer) */
+		IR::Instruction* entryAddr = new IR::Addr(this->newTemporary(Parser::INT), entry);
+		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( entryAddr ) );
+
 		/* Now we have to sum with the base pointer (id). */
-		IR::Instruction* arrAccess = new IR::IAdd(this->newTemporary(Parser::INT), entry, indAccess->tgt());
+		IR::Instruction* arrAccess = new IR::IAdd(this->newTemporary(Parser::INT), entryAddr->tgt(), indAccess->tgt());
 		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( arrAccess ) );
 
 		/* If we are parsing a right-hand side expression we will de-refer the pointer and load
 		 * the array value in a temporary. Otherwise, we will just return the address to the previous
 		 * expression, and it will take care of dereferencing. 									   */
-		if (!id->isExpLeftHand() && !this->isAArgumentExpression) {
+		if (id->isExpLeftHand() || !fullDecoded) {
+			id->addr( arrAccess->tgt() );
+		}
+		else {
 			IR::Instruction* derefer = new IR::CopyFromArray(this->newTemporary(id->type()), arrAccess->tgt());
 			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( derefer ) );
 
 			id->addr( derefer->tgt() );
-		}
-		else {
-			id->addr( arrAccess->tgt() );
 		}
 	}
 	else {
@@ -434,11 +439,11 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 
 	for (auto argument : *funCall->arguments()) {
 		/* Visit the argument, produce address for them.*/
-		bool prev = this->isAArgumentExpression;
+//		bool prev = this->isAArgumentExpression;
 
-		this->isAArgumentExpression = true;
+//		this->isAArgumentExpression = true;
 		argument->accept(this);
-		this->isAArgumentExpression = prev;
+//		this->isAArgumentExpression = prev;
 
 		/* Add the argument to the function call. */
 		newInstruction->addArgument(argument->addr());
