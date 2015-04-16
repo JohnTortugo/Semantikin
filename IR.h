@@ -454,6 +454,20 @@ namespace IR {
 		void linearDumpTox86(stringstream& buffer);
 	};
 
+	/**
+	 * This class represents a displacement (\param src2) from a base address (\param src1). The final
+	 * address is stored in (\param tgt)
+	 */
+	class AddrDispl : public Instruction {
+	public:
+		AddrDispl(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		{ }
+
+		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
+	};
+
+
 	/* Represent the call to a function. */
 	class Call : public Instruction {
 	private:

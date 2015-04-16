@@ -401,12 +401,12 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 	}
 
 	/* Just the initial indices were specified, fill the remainder wit [0]. */
-	if ((varDecl->getNumDims() > 0 && dims == nullptr) || (varDecl->getNumDims() > dims->size())) {
-		int remainder = (dims == nullptr) ? varDecl->getNumDims() : varDecl->getNumDims() - dims->size();
-
-		for (int i=0; i<remainder; i++)
-			dims->push_back(shared_ptr<Parser::IntegerExpr>(new Parser::IntegerExpr(location(), 0)));
-	}
+//	if ((varDecl->getNumDims() > 0 && dims == nullptr) || (varDecl->getNumDims() > dims->size())) {
+//		int remainder = (dims == nullptr) ? varDecl->getNumDims() : varDecl->getNumDims() - dims->size();
+//
+//		for (int i=0; i<remainder; i++)
+//			dims->push_back(shared_ptr<Parser::IntegerExpr>(new Parser::IntegerExpr(location(), 0)));
+//	}
 
 	/* Continue visiting. */
 	if (dims != nullptr) {

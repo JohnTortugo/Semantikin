@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 			outputName = getCmdOption(argv, argv+argc, "-o");
 
 		stringstream ss;
-		ss << "gcc lib.c -x assembler " << asmFileName << " -o " << outputName;
+		ss << "gcc -g lib.c -x assembler " << asmFileName << " -o " << outputName;
 		cout << ss.str() << endl;
 		system(ss.str().c_str());
 	}

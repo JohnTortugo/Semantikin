@@ -1,0 +1,27 @@
+void init(int v[10]) {
+	int i = 0, N = 10;
+	
+	while (i < N) {
+		v[i] = i*i;
+		i++;
+	}
+}
+
+void print(int v[10]) {
+	int i = 0, N = 10;
+	
+	while (i < N) {
+		printInt( v[i] );
+		i++;
+	}
+}
+
+int main() {
+	int v[10];
+
+	init(v);	
+
+	print(v);	
+
+	return 0;
+}

@@ -1,9 +1,29 @@
+//	int v[10];
+//	int i = 1, N = 10;
+//	
+//	while (i < N) {
+//		v[i] = i*i;
+//		i++;
+//	}
+//
+//	i = 1;
+//	while (i < N) {
+//		int a = v[i];
+//		
+//		printInt( a );
+//		
+//		i++;
+//	}
+
+
+
+
+
+
 int main() {
-	int v[1000];
-
-	v[1] = 100985;
-
-	printInt( v[1] );
+	int a = 10;
+	int b = 5;
+	int c = a / b;
 
 	return 0;
 }

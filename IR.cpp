@@ -270,6 +270,10 @@ namespace IR {
 		buffer << this->_tgt->getName() << " = &" << this->_src1->getName() << ";" << endl;
 	}
 
+	void AddrDispl::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " ++ " << this->_src2->getName() << ";" << endl;
+	}
+
 	void Call::dump(stringstream& buffer) {
 		if (this->_tgt != nullptr)
 			buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "(";
@@ -545,9 +549,19 @@ namespace IR {
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
-	void IDiv::linearDumpTox86(stringstream& buffer) { buffer << "x86_idiv();" << endl; }
+	void IDiv::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_idiv" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "div %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
-	void IMod::linearDumpTox86(stringstream& buffer) { buffer << "x86_imod();" << endl; }
+	void IMod::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_imod" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "div %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rdx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
 	void IMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_iminus();" << endl; }
 
@@ -686,12 +700,19 @@ namespace IR {
 		}
 	}
 
+	void AddrDispl::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_addr_displ" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "sub %rbx, %rax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
+
 	void Call::linearDumpTox86(stringstream& buffer) {
 		auto calleeName = this->_src1->getName();
 		auto resVar 	= this->_tgt;
 		auto arguments 	= this->arguments();
 
-		buffer << endl;
+		buffer << " \t\t\t # x86_call" << endl;
 
 		/* Save register and push parameters */
 		if (resVar != nullptr)
@@ -713,7 +734,7 @@ namespace IR {
 		}
 
 		/* Do the actual call */
-		buffer << std::setfill(' ') << std::setw(17) << " " << "call " << calleeName << " \t\t\t # x86_call" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "call " << calleeName << endl;
 
 		/* Restore register and pop parameters */
 		if (arguments != nullptr) {
