@@ -156,14 +156,6 @@ namespace IR {
 		void linearDumpTox86(stringstream& buffer);
 	};
 
-	class IPlus : public UnaryIntegerArithmetic {
-	public:
-		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
-	};
-
 	class IInc : public UnaryIntegerArithmetic {
 	public:
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
@@ -309,45 +301,6 @@ namespace IR {
 
 
 
-	/* Parent class of all logical arithmetic instructions. */
-	class LogicalArithmetic : public Instruction {
-	public:
-		LogicalArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
-		{ }
-	};
-
-	class LogAnd : public LogicalArithmetic {
-	public:
-		using LogicalArithmetic::LogicalArithmetic;
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
-	};
-
-	class LogOr : public LogicalArithmetic {
-	public:
-		using LogicalArithmetic::LogicalArithmetic;
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
-	};
-
-	class LogXor : public LogicalArithmetic {
-	public:
-		using LogicalArithmetic::LogicalArithmetic;
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
-	};
-
-	class LogNot : public LogicalArithmetic {
-	public:
-		LogNot(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : LogicalArithmetic(tgt, src, nullptr)
-		{ }
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
-	};
 
 
 

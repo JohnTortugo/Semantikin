@@ -148,10 +148,6 @@ namespace IR {
 		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
 	}
 
-	void IPlus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
-	}
-
 	void IInc::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
 	}
@@ -159,6 +155,8 @@ namespace IR {
 	void IDec::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
 	}
+
+
 
 	void FAdd::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + " << this->_src2->getName() << ";" << endl;
@@ -178,10 +176,6 @@ namespace IR {
 
 	void FMinus::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
-	}
-
-	void FPlus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
 	}
 
 	void FInc::dump(stringstream& buffer) {
@@ -208,20 +202,6 @@ namespace IR {
 
 	void BinNot::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = ~ " << this->_src1->getName() << ";" << endl;
-	}
-
-
-
-	void LogAnd::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " && " << this->_src2->getName() << ";" << endl;
-	}
-
-	void LogOr::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " || " << this->_src2->getName() << ";" << endl;
-	}
-
-	void LogNot::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = ! " << this->_src1->getName() << ";" << endl;
 	}
 
 
@@ -552,6 +532,7 @@ namespace IR {
 	void IDiv::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_idiv" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "xor %rdx, %rdx" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "div %rbx" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
@@ -559,13 +540,16 @@ namespace IR {
 	void IMod::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_imod" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "xor %rdx, %rdx" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "div %rbx" << endl;
 		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rdx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
 	}
 
-	void IMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_iminus();" << endl; }
-
-	void IPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_iplus();" << endl; }
+	void IMinus::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_iminus" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "neg %rax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
 	void IInc::linearDumpTox86(stringstream& buffer) {
 		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_inc" << endl;
@@ -591,29 +575,38 @@ namespace IR {
 
 	void FMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fminus();" << endl; }
 
-	void FPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fplus();" << endl; }
-
 	void FInc::linearDumpTox86(stringstream& buffer) { buffer << "x86_finc();" << endl; }
 
 	void FDec::linearDumpTox86(stringstream& buffer) { buffer << "x86_fdec();" << endl; }
 
 
 
-	void BinAnd::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_and();" << endl; }
+	void BinAnd::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_binary_and" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "and %rax, %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
-	void BinOr::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_or();" << endl; }
+	void BinOr::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_binary_or" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "or %rax, %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
-	void BinXor::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_xor();" << endl; }
+	void BinXor::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_binary_xor" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation(this->_src2) << ", %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "xor %rax, %rbx" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rbx, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
-	void BinNot::linearDumpTox86(stringstream& buffer) { buffer << "x86_binary_not();" << endl; }
-
-
-
-	void LogAnd::linearDumpTox86(stringstream& buffer) { buffer << "x86_log_and();" << endl; }
-
-	void LogOr::linearDumpTox86(stringstream& buffer) { buffer << "x86_log_or();" << endl; }
-
-	void LogNot::linearDumpTox86(stringstream& buffer) { buffer << "x86_log_not();" << endl; }
+	void BinNot::linearDumpTox86(stringstream& buffer) {
+		buffer << "movq " << Util::linearDumpTox86VarLocation(this->_src1) << ", %rax 	\t\t\t# x86_binary_not" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "not %rax" << endl;
+		buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(this->_tgt) << endl;
+	}
 
 
 

@@ -394,7 +394,6 @@ string AstToDotVisitor::translateUnop(Parser::UnaryExpr::ExprType type) {
 		case Parser::UnaryExpr::BIT_NOT: return "~";
 		case Parser::UnaryExpr::NOT: return "!";
 		case Parser::UnaryExpr::MINUS: return "-";
-		case Parser::UnaryExpr::PLUS: return "+";
 		case Parser::UnaryExpr::ADDR: return "&";
 		case Parser::UnaryExpr::INCREMENT: return "++";
 		case Parser::UnaryExpr::DECREMENT: return "--";

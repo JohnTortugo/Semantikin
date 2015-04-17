@@ -543,10 +543,6 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 				newInstruction = new IR::IMinus(this->newTemporary(tgtType), exp->addr());
 				break;
 
-			case UnaryExpr::PLUS:
-				newInstruction = new IR::IPlus(this->newTemporary(tgtType), exp->addr());
-				break;
-
 			case UnaryExpr::INCREMENT:
 				newInstruction = new IR::IInc(exp->addr(), exp->addr());
 				break;
@@ -560,10 +556,6 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 		switch (unary->opr()) {
 			case UnaryExpr::MINUS:
 				newInstruction = new IR::FMinus(this->newTemporary(tgtType), exp->addr());
-				break;
-
-			case UnaryExpr::PLUS:
-				newInstruction = new IR::FPlus(this->newTemporary(tgtType), exp->addr());
 				break;
 
 			case UnaryExpr::INCREMENT:

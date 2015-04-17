@@ -247,7 +247,6 @@ EXPR			: EXPR TK_COMPARE EXPR														{ $$ = new BinaryExpr(BinaryExpr::COM
 				| TK_BIT_NOT EXPR 															{ $$ = new UnaryExpr(UnaryExpr::BIT_NOT, @1, $2); }
 				| TK_NOT EXPR 																{ $$ = new UnaryExpr(UnaryExpr::NOT, @1, $2); }
 				| TK_MINUS EXPR 															{ $$ = new UnaryExpr(UnaryExpr::MINUS, @1, $2); }
-				| TK_PLUS EXPR 																{ $$ = new UnaryExpr(UnaryExpr::PLUS, @1, $2); }
 				| TK_AMPERSAND EXPR 														{ $$ = new UnaryExpr(UnaryExpr::ADDR, @1, $2); }
 				| EXPR TK_DPLUS																{ $$ = new UnaryExpr(UnaryExpr::INCREMENT, @2, $1); }
 				| EXPR TK_DMINUS															{ $$ = new UnaryExpr(UnaryExpr::DECREMENT, @2, $1); }

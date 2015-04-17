@@ -158,7 +158,6 @@ namespace Parser {
 			BIT_NOT,
 			NOT,
 			MINUS,
-			PLUS,
 			ADDR,
 			INCREMENT,
 			DECREMENT
