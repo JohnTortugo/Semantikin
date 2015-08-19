@@ -70,3 +70,8 @@ void fun8(int a, int b) {
 		b++;
 	}
 }
+
+int main() {
+
+	return 0;
+}

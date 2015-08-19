@@ -68,6 +68,8 @@ typedef shared_ptr<Parser::STLabelDef>				STLabelDef_sptr;
 typedef pair<STLabelDef_sptr, Instruction_sptr> 	IRLine;
 typedef shared_ptr<list<IRLine>>					IRLine_list_sptr;
 
+typedef shared_ptr<Parser::SymbolTableEntry>		SymbolTableEntry_sp;
+
 /*******************************************************************************
  ** System configuration.. constants, etc. 									  **
  ******************************************************************************/

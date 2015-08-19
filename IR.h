@@ -24,25 +24,39 @@ namespace IR {
 	/* This class is the parent of all Three-address-code (TAC) IR instructions. */
 	class Instruction {
 	protected:
-		shared_ptr<SymbolTableEntry> _tgt;
-		shared_ptr<SymbolTableEntry> _src1;
-		shared_ptr<SymbolTableEntry> _src2;
+		SymbolTableEntry_sp _tgt = nullptr;
+		SymbolTableEntry_sp _src1 = nullptr;
+		SymbolTableEntry_sp _src2 = nullptr;
+
+		Instruction_sptr _chd1 = nullptr;
+		Instruction_sptr _chd2 = nullptr;
 
 	public:
-		Instruction(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : _tgt(tgt), _src1(src1), _src2(src2)
+		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) :
+			_tgt(tgt), _src1(src1), _src2(src2), _chd1(chd1), _chd2(chd2)
 		{ }
 
-		void tgt(shared_ptr<SymbolTableEntry> tgt) { this->_tgt = tgt; }
-		shared_ptr<SymbolTableEntry> tgt() { return this->_tgt; }
+		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) :
+			_tgt(tgt), _src1(src1), _chd1(chd1)
+		{ }
 
-		void src1(shared_ptr<SymbolTableEntry> src) { this->_src1 = src; }
-		shared_ptr<SymbolTableEntry> src1() { return this->_src1; }
+		void tgt(SymbolTableEntry_sp tgt) { this->_tgt = tgt; }
+		SymbolTableEntry_sp tgt() { return this->_tgt; }
 
-		void src2(shared_ptr<SymbolTableEntry> src) { this->_src2 = src; }
-		shared_ptr<SymbolTableEntry> src2() { return this->_src2; }
+		void src1(SymbolTableEntry_sp src) { this->_src1 = src; }
+		SymbolTableEntry_sp src1() { return this->_src1; }
 
-		virtual const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() { return nullptr; }
-		virtual void addArgument(shared_ptr<SymbolTableEntry> argument) { }
+		void src2(SymbolTableEntry_sp src) { this->_src2 = src; }
+		SymbolTableEntry_sp src2() { return this->_src2; }
+
+		void chd1(Instruction_sptr chd) { this->_chd1 = chd; }
+		Instruction_sptr chd1() { return this->_chd1; }
+
+		void chd2(Instruction_sptr chd) { this->_chd2 = chd; }
+		Instruction_sptr chd2() { return this->_chd2; }
+
+		virtual const shared_ptr<vector<SymbolTableEntry_sp>> arguments() { return nullptr; }
+		virtual void addArgument(SymbolTableEntry_sp argument) { }
 
 		virtual void dump(stringstream& buffer) = 0;
 
@@ -53,16 +67,20 @@ namespace IR {
 
 
 
-	/* Parent class of all data movement instructions. */
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/* Parent class of all data movement instructions. 		*/
 	class Copy : public Instruction {
 	public:
-		Copy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Instruction(tgt, src1, nullptr)
+		Copy(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
 		{ }
 	};
 
 	class ScalarCopy : public Copy {
 	public:
-		ScalarCopy(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Copy(tgt, src)
+		ScalarCopy(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd1) : Copy(tgt, src, chd1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -71,7 +89,7 @@ namespace IR {
 
 	class CopyFromArray : public Copy {
 	public:
-		CopyFromArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
+		CopyFromArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -80,7 +98,7 @@ namespace IR {
 
 	class CopyToArray : public Copy {
 	public:
-		CopyToArray(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1) : Copy(tgt, src1)
+		CopyToArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -89,22 +107,31 @@ namespace IR {
 
 
 
+
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
 	/* Parent class of all integer arithmetic instructions. */
 	class IntegerArithmetic : public Instruction {
 	public:
-		IntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		IntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
+		{ }
+
+		IntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
 		{ }
 	};
 
 	class BinaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		BinaryIntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : IntegerArithmetic(tgt, src1, src2)
+		BinaryIntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : IntegerArithmetic(tgt, src1, src2, chd1, chd2)
 		{ }
 	};
 
 	class UnaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		UnaryIntegerArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : IntegerArithmetic(tgt, src, nullptr)
+		UnaryIntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd)
+			: IntegerArithmetic(tgt, src, chd)
 		{ }
 	};
 
@@ -174,22 +201,31 @@ namespace IR {
 
 
 
+
+
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
 	/* Parent class of all floating point arithmetic instructions. */
 	class FloatingArithmetic : public Instruction {
 	public:
-		FloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
+		{ }
+
+		FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
 		{ }
 	};
 
 	class BinaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		BinaryFloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : FloatingArithmetic(tgt, src1, src2)
+		BinaryFloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : FloatingArithmetic(tgt, src1, src2, chd1, chd2)
 		{ }
 	};
 
 	class UnaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		UnaryFloatingArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : FloatingArithmetic(tgt, src, nullptr)
+		UnaryFloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : FloatingArithmetic(tgt, src, chd)
 		{ }
 	};
 
@@ -259,10 +295,17 @@ namespace IR {
 
 
 
-	/* Parent class of all binary arithmetic instructions. */
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/* Parent class of all binary arithmetic instructions.  */
 	class BitArithmetic : public Instruction {
 	public:
-		BitArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		BitArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
+		{ }
+
+		BitArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
 		{ }
 	};
 
@@ -292,7 +335,7 @@ namespace IR {
 
 	class BinNot : public BitArithmetic {
 	public:
-		BinNot(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : BitArithmetic(tgt, src, nullptr)
+		BinNot(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : BitArithmetic(tgt, src, chd)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -303,11 +346,14 @@ namespace IR {
 
 
 
-
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
 	/* Parent class of all relational arithmetic instructions. */
 	class RelationalArithmetic : public Instruction {
 	public:
-		RelationalArithmetic(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		RelationalArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
 		{ }
 	};
 
@@ -364,13 +410,16 @@ namespace IR {
 	/* Base class for all instructions that change control flow. */
 	class BranchInstruction : public Instruction {
 	public:
-		BranchInstruction(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		BranchInstruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : Instruction(tgt, src, chd)
+		{ }
+
+		BranchInstruction(SymbolTableEntry_sp tgt) : Instruction(tgt, nullptr, nullptr)
 		{ }
 	};
 
 	class Jump : public BranchInstruction {
 	public:
-		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(tgt, nullptr, nullptr)
+		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(tgt)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -379,7 +428,7 @@ namespace IR {
 
 	class CondTrueJump : public BranchInstruction {
 	public:
-		CondTrueJump(shared_ptr<SymbolTableEntry> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt, nullptr)
+		CondTrueJump(SymbolTableEntry_sp exp, shared_ptr<STLabelDef> tgt, Instruction_sptr chd) : BranchInstruction(exp, tgt, chd)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -388,7 +437,7 @@ namespace IR {
 
 	class CondFalseJump : public BranchInstruction {
 	public:
-		CondFalseJump(shared_ptr<SymbolTableEntry> exp, shared_ptr<STLabelDef> tgt) : BranchInstruction(exp, tgt, nullptr)
+		CondFalseJump(SymbolTableEntry_sp exp, shared_ptr<STLabelDef> tgt, Instruction_sptr chd) : BranchInstruction(exp, tgt, chd)
 		{ tgt->incrementUses(); }
 
 		void dump(stringstream& buffer);
@@ -400,7 +449,7 @@ namespace IR {
 	/* Represent taking the address of a variable. */
 	class Addr : public Instruction {
 	public:
-		Addr(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src) : Instruction(tgt, src, nullptr)
+		Addr(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : Instruction(tgt, src, chd)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -413,7 +462,7 @@ namespace IR {
 	 */
 	class AddrDispl : public Instruction {
 	public:
-		AddrDispl(shared_ptr<SymbolTableEntry> tgt, shared_ptr<SymbolTableEntry> src1, shared_ptr<SymbolTableEntry> src2) : Instruction(tgt, src1, src2)
+		AddrDispl(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -424,17 +473,17 @@ namespace IR {
 	/* Represent the call to a function. */
 	class Call : public Instruction {
 	private:
-		shared_ptr<vector<shared_ptr<SymbolTableEntry>>> _arguments;
+		shared_ptr<vector<SymbolTableEntry_sp>> _arguments;
 
 	public:
-		Call(shared_ptr<SymbolTableEntry> callee, shared_ptr<SymbolTableEntry> resTgt) : Instruction(resTgt, callee, nullptr)
+		Call(SymbolTableEntry_sp callee, SymbolTableEntry_sp resTgt, Instruction_sptr chd) : Instruction(resTgt, callee, chd)
 		{ }
 
-		const shared_ptr<vector<shared_ptr<SymbolTableEntry>>> arguments() const { return _arguments; }
+		const shared_ptr<vector<SymbolTableEntry_sp>> arguments() const { return _arguments; }
 
-		void addArgument(shared_ptr<SymbolTableEntry> argument) {
+		void addArgument(SymbolTableEntry_sp argument) {
 			if (this->_arguments == nullptr)
-				this->_arguments = make_shared<vector<shared_ptr<SymbolTableEntry>>>();
+				this->_arguments = make_shared<vector<SymbolTableEntry_sp>>();
 
 			_arguments->push_back(argument);
 		}
@@ -446,7 +495,7 @@ namespace IR {
 	/* Represent a return instruction. */
 	class Return : public Instruction {
 	public:
-		Return(shared_ptr<SymbolTableEntry> exp) : Instruction(exp, nullptr, nullptr)
+		Return(SymbolTableEntry_sp exp, Instruction_sptr chd) : Instruction(nullptr, exp, chd)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -466,7 +515,7 @@ namespace IR {
 	class Function {
 	private:
 		/* Pointer to the symbol table entry describing this function. */
-		shared_ptr<SymbolTableEntry> _addr;
+		SymbolTableEntry_sp _addr;
 
 		/* Pointer to this function's symbol table. */
 		shared_ptr<SymbolTable> _symbTable;
@@ -495,9 +544,9 @@ namespace IR {
 		ControlFlowGraph_sptr cfg();
 
 		/* Methods related to setting/getting the function's declaration. */
-		void addr(shared_ptr<SymbolTableEntry> addr) { this->_addr = addr; }
+		void addr(SymbolTableEntry_sp addr) { this->_addr = addr; }
 
-		shared_ptr<SymbolTableEntry> addr() { return this->_addr; }
+		SymbolTableEntry_sp addr() { return this->_addr; }
 
 
 		/* Methods related to Linear IR construction. */

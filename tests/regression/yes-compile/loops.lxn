@@ -39,3 +39,8 @@ void fun6(int vet[100], int N) {
 	
 	printInt(vet[N-1]);
 }
+
+int main() {
+
+	return 0;
+}

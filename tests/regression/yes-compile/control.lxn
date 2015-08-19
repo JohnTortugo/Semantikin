@@ -84,3 +84,8 @@ int arithm3(int x[2][3], float vf[10]) {
 
 	return 0;
 }
+
+int main() {
+
+	return 0;
+}

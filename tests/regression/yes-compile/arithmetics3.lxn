@@ -76,3 +76,8 @@ void fun11() {
 
 	float c = (a && (a || a || a)) && (b || (a && b && a));
 }
+
+int main() {
+
+	return 0;
+}

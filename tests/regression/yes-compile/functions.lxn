@@ -43,3 +43,7 @@ string fun12(string p1, string p2, int p3, int p4, float p5, float p6, string p7
 	return p7;
 }
 
+int main() {
+
+	return 0;
+}

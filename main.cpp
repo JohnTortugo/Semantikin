@@ -53,6 +53,11 @@ int main(int argc, char *argv[]) {
 	/* Parsing. */
 	char* inputFileName = getCmdOption(argv, argv+argc, "-i");
 
+	if (access(inputFileName, F_OK | R_OK)) {
+		fprintf(stderr, "Could not access the specified input file.\n");
+		exit(1);
+	}
+
 	if (!driver.parse(inputFileName, astModule))
 		exit(1);
 

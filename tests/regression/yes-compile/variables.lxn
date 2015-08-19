@@ -32,3 +32,8 @@ void fun5() {
 	float fff, ffffff, ff, fsdf[10][20], foiw[50][30];
 	string s[30], name[100], more[30][2][4];
 }
+
+int main() {
+
+	return 0;
+}
