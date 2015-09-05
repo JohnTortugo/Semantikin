@@ -30,6 +30,7 @@ namespace IR {
 
 		Instruction_sptr _chd1 = nullptr;
 		Instruction_sptr _chd2 = nullptr;
+		Instruction_sptr _chd3 = nullptr;
 
 	public:
 		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) :
@@ -38,6 +39,10 @@ namespace IR {
 
 		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) :
 			_tgt(tgt), _src1(src1), _chd1(chd1)
+		{ }
+
+		Instruction(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) :
+			_chd1(chd1), _chd2(chd2), _chd3(chd3)
 		{ }
 
 		void tgt(SymbolTableEntry_sp tgt) { this->_tgt = tgt; }
@@ -67,6 +72,15 @@ namespace IR {
 
 
 
+	class Mem : public Instruction {
+	public:
+		Copy(Instruction_sptr tgt, Instruction_sptr value, Instruction_sptr offset=nullptr) : Instruction(tgt, value, offset)
+		{ }
+	};
+
+
+
+
 	/********************************************************/
 	/********************************************************/
 	/********************************************************/
@@ -74,13 +88,13 @@ namespace IR {
 	/* Parent class of all data movement instructions. 		*/
 	class Copy : public Instruction {
 	public:
-		Copy(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
+		Copy(Instruction_sptr tgt, Instruction_sptr value, Instruction_sptr offset=nullptr) : Instruction(tgt, value, offset)
 		{ }
 	};
 
 	class ScalarCopy : public Copy {
 	public:
-		ScalarCopy(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd1) : Copy(tgt, src, chd1)
+		ScalarCopy(Instruction_sptr tgt, Instruction_sptr src) : Copy(tgt, src)
 		{ }
 
 		void dump(stringstream& buffer);
@@ -88,21 +102,21 @@ namespace IR {
 	};
 
 	class CopyFromArray : public Copy {
-	public:
-		CopyFromArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
-		{ }
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
+//	public:
+//		CopyFromArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
+//		{ }
+//
+//		void dump(stringstream& buffer);
+//		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyToArray : public Copy {
-	public:
-		CopyToArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
-		{ }
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
+//	public:
+//		CopyToArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
+//		{ }
+//
+//		void dump(stringstream& buffer);
+//		void linearDumpTox86(stringstream& buffer);
 	};
 
 

@@ -1,16 +1,7 @@
 int main() {
-	int zero = 10;
-	int um = 10;
+	int a, b;
 
-	int a =  10 & 10;
-	int b =  10 | 5;
-	int c =  10 ^ 5;
-	int d =  ~1;
-
-	printInt(a);
-	printInt(b);
-	printInt(c);
-	printInt(d);
+	a = 3;
 
 	return 0;
 }

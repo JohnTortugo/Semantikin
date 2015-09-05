@@ -145,6 +145,16 @@ private:
 	 * the function frame index used to store new temporary variables.    */
 	int _currentOffset;
 
+
+	/**
+	 * This is a pointer for the last IR node (instruction) added to a subtree.
+	 * Therefore, essentially this instruction is a root of a subtree. Since we
+	 * construct the IR tree bottom up the "upper" nodes need to have a reference
+	 * to the "bottom" nodes. This variable is a pointer to the last bottom node
+	 * created.
+	 */
+	Instruction_sptr lastInstruction = nullptr;
+
 	/* This will be true whenever we are generating code for an expression that
 	 * is being used as an argument to a function call. This is helpful when generating
 	 * calls that receive matrixes as parameters. Usually multidimensional variable accesses
