@@ -62,7 +62,7 @@ namespace Parser {
 		buffer << std::right;
 		buffer << std::setw(10) << this->name << " |";
 		buffer << std::setw(5) << Util::typeName(this->_type) << " |";
-		buffer << std::setw(5) << this->width << " |";
+		buffer << std::setw(5) << this->_width << " |";
 		buffer << std::setw(5) << this->_offset << " |";
 		buffer << std::setw(5) << this->getNumDims() << " |";
 		buffer << std::setw(10) << "-" << " |";
@@ -78,7 +78,7 @@ namespace Parser {
 		buffer << std::right;
 		buffer << std::setw(10) << this->name << " |";
 		buffer << std::setw(5) << Util::typeName(this->_type) << " |";
-		buffer << std::setw(5) << this->width << " |";
+		buffer << std::setw(5) << this->_width << " |";
 		buffer << std::setw(5) << this->_offset << " |";
 		buffer << std::setw(5) << this->getNumDims() << " |";
 		buffer << std::setw(10) << "-" << " |";
@@ -119,16 +119,16 @@ namespace Parser {
 		buffer << endl;
 	}
 
-	void STTempVar::dump(std::stringstream& buffer) const {
+	void STRegister::dump(std::stringstream& buffer) const {
 		buffer.fill(' ');
 		buffer << std::left;
 		buffer << std::setw(10) << "| Temp" << " |";
 		buffer << std::right;
 		buffer << std::setw(10) << this->name << " |";
 		buffer << std::setw(5) << Util::typeName(this->_type) << " |";
-		buffer << std::setw(5) << this->width << " |";
-		buffer << std::setw(5) << this->_offset << " |";
-		buffer << std::setw(5) << this->getNumDims() << " |";
+		buffer << std::setw(5) << this->_width << " |";
+		buffer << std::setw(5) << "-" << " |";
+		buffer << std::setw(5) << "-" << " |";
 		buffer << std::setw(10) << "-" << " |";
 		buffer << std::setw(5)  << "-" << " |";
 		buffer << std::setw(40)  << "-" << " |";
@@ -167,13 +167,13 @@ namespace Parser {
 
 		for (auto& entry : _entries) {
 			auto var = std::dynamic_pointer_cast<STLocalVarDecl>(entry.second);
-			auto tmp = std::dynamic_pointer_cast<STTempVar>(entry.second);
+			auto tmp = std::dynamic_pointer_cast<STRegister>(entry.second);
 
 			if (var != nullptr) {
-				frameSize += var->getWidth();
+				frameSize += var->width();
 			}
 			else if (tmp != nullptr) {
-				frameSize += tmp->getWidth();
+				frameSize += tmp->width();
 			}
 		}
 

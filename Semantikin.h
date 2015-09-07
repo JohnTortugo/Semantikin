@@ -30,6 +30,9 @@ namespace Parser {
 	};
 
 	class STLabelDef;
+	class STConstantDef;
+	class STRegister;
+	class STVariableDeclaration;
 	class SymbolTable;
 	class SymbolTableEntry;
 }
@@ -64,11 +67,17 @@ typedef shared_ptr<IR::Instruction>					Instruction_sptr;
 typedef list<Instruction_sptr> 						Instruction_sptr_list;
 
 typedef shared_ptr<Parser::STLabelDef>				STLabelDef_sptr;
+typedef shared_ptr<Parser::STConstantDef>			STConstantDef_sptr;
+typedef shared_ptr<Parser::STVariableDeclaration>	STVariableDeclaration_sptr;
+typedef shared_ptr<Parser::STRegister>				STRegister_sptr;
+
 
 typedef pair<STLabelDef_sptr, Instruction_sptr> 	IRLine;
 typedef shared_ptr<list<IRLine>>					IRLine_list_sptr;
 
 typedef shared_ptr<Parser::SymbolTableEntry>		SymbolTableEntry_sp;
+
+
 
 /*******************************************************************************
  ** System configuration.. constants, etc. 									  **

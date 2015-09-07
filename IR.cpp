@@ -1,4 +1,5 @@
 #include "IR.h"
+#include "IRVisitors.h"
 #include "BasicBlock.h"
 
 #include <set>
@@ -109,9 +110,84 @@ namespace Util {
 
 
 namespace IR {
+	void Module::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Function::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void ScalarCopy::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void CopyFromArray::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void CopyToArray::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void Immediate::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Memory::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Register::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void IAdd::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void ISub::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void IMul::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void IDiv::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void IMod::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void IMinus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void IInc::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void IDec::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void FAdd::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FSub::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FMul::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FDiv::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FMinus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FPlus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FInc::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void FDec::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void BinAnd::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void BinOr::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void BinXor::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void BinNot::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void RLesThan::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void RLesThanEqual::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void RGreaterThan::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void RGreaterThanEqual::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void REqual::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void RNotEqual::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void Jump::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void CondTrueJump::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void CondFalseJump::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+	void Addr::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void AddrDispl::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Call::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Return::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Phi::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+
+
+
+
+
+
+
+
+
+
+	void Register::dump(stringstream& buffer) {
+		buffer << "Reg;" << endl;
+	}
+
+	void Immediate::dump(stringstream& buffer) {
+		buffer << "Imm;" << endl;
+	}
+
+	void Memory::dump(stringstream& buffer) {
+		buffer << "Mem" << endl;
+	}
+
+
+
 
 	void ScalarCopy::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << ";" << endl;
+		buffer << this->_chd1->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
 	}
 
 	void CopyFromArray::dump(stringstream& buffer) {
@@ -176,6 +252,10 @@ namespace IR {
 
 	void FMinus::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
+	}
+
+	void FPlus::dump(stringstream& buffer) {
+		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
 	}
 
 	void FInc::dump(stringstream& buffer) {
@@ -294,7 +374,7 @@ namespace IR {
 	void Function::dump(stringstream& buffer) {
 		buffer << "function " << this->_addr->getName() << "(...) {" << endl;
 
-		for (auto instruction : *this->_instrs) {
+		for (auto instruction : *this->_subtrees) {
 			/* Do we have a label here?  */
 			if (instruction.first != nullptr)
 				buffer << std::setfill(' ') << std::setw(15) << instruction.first->getName() << ": ";
@@ -316,22 +396,22 @@ namespace IR {
 
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {
 		if (this->_labelPendingSlot)
-			this->_instrs->back().second = nullptr;
+			this->_subtrees->back().second = nullptr;
 
 		/* Set the "address" to which the label points to. */
-		label->address((int)this->_instrs->size());
+		label->address((int)this->_subtrees->size());
 
-		this->_instrs->push_back( make_pair(label, nullptr) );
+		this->_subtrees->push_back( make_pair(label, nullptr) );
 		this->_labelPendingSlot = true;
 	}
 
 	void Function::appendInstruction(shared_ptr<IR::Instruction> instr) {
 		if (this->_labelPendingSlot) {
-			this->_instrs->back().second = instr;
+			this->_subtrees->back().second = instr;
 			this->_labelPendingSlot = false;
 		}
 		else {
-			this->_instrs->push_back( make_pair(nullptr, instr) );
+			this->_subtrees->push_back( make_pair(nullptr, instr) );
 		}
 	}
 
@@ -361,7 +441,7 @@ namespace IR {
 
 		/* Find the leaders */
 		unsigned int instrInd = 0;
-		for (auto& irLine : *this->_instrs) {
+		for (auto& irLine : *this->_subtrees) {
 			if (irLine.first != nullptr || nextIsLeader) {
 				/* Save index of where the BB starts. */
 				bbLimits.push_back(make_pair(instrInd, 0));
@@ -380,7 +460,7 @@ namespace IR {
 			instrInd = ldrIndx.first + 1; // next instruction after the leader (i.e., first in the BB)
 
 			// Find the end of the BB
-			while (instrInd < this->_instrs->size() && leaders.find(instrInd) == leaders.end())
+			while (instrInd < this->_subtrees->size() && leaders.find(instrInd) == leaders.end())
 				instrInd++;
 
 			// second points to one after end
@@ -390,8 +470,8 @@ namespace IR {
 		/* Construct the nodes of the CFG. */
 		BasicBlock_sptr prevBB = nullptr;
 		for (auto& bbBorder : bbLimits) {
-			auto beg = this->_instrs->begin();
-			auto end = this->_instrs->begin();
+			auto beg = this->_subtrees->begin();
+			auto end = this->_subtrees->begin();
 
 			std::advance(beg, bbBorder.first);
 			std::advance(end, bbBorder.second);
@@ -574,6 +654,8 @@ namespace IR {
 	void FDiv::linearDumpTox86(stringstream& buffer) { buffer << "x86_fdiv();" << endl; }
 
 	void FMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fminus();" << endl; }
+
+	void FPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fplus();" << endl; }
 
 	void FInc::linearDumpTox86(stringstream& buffer) { buffer << "x86_finc();" << endl; }
 
@@ -768,7 +850,7 @@ namespace IR {
 		for (auto& entry : entries) {
 			auto pDecl = std::dynamic_pointer_cast<STParamDecl>(entry.second);
 			if (pDecl != nullptr) {
-				paramTotSize += pDecl->getWidth();
+				paramTotSize += pDecl->width();
 
 				// If this parameter still fits in registers (i.e., < 6th
 				if (paramIndex <= 5) {
@@ -822,7 +904,7 @@ namespace IR {
 
 		this->linearDumpTox86Prologue(buffer);
 
-		for (auto instruction : *this->_instrs) {
+		for (auto instruction : *this->_subtrees) {
 			/* Do we have a label here?  */
 			if (instruction.first != nullptr)
 				buffer << std::setfill(' ') << std::setw(15) << instruction.first->getName() << ": ";

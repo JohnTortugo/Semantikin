@@ -5,7 +5,7 @@
 #include "AbstractSyntaxTree.h"
 #include "IR.h"
 
-class AstNodeVisitor {
+class AstTreeVisitor {
 public:
 	virtual void visit(Parser::CompilationUnit* module) = 0;
 	virtual void visit(Parser::Function* module) = 0;
@@ -25,10 +25,10 @@ public:
 	virtual void visit(Parser::UnaryExpr* module) = 0;
 	virtual void visit(Parser::BinaryExpr* module) = 0;
 
-	virtual ~AstNodeVisitor() {};
+	virtual ~AstTreeVisitor() {};
 };
 
-class AstToDotVisitor : public AstNodeVisitor {
+class AstToDotVisitor : public AstTreeVisitor {
 private:
 	std::ofstream dotfile;
 
@@ -70,7 +70,7 @@ public:
 	void visit(Parser::BinaryExpr* module);
 };
 
-class AstSemaVisitor : public AstNodeVisitor {
+class AstSemaVisitor : public AstTreeVisitor {
 private:
 	/* Offset of the next variable inside the frame of this function. */
 	int _currentOffset;
@@ -122,7 +122,7 @@ public:
 	int currentOffset() { return this->_currentOffset; }
 };
 
-class AstTACGenVisitor : public AstNodeVisitor {
+class AstTACGenVisitor : public AstTreeVisitor {
 private:
 	/* Pointer to the module currently being IR generated. */
 	shared_ptr<IR::Module> _module;
@@ -153,7 +153,7 @@ private:
 	 * to the "bottom" nodes. This variable is a pointer to the last bottom node
 	 * created.
 	 */
-	Instruction_sptr lastInstruction = nullptr;
+	Instruction_sptr _lastInstruction = nullptr;
 
 	/* This will be true whenever we are generating code for an expression that
 	 * is being used as an argument to a function call. This is helpful when generating
@@ -192,13 +192,13 @@ public:
 	void translateArithmeticExpr(Parser::UnaryExpr* unary);
 	void translateBooleanExp(Parser::UnaryExpr* unary);
 
-	void emitBranchesBasedOnExpValue(shared_ptr<SymbolTableEntry>, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse);
+	void emitBranchesBasedOnExpValue(Instruction_sptr, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse);
 
 	template<typename T>
 	shared_ptr<STConstantDef> newConstant(T value);
 
 	shared_ptr<STLabelDef> newLabel(string scope, string suffix="");
-	shared_ptr<STTempVar> newTemporary(NativeType type);
+	shared_ptr<IR::Register> newTemporary(NativeType type);
 };
 
 #endif /* ASTVISITORS_H_ */

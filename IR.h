@@ -20,6 +20,8 @@ using std::shared_ptr;
 using std::make_shared;
 using namespace Parser;
 
+class IRTreeVisitor;
+
 namespace IR {
 	/* This class is the parent of all Three-address-code (TAC) IR instructions. */
 	class Instruction {
@@ -33,6 +35,9 @@ namespace IR {
 		Instruction_sptr _chd3 = nullptr;
 
 	public:
+		Instruction()
+		{ }
+
 		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) :
 			_tgt(tgt), _src1(src1), _src2(src2), _chd1(chd1), _chd2(chd2)
 		{ }
@@ -42,7 +47,7 @@ namespace IR {
 		{ }
 
 		Instruction(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) :
-			_chd1(chd1), _chd2(chd2), _chd3(chd3)
+			_tgt(nullptr), _src1(nullptr), _src2(nullptr), _chd1(chd1), _chd2(chd2), _chd3(chd3)
 		{ }
 
 		void tgt(SymbolTableEntry_sp tgt) { this->_tgt = tgt; }
@@ -60,8 +65,18 @@ namespace IR {
 		void chd2(Instruction_sptr chd) { this->_chd2 = chd; }
 		Instruction_sptr chd2() { return this->_chd2; }
 
+		void chd3(Instruction_sptr chd) { this->_chd3 = chd; }
+		Instruction_sptr chd3() { return this->_chd3; }
+
+
 		virtual const shared_ptr<vector<SymbolTableEntry_sp>> arguments() { return nullptr; }
 		virtual void addArgument(SymbolTableEntry_sp argument) { }
+
+		/** Used to traverse the IR tree. */
+		virtual void accept(IRTreeVisitor* visitor) = 0;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		virtual string tgtDataName() = 0;
 
 		virtual void dump(stringstream& buffer) = 0;
 
@@ -71,12 +86,74 @@ namespace IR {
 	};
 
 
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/********************************************************/
+	/* Parent class of all instructions that are actually
+	 * placeholder for data. Like immediates, registers and
+	 * memory addresses. 									*/
+	class Data : public Instruction { };
 
-	class Mem : public Instruction {
+	class Immediate : public Data {
+	private:
+		STConstantDef_sptr _value;
+
 	public:
-		Copy(Instruction_sptr tgt, Instruction_sptr value, Instruction_sptr offset=nullptr) : Instruction(tgt, value, offset)
+		Immediate(STConstantDef_sptr val) : _value(val)
 		{ }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		STConstantDef_sptr value() { return this->_value; }
+
+		string tgtDataName() { return this->_value->getName(); }
+
+		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer) { }
 	};
+
+	class Register : public Data {
+	private:
+		STRegister_sptr _value;
+
+	public:
+		Register(STRegister_sptr val) : _value(val)
+		{ }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		STRegister_sptr value() { return this->_value; }
+
+		string tgtDataName() { return this->_value->getName(); }
+
+		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer) { }
+	};
+
+	class Memory : public Data {
+	private:
+		STVariableDeclaration_sptr _value;
+
+	public:
+		Memory(STVariableDeclaration_sptr val) : _value(val)
+		{ }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		STVariableDeclaration_sptr value() { return this->_value; }
+
+		string tgtDataName() { return this->_value->getName(); }
+
+		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer) { }
+	};
+
+
+
 
 
 
@@ -88,35 +165,48 @@ namespace IR {
 	/* Parent class of all data movement instructions. 		*/
 	class Copy : public Instruction {
 	public:
-		Copy(Instruction_sptr tgt, Instruction_sptr value, Instruction_sptr offset=nullptr) : Instruction(tgt, value, offset)
+		Copy(Instruction_sptr tgt, Instruction_sptr value) : Instruction(tgt, value, nullptr)
 		{ }
 	};
 
 	class ScalarCopy : public Copy {
 	public:
-		ScalarCopy(Instruction_sptr tgt, Instruction_sptr src) : Copy(tgt, src)
-		{ }
+		using Copy::Copy;
+
+		/** Used to obtain the "human readable" name of the destination operand of the operation. */
+		string tgtDataName() { return this->_chd1->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyFromArray : public Copy {
-//	public:
-//		CopyFromArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
-//		{ }
-//
-//		void dump(stringstream& buffer);
-//		void linearDumpTox86(stringstream& buffer);
+		using Copy::Copy;
+
+		/** Used to obtain the "human readable" name of the destination operand of the operation. */
+		string tgtDataName() { return this->_chd1->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyToArray : public Copy {
-//	public:
-//		CopyToArray(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Copy(tgt, src1, chd1)
-//		{ }
-//
-//		void dump(stringstream& buffer);
-//		void linearDumpTox86(stringstream& buffer);
+		using Copy::Copy;
+
+		/** Used to obtain the "human readable" name of the destination operand of the operation. */
+		string tgtDataName() { return this->_chd1->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		void dump(stringstream& buffer);
+		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -129,29 +219,32 @@ namespace IR {
 	/* Parent class of all integer arithmetic instructions. */
 	class IntegerArithmetic : public Instruction {
 	public:
-		IntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
-		{ }
-
-		IntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
+		IntegerArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
 		{ }
 	};
 
 	class BinaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		BinaryIntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : IntegerArithmetic(tgt, src1, src2, chd1, chd2)
+		BinaryIntegerArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : IntegerArithmetic(chd1, chd2, chd3)
 		{ }
 	};
 
 	class UnaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		UnaryIntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd)
-			: IntegerArithmetic(tgt, src, chd)
-		{ }
+//		UnaryIntegerArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd)
+//			: IntegerArithmetic(tgt, src, chd)
+//		{ }
 	};
 
 	class IAdd : public BinaryIntegerArithmetic {
 	public:
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -161,6 +254,12 @@ namespace IR {
 	public:
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -168,6 +267,12 @@ namespace IR {
 	class IMul : public BinaryIntegerArithmetic {
 	public:
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -177,6 +282,12 @@ namespace IR {
 	public:
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -184,6 +295,12 @@ namespace IR {
 	class IMod : public BinaryIntegerArithmetic {
 	public:
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -193,6 +310,12 @@ namespace IR {
 	public:
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -201,6 +324,12 @@ namespace IR {
 	public:
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -208,6 +337,12 @@ namespace IR {
 	class IDec : public UnaryIntegerArithmetic {
 	public:
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -227,25 +362,31 @@ namespace IR {
 		FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
 		{ }
 
-		FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
+		FloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
 		{ }
 	};
 
 	class BinaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		BinaryFloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : FloatingArithmetic(tgt, src1, src2, chd1, chd2)
+		BinaryFloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : FloatingArithmetic(chd1, chd2, chd3)
 		{ }
 	};
 
 	class UnaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		UnaryFloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : FloatingArithmetic(tgt, src, chd)
+		UnaryFloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2) : FloatingArithmetic(chd1, chd2, nullptr)
 		{ }
 	};
 
 	class FAdd : public BinaryFloatingArithmetic {
 	public:
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -255,6 +396,12 @@ namespace IR {
 	public:
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -262,6 +409,12 @@ namespace IR {
 	class FMul : public BinaryFloatingArithmetic {
 	public:
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -271,6 +424,12 @@ namespace IR {
 	public:
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -278,6 +437,12 @@ namespace IR {
 	class FMinus : public UnaryFloatingArithmetic {
 	public:
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -287,6 +452,12 @@ namespace IR {
 	public:
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -295,6 +466,12 @@ namespace IR {
 	public:
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -302,6 +479,12 @@ namespace IR {
 	class FDec : public UnaryFloatingArithmetic {
 	public:
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -316,16 +499,19 @@ namespace IR {
 	/* Parent class of all binary arithmetic instructions.  */
 	class BitArithmetic : public Instruction {
 	public:
-		BitArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
-		{ }
-
-		BitArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) : Instruction(tgt, src1, chd1)
+		BitArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
 		{ }
 	};
 
 	class BinAnd : public BitArithmetic {
 	public:
 		using BitArithmetic::BitArithmetic;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -335,6 +521,12 @@ namespace IR {
 	public:
 		using BitArithmetic::BitArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -343,14 +535,26 @@ namespace IR {
 	public:
 		using BitArithmetic::BitArithmetic;
 
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinNot : public BitArithmetic {
 	public:
-		BinNot(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : BitArithmetic(tgt, src, chd)
+		BinNot(Instruction_sptr chd1, Instruction_sptr chd2) : BitArithmetic(chd1, chd2, nullptr)
 		{ }
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -375,6 +579,9 @@ namespace IR {
 	public:
 		using RelationalArithmetic::RelationalArithmetic;
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -382,6 +589,9 @@ namespace IR {
 	class RLesThanEqual : public RelationalArithmetic {
 	public:
 		using RelationalArithmetic::RelationalArithmetic;
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -391,6 +601,9 @@ namespace IR {
 	public:
 		using RelationalArithmetic::RelationalArithmetic;
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -398,6 +611,9 @@ namespace IR {
 	class RGreaterThanEqual : public RelationalArithmetic {
 	public:
 		using RelationalArithmetic::RelationalArithmetic;
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -407,6 +623,9 @@ namespace IR {
 	public:
 		using RelationalArithmetic::RelationalArithmetic;
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -414,6 +633,9 @@ namespace IR {
 	class RNotEqual : public RelationalArithmetic {
 	public:
 		using RelationalArithmetic::RelationalArithmetic;
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -436,6 +658,9 @@ namespace IR {
 		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(tgt)
 		{ tgt->incrementUses(); }
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -444,6 +669,9 @@ namespace IR {
 	public:
 		CondTrueJump(SymbolTableEntry_sp exp, shared_ptr<STLabelDef> tgt, Instruction_sptr chd) : BranchInstruction(exp, tgt, chd)
 		{ tgt->incrementUses(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -454,6 +682,9 @@ namespace IR {
 		CondFalseJump(SymbolTableEntry_sp exp, shared_ptr<STLabelDef> tgt, Instruction_sptr chd) : BranchInstruction(exp, tgt, chd)
 		{ tgt->incrementUses(); }
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -463,8 +694,14 @@ namespace IR {
 	/* Represent taking the address of a variable. */
 	class Addr : public Instruction {
 	public:
-		Addr(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : Instruction(tgt, src, chd)
+		Addr(Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(chd1, chd2, nullptr)
 		{ }
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -476,8 +713,14 @@ namespace IR {
 	 */
 	class AddrDispl : public Instruction {
 	public:
-		AddrDispl(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
+		AddrDispl(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
 		{ }
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { return this->chd1()->tgtDataName(); }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
@@ -502,6 +745,9 @@ namespace IR {
 			_arguments->push_back(argument);
 		}
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -512,6 +758,9 @@ namespace IR {
 		Return(SymbolTableEntry_sp exp, Instruction_sptr chd) : Instruction(nullptr, exp, chd)
 		{ }
 
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -519,6 +768,9 @@ namespace IR {
 	/* Represent SSA phi functions. */
 	class Phi : public Instruction {
 	public:
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
@@ -545,13 +797,19 @@ namespace IR {
 		bool _labelPendingSlot = false;
 
 		/* The instructions that compose this function. */
-		shared_ptr<list< pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>> >> _instrs;
+		shared_ptr<list< pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>> >> _subtrees;
 
 	public:
 		Function(shared_ptr<SymbolTable> st) :
 			_symbTable(st),
-			_instrs(shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>>(new list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>()))
+			_subtrees(shared_ptr<list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>>(new list<pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>>>()))
 		{ }
+
+
+		string name() { return dynamic_cast<STFunctionDeclaration*>(this->_addr.get())->getLabel(); }
+
+
+		shared_ptr<list< pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>> >> subtrees() { return this->_subtrees; }
 
 
 		/* Methods related to Control Flow Graph construction. */
@@ -576,6 +834,9 @@ namespace IR {
 
 		void addSymbolTable(shared_ptr<SymbolTable> st);
 
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		/* Mostly debug related methods. */
 		void dump(stringstream& buffer);
@@ -605,6 +866,9 @@ namespace IR {
 
 		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
 		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dump();
 

@@ -47,7 +47,7 @@ namespace Parser {
 	class STVariableDeclaration : public SymbolTableEntry {
 	protected:
 		/* How many bytes this variable occupy. */
-		int width;
+		int _width;
 
 		/* Offset within the function frame where this variable will be stored. */
 		int _offset;
@@ -59,10 +59,10 @@ namespace Parser {
 
 
 	public:
-		STVariableDeclaration() : SymbolTableEntry("", Parser::NOT_A_TYPE), width(0), _offset(0)
+		STVariableDeclaration() : SymbolTableEntry("", Parser::NOT_A_TYPE), _width(0), _offset(0)
 		{ }
 
-		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), width(wd), _offset(off)
+		STVariableDeclaration(string nm, NativeType tp, int wd, int off) : SymbolTableEntry(nm, tp), _width(wd), _offset(off)
 		{ }
 
 		const vector<int>& dims() const { return _dims; }
@@ -72,9 +72,7 @@ namespace Parser {
 		int offset() const { return _offset; }
 		void offset(int ofts) { this->_offset = ofts; }
 
-		int getWidth() const { return width; }
-
-
+		int width() const { return _width; }
 	};
 
 
@@ -98,14 +96,22 @@ namespace Parser {
 	};
 
 
-	/* This entry will represent a temporary variable used in the IR. */
-	class STTempVar : public STVariableDeclaration {
+
+	/* This is the base class for all kinds of registers. */
+	class STRegister : public SymbolTableEntry {
+	private:
+		unsigned int _width = 0;
+
 	public:
-		STTempVar(string nm, NativeType tp, int wd, int off) : STVariableDeclaration(nm, tp, wd, off)
+		STRegister(string nm, NativeType tp, int wd) : SymbolTableEntry(nm, tp), _width(wd)
 		{ }
+
+		unsigned int width() const { return this->_width; }
 
 		void dump(std::stringstream& buffer) const;
 	};
+
+
 
 
 	/* This entry will represent a address label used in the IR. */
@@ -137,8 +143,7 @@ namespace Parser {
 		string _str;
 
 	public:
-		/* Didn't like this too much, but I would have to overload
-		 * it in the union anyway, right? 						*/
+		/* TODO: Change this	*/
 		STConstantDef(string nm, string s) : SymbolTableEntry(nm, Parser::STRING), _str(s), _integer(0), _floating(0) {}
 		STConstantDef(string nm, int i)    : SymbolTableEntry(nm, Parser::INT), _str(""), _integer(i), _floating(0) {}
 		STConstantDef(string nm, float f)  : SymbolTableEntry(nm, Parser::FLOAT), _str(""), _integer(0), _floating(f) {}

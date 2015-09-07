@@ -17,6 +17,7 @@
  * 	 9. size of array dimensions must be integers contants.			// ok
  * 	10. check (non-)existence of return statements and its type.	// ok
  *	11. Check if we aren't taking the address of a non-lefthand exp.// ok
+ *	12. check the consistency of operators and operand types.
  */
 
 using namespace Parser;

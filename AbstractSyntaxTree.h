@@ -18,7 +18,7 @@ using std::make_pair;
 using std::cout;
 using std::endl;
 
-class AstNodeVisitor;
+class AstTreeVisitor;
 
 namespace Parser {
 	class AstNode {
@@ -35,7 +35,7 @@ namespace Parser {
 		virtual const location& loc() { return this->_loc; }
 		virtual void loc(location loct) { this->_loc = loct; }
 
-		virtual void accept(AstNodeVisitor* visitor) = 0;
+		virtual void accept(AstTreeVisitor* visitor) = 0;
 
 		virtual ~AstNode() { };
 	};
@@ -143,7 +143,7 @@ namespace Parser {
 			_exp2(exp2)
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		ExprType opr() const { return this->_opr; }
 
@@ -178,7 +178,7 @@ namespace Parser {
 
 		Expression* exp() const { return this->_exp.get(); }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 
 	class FunctionCall : public Expression {
@@ -193,7 +193,7 @@ namespace Parser {
 			_arguments(shared_ptr<list<shared_ptr<Expression>>>(arguments))
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		string name() const { return this->_name; }
 
@@ -212,7 +212,7 @@ namespace Parser {
 			_dimExprs(shared_ptr<list<shared_ptr<Expression>>>(dimExprs))
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		string value() const { return this->_value; }
 
@@ -226,7 +226,7 @@ namespace Parser {
 	public:
 		IntegerExpr(location loc, int _value) : Expression(loc), _value(_value) {}
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		int value() const { return this->_value; }
 	};
@@ -238,7 +238,7 @@ namespace Parser {
 	public:
 		FloatExpr(location loc, float _value) : Expression(loc), _value(_value) {}
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		float value() const { return this->_value; }
 	};
@@ -250,7 +250,7 @@ namespace Parser {
 	public:
 		StringExpr(location loc, string _value) : Expression(loc), _value(_value) {}
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		string value() const { return this->_value; }
 	};
@@ -266,7 +266,7 @@ namespace Parser {
 			_statements(shared_ptr<list<shared_ptr<Statement>>>(_stmts))
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		shared_ptr<SymbolTable> getSymbTable() const { return this->_symbTable; }
 
@@ -285,7 +285,7 @@ namespace Parser {
 			_expression(shared_ptr<Expression>(_exp))
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		Expression* getExpression() const { return this->_expression.get(); }
 	};
@@ -302,7 +302,7 @@ namespace Parser {
 			_elseIfBlock(shared_ptr<CodeBlock>(_elseIfBlock))
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		Expression* getCondition() const { return this->_condition.get(); }
 
@@ -333,7 +333,7 @@ namespace Parser {
 
 		CodeBlock* getElseBlock() const { return this->_elseBlock.get(); }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 
 	class LoopStmt : public Statement {
@@ -348,7 +348,7 @@ namespace Parser {
 			_body(shared_ptr<CodeBlock>(body))
 		{ }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 
 		Expression* getCondition() const { return this->_condition.get(); }
 
@@ -375,7 +375,7 @@ namespace Parser {
 
 		list<shared_ptr<Expression>>* getDimsExpr() const { return this->_dimsExprs.get(); }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 
 	class VarDecl : public Statement {
@@ -394,7 +394,7 @@ namespace Parser {
 
 		list<shared_ptr<VarSpec>>* getVars() const { return this->_vars.get(); }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 
 	class ParamDecl : public Statement {
@@ -422,7 +422,7 @@ namespace Parser {
 
 		const string& getType() const { return _type; }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 
 	class Function : public AstNode {
@@ -462,7 +462,7 @@ namespace Parser {
 		int currentOffset() const { return this->_currentOffset; }
 		void currentOffset(int ofts) { this->_currentOffset = ofts; }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 
 	class CompilationUnit : public AstNode {
@@ -481,7 +481,7 @@ namespace Parser {
 
 		void setSymbTable(shared_ptr<SymbolTable> _symbTable) { this->symbTable = _symbTable; }
 
-		void accept(AstNodeVisitor* visitor);
+		void accept(AstTreeVisitor* visitor);
 	};
 }
 

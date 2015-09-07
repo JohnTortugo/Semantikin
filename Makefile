@@ -6,14 +6,12 @@ CFGS_DOT	= 	$(shell find $(SOURCEDIR) -name 'cfg_*.dot')
 ASTS_PNG	= 	$(ASTS_DOT:.dot=.png)
 CFGS_PNG	= 	$(CFGS_DOT:.dot=.png)
 
-
-SOURCES = 	Parsin.tab.cc lex.yy.cc Driver.cpp main.cpp AbstractSyntaxTree.cpp AstToDotVisitor.cpp \
-			SymbolTable.cpp AstSemaVisitor.cpp AstTACGenVisitor.cpp IR.cpp ErrorReporting.cpp	\
-			ControlFlowGraph.cpp BasicBlock.cpp
+SOURCES = $(shell find . -regextype sed -regex '\..*\(\.cpp\|\.cc\)')
+PAR_FIR = Parsin.tab.cc Parsin.tab.o lex.yy.cc lex.yy.o
 OBJS1	= $(SOURCES:.cc=.o)
 OBJS	= $(OBJS1:.cpp=.o)
 
-all: $(OBJS)
+all: $(PAR_FIR) $(OBJS)
 	g++ -g -std=c++0x $(OBJS) -o Semantikin
 
 %.o: %.cpp

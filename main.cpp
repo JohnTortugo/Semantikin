@@ -1,6 +1,7 @@
 #include "Semantikin.h"
 #include "Driver.h"
 #include "AstVisitors.h"
+#include "IRVisitors.h"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -30,9 +31,11 @@ void printHelp() {
 	printf("%10s | %s\n", "-h", 		"Print this help message.");
 	printf("%10s | %s\n", "-i", 		"[Mandatory] Specify the source input file.");
 	printf("%10s | %s\n", "-o", 		"Specify the executable output file.");
+	printf("%10s | %s\n", "-dumps", 	"Specify that no further processing [mounting/linking] is required.");
 	printf("%10s | %s\n", "-dumpAsts", 	"Dump the AST for all functions to DOT format.");
 	printf("%10s | %s\n", "-dumpCfgs", 	"Dump the CFG for all functions to DOT format.");
 	printf("%10s | %s\n", "-dumpIR", 	"Dump the Internal Representation for all functions.");
+	printf("%10s | %s\n", "-dumpIRTree","Dump the Internal Representation for all functions in a tree-like format.");
 	printf("%10s | %s\n", "-dumpX86", 	"Dump the X86 (AT&T) assembly for all functions.");
 }
 
@@ -65,12 +68,21 @@ int main(int argc, char *argv[]) {
 	AstSemaVisitor semantic;
 	astModule->accept(&semantic);
 
-	/* Generate TAC-SSA IR. */
+	/* Generate TAC-SSA Tree-Like IR. */
 	AstTACGenVisitor irgen(semantic.currentOffset());
 	astModule->accept(&irgen);
 
 	/* Obtain pointer to the IR generated module. */
 	shared_ptr<IR::Module> irModule = irgen.module();
+
+
+	/* Check if we need to print the IR-Tree */
+	if (cmdOptionExists(argv, argv+argc, "-dumpIRTree")) {
+		string dotFileName(inputFileName);
+
+		IRToDotVisitor itdVisitor(dotFileName + ".dot");
+		irModule->accept(&itdVisitor);
+	}
 
 	/* Just print out the AST of the function */
 	if (cmdOptionExists(argv, argv+argc, "-dumpAsts")) {
@@ -103,27 +115,34 @@ int main(int argc, char *argv[]) {
 		asmFile.close();
 	}
 
-	/* Call GCC to assembly and link */
-	char asmFileName[50] 	= {"/tmp/Semantikin_XXXXXX"};
-	int asmFile 			= mkstemp(asmFileName);
+	/**
+	 * If the user specified that no further processing [assemblying/linking]
+	 * is required the part below should be skipped.
+	 *
+	 * Call GCC to assembly and link
+	 */
+	if (!cmdOptionExists(argv, argv+argc, "-dumps")) {
+		char asmFileName[50] 	= {"/tmp/Semantikin_XXXXXX"};
+		int asmFile 			= mkstemp(asmFileName);
 
-	if (!asmFile || asmFile == -1) {
-		fprintf(stderr, "It was not possible to create a temporary file.\n");
-		exit(1);
-	}
-	else {
-		write(asmFile, x86Stream.str().c_str(), x86Stream.str().size());
-		close(asmFile);
+		if (!asmFile || asmFile == -1) {
+			fprintf(stderr, "It was not possible to create a temporary file.\n");
+			exit(1);
+		}
+		else {
+			write(asmFile, x86Stream.str().c_str(), x86Stream.str().size());
+			close(asmFile);
 
-		string outputName = "executable";
+			string outputName = "executable";
 
-		if (cmdOptionExists(argv, argv+argc, "-o"))
-			outputName = getCmdOption(argv, argv+argc, "-o");
+			if (cmdOptionExists(argv, argv+argc, "-o"))
+				outputName = getCmdOption(argv, argv+argc, "-o");
 
-		stringstream ss;
-		ss << "gcc -g lib.c -x assembler " << asmFileName << " -o " << outputName;
-		cout << ss.str() << endl;
-		system(ss.str().c_str());
+			stringstream ss;
+			ss << "gcc -g lib.c -x assembler " << asmFileName << " -o " << outputName;
+			cout << ss.str() << endl;
+			system(ss.str().c_str());
+		}
 	}
 
 	/* Finish */

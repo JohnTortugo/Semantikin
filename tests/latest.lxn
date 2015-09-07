@@ -1,7 +1,15 @@
 int main() {
-	int a, b;
+	float a, b;
+	
+//	a = a & a;
+	//a = a | a;
+	//a = a ^ a;
 
-	a = 3;
+	a = a + b;
+	a = a - b;
+	a = a * b;
+	a = a / b;
+	//a = a % b;   
 
 	return 0;
 }
