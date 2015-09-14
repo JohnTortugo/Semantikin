@@ -92,58 +92,59 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	/* print out the cfg of the function */
-	if (cmdOptionExists(argv, argv+argc, "-dumpCfgs")) {
-		for (auto& func : *irModule->functions()) {
-			auto cfg = func->cfg();
-			cfg->dumpToDot("cfg_" + func->addr()->getName() + ".dot");
-		}
-	}
+//	/* print out the cfg of the function */
+//	if (cmdOptionExists(argv, argv+argc, "-dumpCfgs")) {
+//		for (auto& func : *irModule->functions()) {
+//			auto cfg = func->cfg();
+//			cfg->dumpToDot("cfg_" + func->addr()->getName() + ".dot");
+//		}
+//	}
 
 	/* Just dump the IR */
 	if (cmdOptionExists(argv, argv+argc, "-dumpIR")) {
 		irModule->dump();
 	}
 
-	/* print the x86 assembly of each instruction */
-	stringstream x86Stream;
-	irModule->linearDumpTox86(x86Stream);
-
-	if (cmdOptionExists(argv, argv+argc, "-dumpX86")) {
-		std::ofstream asmFile(getCmdOption(argv, argv+argc, "-dumpX86"));
-		asmFile << x86Stream.str() << std::endl;
-		asmFile.close();
-	}
-
-	/**
-	 * If the user specified that no further processing [assemblying/linking]
-	 * is required the part below should be skipped.
-	 *
-	 * Call GCC to assembly and link
-	 */
-	if (!cmdOptionExists(argv, argv+argc, "-dumps")) {
-		char asmFileName[50] 	= {"/tmp/Semantikin_XXXXXX"};
-		int asmFile 			= mkstemp(asmFileName);
-
-		if (!asmFile || asmFile == -1) {
-			fprintf(stderr, "It was not possible to create a temporary file.\n");
-			exit(1);
-		}
-		else {
-			write(asmFile, x86Stream.str().c_str(), x86Stream.str().size());
-			close(asmFile);
-
-			string outputName = "executable";
-
-			if (cmdOptionExists(argv, argv+argc, "-o"))
-				outputName = getCmdOption(argv, argv+argc, "-o");
-
-			stringstream ss;
-			ss << "gcc -g lib.c -x assembler " << asmFileName << " -o " << outputName;
-			cout << ss.str() << endl;
-			system(ss.str().c_str());
-		}
-	}
+//	/* print the x86 assembly of each instruction */
+//	stringstream x86Stream;
+//	irModule->linearDumpTox86(x86Stream);
+//
+//
+//	if (cmdOptionExists(argv, argv+argc, "-dumpX86")) {
+//		std::ofstream asmFile(getCmdOption(argv, argv+argc, "-dumpX86"));
+//		asmFile << x86Stream.str() << std::endl;
+//		asmFile.close();
+//	}
+//
+//	/**
+//	 * If the user specified that no further processing [assemblying/linking]
+//	 * is required the part below should be skipped.
+//	 *
+//	 * Call GCC to assembly and link
+//	 */
+//	if (!cmdOptionExists(argv, argv+argc, "-dumps")) {
+//		char asmFileName[50] 	= {"/tmp/Semantikin_XXXXXX"};
+//		int asmFile 			= mkstemp(asmFileName);
+//
+//		if (!asmFile || asmFile == -1) {
+//			fprintf(stderr, "It was not possible to create a temporary file.\n");
+//			exit(1);
+//		}
+//		else {
+//			write(asmFile, x86Stream.str().c_str(), x86Stream.str().size());
+//			close(asmFile);
+//
+//			string outputName = "executable";
+//
+//			if (cmdOptionExists(argv, argv+argc, "-o"))
+//				outputName = getCmdOption(argv, argv+argc, "-o");
+//
+//			stringstream ss;
+//			ss << "gcc -g lib.c -x assembler " << asmFileName << " -o " << outputName;
+//			cout << ss.str() << endl;
+//			system(ss.str().c_str());
+//		}
+//	}
 
 	/* Finish */
 	exit(0);

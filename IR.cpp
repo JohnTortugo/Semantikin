@@ -112,6 +112,7 @@ namespace Util {
 namespace IR {
 	void Module::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void Function::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void BasicBlock::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 	void ScalarCopy::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void CopyFromArray::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
@@ -120,6 +121,7 @@ namespace IR {
 	void Immediate::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void Memory::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void Register::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Func::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 	void IAdd::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void ISub::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
@@ -135,7 +137,7 @@ namespace IR {
 	void FMul::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FDiv::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FMinus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-	void FPlus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	//void FPlus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FInc::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FDec::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
@@ -183,6 +185,9 @@ namespace IR {
 		buffer << "Mem" << endl;
 	}
 
+	void Func::dump(stringstream& buffer) {
+		buffer << "Func" << endl;
+	}
 
 
 
@@ -254,9 +259,9 @@ namespace IR {
 		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
 	}
 
-	void FPlus::dump(stringstream& buffer) {
-		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
-	}
+//	void FPlus::dump(stringstream& buffer) {
+//		buffer << this->_tgt->getName() << " = +" << this->_src1->getName() << ";" << endl;
+//	}
 
 	void FInc::dump(stringstream& buffer) {
 		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
@@ -344,10 +349,10 @@ namespace IR {
 
 		if (arguments != nullptr) {
 			if (arguments->size() > 0)
-				buffer << (*arguments)[0]->getName();
+				buffer << (*arguments)[0]->tgtDataName();
 
 			for (int i=1; i<arguments->size(); i++)
-				buffer << ", " << (*arguments)[i]->getName();
+				buffer << ", " << (*arguments)[i]->tgtDataName();
 		}
 
 		buffer << ");" << endl;
@@ -395,140 +400,142 @@ namespace IR {
 
 
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {
-		if (this->_labelPendingSlot)
-			this->_subtrees->back().second = nullptr;
+	//	if (this->_labelPendingSlot)
+	//		this->_subtrees->back().second = nullptr;
 
-		/* Set the "address" to which the label points to. */
-		label->address((int)this->_subtrees->size());
+	//	/* Set the "address" to which the label points to. */
+	//	label->address((int)this->_subtrees->size());
 
-		this->_subtrees->push_back( make_pair(label, nullptr) );
-		this->_labelPendingSlot = true;
+	//	this->_subtrees->push_back( make_pair(label, nullptr) );
+	//	this->_labelPendingSlot = true;
 	}
 
 	void Function::appendInstruction(shared_ptr<IR::Instruction> instr) {
-		if (this->_labelPendingSlot) {
-			this->_subtrees->back().second = instr;
-			this->_labelPendingSlot = false;
-		}
-		else {
-			this->_subtrees->push_back( make_pair(nullptr, instr) );
-		}
+		this->_currentBasicBlock->appendInstruction(instr);
+		
+		//if (this->_labelPendingSlot) {
+		//	this->_subtrees->back().second = instr;
+		//	this->_labelPendingSlot = false;
+		//}
+		//else {
+		//	this->_subtrees->push_back( make_pair(nullptr, instr) );
+		//}
 	}
 
-	ControlFlowGraph_sptr Function::cfg() {
-		/* Index of leader/ender's instructions of each basic block.. */
-		vector<pair<int,int>> bbLimits;
-
-		/* Which instructions are leaders? */
-		set<int> leaders;
-
-		/* Map from instruction label to bb-id. */
-		map<STLabelDef_sptr, BasicBlock_sptr> labelToBB;
-
-		/* The CFG we are building */
-		auto newCfg = make_shared<Backend::ControlFlowGraph>();
-
-		/* We still need information about the "vars" inside this function, right? */
-		newCfg->addr(this->_addr);
-		newCfg->symbTable(this->_symbTable);
-
-		/* If the current instruction is a control handling instruction
-		 * then the next one is a leader for the fallthrought case. */
-		bool nextIsLeader = false;
-
-		/* Identifiers for basic blocks. */
-		auto bbId = 1;
-
-		/* Find the leaders */
-		unsigned int instrInd = 0;
-		for (auto& irLine : *this->_subtrees) {
-			if (irLine.first != nullptr || nextIsLeader) {
-				/* Save index of where the BB starts. */
-				bbLimits.push_back(make_pair(instrInd, 0));
-
-				/* We need to know later which instructions aren't leaders. */
-				leaders.insert(instrInd);
-			}
-
-			nextIsLeader = Util::isControlInstr(irLine.second);
-
-			instrInd++;
-		}
-
-		/* Find the "enders". */
-		for (auto& ldrIndx : bbLimits) {
-			instrInd = ldrIndx.first + 1; // next instruction after the leader (i.e., first in the BB)
-
-			// Find the end of the BB
-			while (instrInd < this->_subtrees->size() && leaders.find(instrInd) == leaders.end())
-				instrInd++;
-
-			// second points to one after end
-			ldrIndx.second = instrInd;
-		}
-
-		/* Construct the nodes of the CFG. */
-		BasicBlock_sptr prevBB = nullptr;
-		for (auto& bbBorder : bbLimits) {
-			auto beg = this->_subtrees->begin();
-			auto end = this->_subtrees->begin();
-
-			std::advance(beg, bbBorder.first);
-			std::advance(end, bbBorder.second);
-
-			auto newBB = make_shared<Backend::BasicBlock>(bbId++, make_shared<list<IRLine>>( list<IRLine>(beg, end) ));
-
-			/* If the current basic block header may be a target of a jump (i.e.,
-			 * the first instruction have a label, then we need to keep that
-			 * information for later we need to add these edges to the CFG. */
-			if (beg->first != nullptr)
-				labelToBB[beg->first] = newBB;
-
-			/* We check if the previous basic block may fallthrought to the
-			 * current basic block. */
-			if (prevBB != nullptr && prevBB->instructions()->size() > 0) {
-				auto prevLastInstr 		= prevBB->instructions()->back();
-				auto typePrevLastInstr 	= Util::isControlInstr(prevLastInstr.second);
-
-				/* Does the last instruction of the previous BB have a fallthrought?
-				 * Only when it is a return instruction that it does not. */
-				if (typePrevLastInstr != Util::ReturnInstruction)
-					prevBB->jmpFall(newBB);
-			}
-
-			/* Add BB to CFG. */
-			newCfg->addBasicBlock(newBB);
-			
-			/* Update the previous BB. */
-			prevBB = newBB;
-		}
-
-		/* Every function has exactly one exit basic block. */
-		auto exitBasicBlock = make_shared<Backend::BasicBlock>(bbId++, make_shared<list<IRLine>>( list<IRLine>() ));
-
-		/* jumping/branching edges. Fallthrought edges have already
-		 * been added. */
-		for (auto& bb : newCfg->nodes()) {
-			/* If the block have instructions. */
-			if (bb->instructions() != nullptr && bb->instructions()->size() > 0) {
-				auto lastInstr = bb->instructions()->back().second;
-				auto typeLastInstr = Util::isControlInstr(lastInstr);
-
-				if (typeLastInstr == Util::ReturnInstruction)
-					bb->jmpLabel(exitBasicBlock);
-				else if (typeLastInstr == Util::BranchInstruction)
-					bb->jmpLabel( labelToBB[ Util::branchTarget(lastInstr) ] );
-			}
-
-			if (bb->jmpFall() == nullptr && bb->jmpLabel() == nullptr)
-				bb->jmpFall(exitBasicBlock);
-		}
-
-		/* Add BB to CFG. */
-		newCfg->addBasicBlock(exitBasicBlock);
-
-		return newCfg;
-	}
+//	ControlFlowGraph_sptr Function::cfg() {
+//		/* Index of leader/ender's instructions of each basic block.. */
+//		vector<pair<int,int>> bbLimits;
+//
+//		/* Which instructions are leaders? */
+//		set<int> leaders;
+//
+//		/* Map from instruction label to bb-id. */
+//		map<STLabelDef_sptr, BasicBlock_sptr> labelToBB;
+//
+//		/* The CFG we are building */
+//		auto newCfg = make_shared<Backend::ControlFlowGraph>();
+//
+//		/* We still need information about the "vars" inside this function, right? */
+//		newCfg->addr(this->_addr);
+//		newCfg->symbTable(this->_symbTable);
+//
+//		/* If the current instruction is a control handling instruction
+//		 * then the next one is a leader for the fallthrought case. */
+//		bool nextIsLeader = false;
+//
+//		/* Identifiers for basic blocks. */
+//		auto bbId = 1;
+//
+//		/* Find the leaders */
+//		unsigned int instrInd = 0;
+//		for (auto& irLine : *this->_subtrees) {
+//			if (irLine.first != nullptr || nextIsLeader) {
+//				/* Save index of where the BB starts. */
+//				bbLimits.push_back(make_pair(instrInd, 0));
+//
+//				/* We need to know later which instructions aren't leaders. */
+//				leaders.insert(instrInd);
+//			}
+//
+//			nextIsLeader = Util::isControlInstr(irLine.second);
+//
+//			instrInd++;
+//		}
+//
+//		/* Find the "enders". */
+//		for (auto& ldrIndx : bbLimits) {
+//			instrInd = ldrIndx.first + 1; // next instruction after the leader (i.e., first in the BB)
+//
+//			// Find the end of the BB
+//			while (instrInd < this->_subtrees->size() && leaders.find(instrInd) == leaders.end())
+//				instrInd++;
+//
+//			// second points to one after end
+//			ldrIndx.second = instrInd;
+//		}
+//
+//		/* Construct the nodes of the CFG. */
+//		BasicBlock_sptr prevBB = nullptr;
+//		for (auto& bbBorder : bbLimits) {
+//			auto beg = this->_subtrees->begin();
+//			auto end = this->_subtrees->begin();
+//
+//			std::advance(beg, bbBorder.first);
+//			std::advance(end, bbBorder.second);
+//
+//			auto newBB = make_shared<Backend::BasicBlock>(bbId++, make_shared<list<IRLine>>( list<IRLine>(beg, end) ));
+//
+//			/* If the current basic block header may be a target of a jump (i.e.,
+//			 * the first instruction have a label, then we need to keep that
+//			 * information for later we need to add these edges to the CFG. */
+//			if (beg->first != nullptr)
+//				labelToBB[beg->first] = newBB;
+//
+//			/* We check if the previous basic block may fallthrought to the
+//			 * current basic block. */
+//			if (prevBB != nullptr && prevBB->instructions()->size() > 0) {
+//				auto prevLastInstr 		= prevBB->instructions()->back();
+//				auto typePrevLastInstr 	= Util::isControlInstr(prevLastInstr.second);
+//
+//				/* Does the last instruction of the previous BB have a fallthrought?
+//				 * Only when it is a return instruction that it does not. */
+//				if (typePrevLastInstr != Util::ReturnInstruction)
+//					prevBB->jmpFall(newBB);
+//			}
+//
+//			/* Add BB to CFG. */
+//			newCfg->addBasicBlock(newBB);
+//			
+//			/* Update the previous BB. */
+//			prevBB = newBB;
+//		}
+//
+//		/* Every function has exactly one exit basic block. */
+//		auto exitBasicBlock = make_shared<Backend::BasicBlock>(bbId++, make_shared<list<IRLine>>( list<IRLine>() ));
+//
+//		/* jumping/branching edges. Fallthrought edges have already
+//		 * been added. */
+//		for (auto& bb : newCfg->nodes()) {
+//			/* If the block have instructions. */
+//			if (bb->instructions() != nullptr && bb->instructions()->size() > 0) {
+//				auto lastInstr = bb->instructions()->back().second;
+//				auto typeLastInstr = Util::isControlInstr(lastInstr);
+//
+//				if (typeLastInstr == Util::ReturnInstruction)
+//					bb->jmpLabel(exitBasicBlock);
+//				else if (typeLastInstr == Util::BranchInstruction)
+//					bb->jmpLabel( labelToBB[ Util::branchTarget(lastInstr) ] );
+//			}
+//
+//			if (bb->jmpFall() == nullptr && bb->jmpLabel() == nullptr)
+//				bb->jmpFall(exitBasicBlock);
+//		}
+//
+//		/* Add BB to CFG. */
+//		newCfg->addBasicBlock(exitBasicBlock);
+//
+//		return newCfg;
+//	}
 
 
 	void Module::dump() {
@@ -655,7 +662,7 @@ namespace IR {
 
 	void FMinus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fminus();" << endl; }
 
-	void FPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fplus();" << endl; }
+//	void FPlus::linearDumpTox86(stringstream& buffer) { buffer << "x86_fplus();" << endl; }
 
 	void FInc::linearDumpTox86(stringstream& buffer) { buffer << "x86_finc();" << endl; }
 
@@ -783,52 +790,52 @@ namespace IR {
 	}
 
 	void Call::linearDumpTox86(stringstream& buffer) {
-		auto calleeName = this->_src1->getName();
-		auto resVar 	= this->_tgt;
-		auto arguments 	= this->arguments();
-
-		buffer << " \t\t\t # x86_call" << endl;
-
-		/* Save register and push parameters */
-		if (resVar != nullptr)
-			buffer << std::setfill(' ') << std::setw(17) << " " << "pushq %rax" << endl;
-
-		if (arguments != nullptr) {
-			int i = 0;
-			int l = arguments->size() - 1;
-
-			// the first six parameters are by register
-			for (i=0; i<6 && i<=l; i++) {
-				buffer << std::setfill(' ') << std::setw(17) << " " << "pushq " << Util::linearDumpTox86ParamRegName(i) << endl;
-				buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation((*arguments)[i]) << ", " << Util::linearDumpTox86ParamRegName(i) << endl;
-			}
-
-			// the remaining parameters are passed through stack
-			for (; l>=i && l>=6; l--)
-				buffer << std::setfill(' ') << std::setw(17) << " " << "pushq " << Util::linearDumpTox86VarLocation((*arguments)[l]) << endl;
-		}
-
-		/* Do the actual call */
-		buffer << std::setfill(' ') << std::setw(17) << " " << "call " << calleeName << endl;
-
-		/* Restore register and pop parameters */
-		if (arguments != nullptr) {
-			int i = 0;
-			int l = arguments->size() - 1;
-
-			// the remaining parameters are passed through stack
-			for (; l>=6; l--)
-				buffer << std::setfill(' ') << std::setw(17) << " " << "popq " << Util::linearDumpTox86VarLocation((*arguments)[l]) << endl;
-
-			// the first six parameters are by register
-			for (i=l; i>=0; i--)
-				buffer << std::setfill(' ') << std::setw(17) << " " << "popq " << Util::linearDumpTox86ParamRegName(i) << endl;
-		}
-
-		if (resVar != nullptr) {
-			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(resVar) << endl;
-			buffer << std::setfill(' ') << std::setw(17) << " " << "popq %rax "<< endl;
-		}
+//		auto calleeName = this->_src1->getName();
+//		auto resVar 	= this->_tgt;
+//		auto arguments 	= this->arguments();
+//
+//		buffer << " \t\t\t # x86_call" << endl;
+//
+//		/* Save register and push parameters */
+//		if (resVar != nullptr)
+//			buffer << std::setfill(' ') << std::setw(17) << " " << "pushq %rax" << endl;
+//
+//		if (arguments != nullptr) {
+//			int i = 0;
+//			int l = arguments->size() - 1;
+//
+//			// the first six parameters are by register
+//			for (i=0; i<6 && i<=l; i++) {
+//				buffer << std::setfill(' ') << std::setw(17) << " " << "pushq " << Util::linearDumpTox86ParamRegName(i) << endl;
+//				buffer << std::setfill(' ') << std::setw(17) << " " << "movq " << Util::linearDumpTox86VarLocation((*arguments)[i]) << ", " << Util::linearDumpTox86ParamRegName(i) << endl;
+//			}
+//
+//			// the remaining parameters are passed through stack
+//			for (; l>=i && l>=6; l--)
+//				buffer << std::setfill(' ') << std::setw(17) << " " << "pushq " << Util::linearDumpTox86VarLocation((*arguments)[l]) << endl;
+//		}
+//
+//		/* Do the actual call */
+//		buffer << std::setfill(' ') << std::setw(17) << " " << "call " << calleeName << endl;
+//
+//		/* Restore register and pop parameters */
+//		if (arguments != nullptr) {
+//			int i = 0;
+//			int l = arguments->size() - 1;
+//
+//			// the remaining parameters are passed through stack
+//			for (; l>=6; l--)
+//				buffer << std::setfill(' ') << std::setw(17) << " " << "popq " << Util::linearDumpTox86VarLocation((*arguments)[l]) << endl;
+//
+//			// the first six parameters are by register
+//			for (i=l; i>=0; i--)
+//				buffer << std::setfill(' ') << std::setw(17) << " " << "popq " << Util::linearDumpTox86ParamRegName(i) << endl;
+//		}
+//
+//		if (resVar != nullptr) {
+//			buffer << std::setfill(' ') << std::setw(17) << " " << "movq %rax, " << Util::linearDumpTox86VarLocation(resVar) << endl;
+//			buffer << std::setfill(' ') << std::setw(17) << " " << "popq %rax "<< endl;
+//		}
 	}
 
 	void Return::linearDumpTox86(stringstream& buffer) {

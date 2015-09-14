@@ -8,6 +8,7 @@ class IRTreeVisitor {
 public:
 	virtual void visit(IR::Module*) = 0;
 	virtual void visit(IR::Function*) = 0;
+	virtual void visit(IR::BasicBlock* bb) = 0;
 
 	virtual void visit(IR::ScalarCopy*) = 0;
 	virtual void visit(IR::CopyFromArray* visitor) = 0;
@@ -16,6 +17,7 @@ public:
 	virtual void visit(IR::Register*) = 0;
 	virtual void visit(IR::Memory*) = 0;
 	virtual void visit(IR::Immediate*) = 0;
+	virtual void visit(IR::Func*) = 0;
 
 	virtual void visit(IR::IAdd* visitor) = 0;
 	virtual void visit(IR::ISub* visitor) = 0;
@@ -31,7 +33,6 @@ public:
 	virtual void visit(IR::FMul* visitor) = 0;
 	virtual void visit(IR::FDiv* visitor) = 0;
 	virtual void visit(IR::FMinus* visitor) = 0;
-	virtual void visit(IR::FPlus* visitor) = 0;
 	virtual void visit(IR::FInc* visitor) = 0;
 	virtual void visit(IR::FDec* visitor) = 0;
 
@@ -100,6 +101,7 @@ public:
 
 	void visit(IR::Module*);
 	void visit(IR::Function*);
+	void visit(IR::BasicBlock* bb);
 
 	void visit(IR::ScalarCopy*);
 	void visit(IR::CopyFromArray* visitor);
@@ -108,6 +110,7 @@ public:
 	void visit(IR::Register*);
 	void visit(IR::Memory*);
 	void visit(IR::Immediate*);
+	void visit(IR::Func*);
 
 	void visit(IR::IAdd* visitor);
 	void visit(IR::ISub* visitor);
@@ -123,7 +126,6 @@ public:
 	void visit(IR::FMul* visitor);
 	void visit(IR::FDiv* visitor);
 	void visit(IR::FMinus* visitor);
-	void visit(IR::FPlus* visitor);
 	void visit(IR::FInc* visitor);
 	void visit(IR::FDec* visitor);
 

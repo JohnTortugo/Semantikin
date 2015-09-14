@@ -1,15 +1,13 @@
-int main() {
-	float a, b;
-	
-//	a = a & a;
-	//a = a | a;
-	//a = a ^ a;
+int fun2(int a, int b, int c) {
 
-	a = a + b;
-	a = a - b;
-	a = a * b;
-	a = a / b;
-	//a = a % b;   
+	return 0;
+}
+
+
+int main() {
+	int a, b, c;
+
+	fun2(a, b, c);
 
 	return 0;
 }

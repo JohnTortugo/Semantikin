@@ -27,9 +27,12 @@ lex.yy.cc: Lexin.l
 
 Parsin.tab.cc: Parsin.yy
 	bison -d Parsin.yy
-	
-test:
-	./Semantikin ${INPUT}
+
+rebuild-run: CLEAR clean all
+	./Semantikin -i tests/latest.lxn -dumps -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
+
+run: CLEAR all
+	./Semantikin -i tests/latest.lxn -dumps -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
 	
 %.png:%.dot
 	dot -Tpng $< -o $@
@@ -41,6 +44,15 @@ view-ast:$(ASTS_PNG)
 
 clean:
 	rm -rf Semantikin Parsin.tab.cc Parsin.tab.hh Parsin.output location.hh position.hh stack.hh lex.yy.cc tmp *.dot *.png *.o
+
+
+
+###############################################################################
+######### Just to clear the screen
+CLEAR:
+	@clear
+
+
 
 ###############################################################################
 ######### This will update the .clang_complete file with all sources and CFLAGS

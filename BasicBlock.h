@@ -7,48 +7,50 @@
 #include <list>
 #include <iostream>
 #include <sstream>
+#include <memory>
 
-using std::cout;
-using std::endl;
-using std::stringstream;
+using namespace std;
 
-namespace Backend {
+class IRTreeVisitor;
+
+namespace IR {
 
 	class BasicBlock {
 	private:
 		int _id;
-		IRLine_list_sptr _instructions;
-		BasicBlock_sptr _jmpLabel;
-		BasicBlock_sptr _fallLabel;
-		BasicBlock_sptr_list _predecessors;
+
+		Instruction_list_sptr _instructions;
+
+		BasicBlock_list_sptr _preds;
+		BasicBlock_list_sptr _succs;
 
 	public:
-		BasicBlock(int id, IRLine_list_sptr instrs) :
+		BasicBlock(unsigned int id) :
 			_id(id),
-			_instructions(instrs),
-			_jmpLabel(nullptr),
-			_fallLabel(nullptr)
-		{ }
+			_instructions(nullptr),
+			_preds(nullptr),
+			_succs(nullptr)
+		{ 
+			cout << "creating a basic block." << endl;
+			this->_instructions =  make_shared< list<shared_ptr<IR::Instruction>> >();
+		
+		}
 
 		int id() const { return _id; }
 		void id(int id) { _id = id; }
 
-		IRLine_list_sptr instructions() const { return _instructions; }
+		Instruction_list_sptr instructions() const { return _instructions; }
 
-		BasicBlock_sptr jmpLabel() const { return _jmpLabel; }
-		void jmpLabel(BasicBlock_sptr label) { _jmpLabel = label; }
+		void appendInstruction(Instruction_sptr instr) {
+			if (this->_instructions == nullptr) {
+				cout << "Fucking instrs are null" << endl;
+			}
 
-		BasicBlock_sptr jmpFall() const { return _fallLabel; }
-		void jmpFall(BasicBlock_sptr label) { _fallLabel = label; }
-
-		void addPredecessor(BasicBlock_sptr newPred) { _predecessors.push_back(newPred); }
-
-		void remPredecessor(BasicBlock_sptr oldPred) {
-			auto predPos = find(_predecessors.begin(), _predecessors.end(), oldPred);
-
-			if (predPos != _predecessors.end())
-				_predecessors.erase(predPos);
+			this->_instructions->push_back( instr );
 		}
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
 
 		void dumpToDot(stringstream& buffer);
 	};

@@ -518,6 +518,14 @@ void AstSemaVisitor::visit(Parser::UnaryExpr* unary) {
 		exit(-1);
 	}
 
+	/* Currently we assume we can't negate anything that isn't a integer.*/
+	if (unary->opr() == UnaryExpr::BIT_NOT && unary->exp()->type() != Parser::INT) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tIt is only allowed to negate integer expressions." << endl;
+		exit(-1);
+	}
+
+
 	unary->type(unary->exp()->type());
 }
 
@@ -540,6 +548,17 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 		}
 
 		binop->type(Parser::STRING);
+	}
+	else if ((binop->opr() == BinaryExpr::BIT_AND || binop->opr() == BinaryExpr::BIT_OR || binop->opr() == BinaryExpr::BIT_XOR) &&
+			(exp1->type() != Parser::INT || exp2->type() != Parser::INT)) {
+			cout << "Error in semantic analysis." << endl;
+			cout << "\tBinary expressions currently are only allowed only between integer types." << endl;
+			exit(-1);
+	}
+	else if (binop->opr() == BinaryExpr::MOD && (exp1->type() != Parser::INT || exp2->type() != Parser::INT)) {
+		cout << "Error in semantic analysis." << endl;
+		cout << "\tWe don't support module for floating expressions." << endl;
+		exit(-1);
 	}
 	else if (exp1->type() == exp2->type()) {
 		binop->type(exp1->type());

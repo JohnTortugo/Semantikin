@@ -33,6 +33,7 @@ namespace Parser {
 	class STConstantDef;
 	class STRegister;
 	class STVariableDeclaration;
+	class STFunctionDeclaration;
 	class SymbolTable;
 	class SymbolTableEntry;
 }
@@ -43,10 +44,7 @@ namespace IR {
 	class Call;
 	class Return;
 	class Function;
-}
 
-namespace Backend {
-	class ControlFlowGraph;
 	class BasicBlock;
 }
 
@@ -58,22 +56,17 @@ namespace Backend {
 typedef shared_ptr<IR::Function>					Function_sptr;
 typedef shared_ptr<list<Function_sptr>> 			Function_sptr_list_sptr;
 
-typedef shared_ptr<Backend::ControlFlowGraph> 		ControlFlowGraph_sptr;
-
-typedef shared_ptr<Backend::BasicBlock> 			BasicBlock_sptr;
-typedef list<BasicBlock_sptr> 						BasicBlock_sptr_list;
+typedef shared_ptr<IR::BasicBlock> 					BasicBlock_sptr;
+typedef shared_ptr<list<BasicBlock_sptr>> 			BasicBlock_list_sptr;
 
 typedef shared_ptr<IR::Instruction>					Instruction_sptr;
-typedef list<Instruction_sptr> 						Instruction_sptr_list;
+typedef shared_ptr<list<Instruction_sptr>> 			Instruction_list_sptr;
 
 typedef shared_ptr<Parser::STLabelDef>				STLabelDef_sptr;
 typedef shared_ptr<Parser::STConstantDef>			STConstantDef_sptr;
 typedef shared_ptr<Parser::STVariableDeclaration>	STVariableDeclaration_sptr;
 typedef shared_ptr<Parser::STRegister>				STRegister_sptr;
-
-
-typedef pair<STLabelDef_sptr, Instruction_sptr> 	IRLine;
-typedef shared_ptr<list<IRLine>>					IRLine_list_sptr;
+typedef shared_ptr<Parser::STFunctionDeclaration>	STFunctionDecl_sptr;
 
 typedef shared_ptr<Parser::SymbolTableEntry>		SymbolTableEntry_sp;
 

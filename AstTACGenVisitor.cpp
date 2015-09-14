@@ -113,21 +113,21 @@ void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
 }
 
 void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
-//	auto condition = ifStmt->getCondition();
-//	auto thenBlock = ifStmt->getThenBlock();
-//	auto elseBlock = ifStmt->getElseBlock();
-//	list<shared_ptr<Parser::ElseIfStmt>>* elseIfChain = ifStmt->getElseIfChain();
-//
-//	if ((elseIfChain == nullptr || elseIfChain->size() == 0) && elseBlock == nullptr) {
-//		/* Does not have else-if nor else blocks. */
-//
-//		condition->tLabel( this->_fallLabel );
-//		condition->fLabel( ifStmt->next() );
-//		thenBlock->next( ifStmt->next() );
-//
-//		condition->accept(this);
-//		thenBlock->accept(this);
-//	}
+	auto condition = ifStmt->getCondition();
+	auto thenBlock = ifStmt->getThenBlock();
+	auto elseBlock = ifStmt->getElseBlock();
+	list<shared_ptr<Parser::ElseIfStmt>>* elseIfChain = ifStmt->getElseIfChain();
+
+	if ((elseIfChain == nullptr || elseIfChain->size() == 0) && elseBlock == nullptr) {
+		/* Does not have else-if nor else blocks. */
+
+		condition->tLabel( this->_fallLabel );
+		condition->fLabel( ifStmt->next() );
+		thenBlock->next( ifStmt->next() );
+
+		condition->accept(this);
+		thenBlock->accept(this);
+	}
 //	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
 //		/* Only have else block. */
 //
@@ -234,19 +234,16 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 //	}
 }
 
-void AstTACGenVisitor::visit(Parser::ElseIfStmt* elseIfStmt) {
-
-}
+void AstTACGenVisitor::visit(Parser::ElseIfStmt* elseIfStmt) { }
 
 void AstTACGenVisitor::visit(const Parser::ReturnStmt* ret) {
-//	Expression* exp = ret->getExpression();
-//
-//	exp->isExpLeftHand(false);
-//	exp->accept(this);
-//
-//	IR::Instruction* newInstruction = new IR::Return(exp->addr());
-//
-//	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
+	Expression* exp = ret->getExpression();
+
+	exp->isExpLeftHand(false);
+	exp->accept(this);
+
+	this->_currentFunction->appendInstruction( make_shared<IR::Return>(this->_lastInstruction) );
+	this->_lastInstruction = nullptr;
 }
 
 void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
@@ -272,13 +269,15 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
 }
 
 void AstTACGenVisitor::visit(Parser::StringExpr* str) {
-//	/* If we are not inside a conditional expression. */
-//	if ( str->tLabel() == nullptr || str->fLabel() == nullptr ) {
-//		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), str->value()));
-//		this->_currentFunction->symbolTable()->add(cttEntry);
-//		str->addr(cttEntry);
-//	}
-//	else {
+	/* If we are not inside a conditional expression. */
+	if ( str->tLabel() == nullptr || str->fLabel() == nullptr ) {
+		auto cttEntry = newConstant(str->value());
+
+		this->_currentFunction->symbolTable()->add(cttEntry);
+
+		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
+	}
+	else {
 //		/* We are inside conditional expression. We evaluate the parameters
 //		 * and goes to the correct direction. */
 //		if (str->value() == "") {
@@ -287,17 +286,19 @@ void AstTACGenVisitor::visit(Parser::StringExpr* str) {
 //		else {
 //			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(str->tLabel()) ) );
 //		}
-//	}
+	}
 }
 
 void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
-//	/* If we are not inside a conditional expression. */
-//	if ( flt->tLabel() == nullptr || flt->fLabel() == nullptr ) {
-//		shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("ctt" + std::to_string(constCounter++), flt->value()));
-//		this->_currentFunction->symbolTable()->add(cttEntry);
-//		flt->addr(cttEntry);
-//	}
-//	else {
+	/* If we are not inside a conditional expression. */
+	if ( flt->tLabel() == nullptr || flt->fLabel() == nullptr ) {
+		auto cttEntry = newConstant(flt->value());
+
+		this->_currentFunction->symbolTable()->add(cttEntry);
+
+		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
+	}
+	else {
 //		/* We are inside conditional expression. We evaluate the parameters
 //		 * and goes to the correct direction. */
 //		if (flt->value() == 0) {
@@ -306,13 +307,13 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 //		else {
 //			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(flt->tLabel()) ) );
 //		}
-//	}
+	}
 }
 
 void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 	/* If we are not inside a conditional expression. */
 	if ( integer->tLabel() == nullptr || integer->fLabel() == nullptr ) {
-		auto cttEntry = make_shared<Parser::STConstantDef>("ctt" + std::to_string(constCounter++), integer->value());
+		auto cttEntry = newConstant(integer->value());
 
 		this->_currentFunction->symbolTable()->add(cttEntry);
 
@@ -337,18 +338,21 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 	shared_ptr<SymbolTableEntry> entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
 	auto decl 							= dynamic_cast<STVariableDeclaration*>( entry.get() );
 
+
+	cout << "Parsing an identifier " << id->value() << endl;
+
 	if (decl->dims().size() > 0) {
 		/* Tells parent "visiting" methods that this is an array access. */
 		id->isArrayAccess(true);
 
-//		/* If no dimensions were specified then we just return the base addr of the array. */
-//		if (id->dimsExprs()->size() != decl->dims().size()) {
-//			IR::Instruction* entryAddr = new IR::Addr(this->newTemporary(Parser::INT), entry);
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( entryAddr ) );
-//
-//			id->addr( entryAddr->tgt() );
-//			return ;
-//		}
+		/* If no dimensions were specified then we just return the base addr of the array. */
+		if (id->dimsExprs()->size() != decl->dims().size()) {
+			auto varEntryInstr = make_shared<IR::Memory>( shared_ptr<Parser::STVariableDeclaration>(decl) );
+			this->_lastInstruction = make_shared<IR::Addr>(this->newTemporary(Parser::INT), varEntryInstr);
+			//this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( entryAddr ) );
+			//id->addr( entryAddr->tgt() );
+			return ;
+		}
 
 		/* Here we are going to store the factors for each index. */
 		vector<shared_ptr<IR::Instruction>> indExpsInstructions;
@@ -463,22 +467,23 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 }
 
 void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
-//	auto decl 	 = this->_currentFunction->symbolTable()->lookup(funCall->name());
-//	auto tmpRes = this->newTemporary( decl->type() );
-//
-//	shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(decl, tmpRes) );
-//
-//	for (auto argument : *funCall->arguments()) {
-//		/* Visit the argument, produce address for them.*/
-//		argument->accept(this);
-//
-//		/* Add the argument to the function call. */
-//		newInstruction->addArgument(argument->addr());
-//	}
-//
-//	this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
-//
-//	funCall->addr(tmpRes);
+	auto decl 	= this->_currentFunction->symbolTable()->lookup(funCall->name());
+	auto funDecPtr = shared_ptr<STFunctionDeclaration>( dynamic_cast<STFunctionDeclaration*>(decl.get()) );
+	auto irFun  = make_shared<IR::Func>(funDecPtr);
+	auto tmpRes = this->newTemporary( decl->type() );
+
+	auto funCallInstr = make_shared<IR::Call>(tmpRes, irFun);
+
+	for (auto argument : *funCall->arguments()) {
+		/* Visit the argument, produce address for them.*/
+		argument->accept(this);
+
+		/* Add the argument to the function call. */
+		funCallInstr->addArgument(this->_lastInstruction);
+		this->_lastInstruction = nullptr;
+	}
+
+	this->_currentFunction->appendInstruction(funCallInstr);
 }
 
 void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
@@ -553,44 +558,44 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 }
 
 void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
-//	IR::Instruction* newInstruction = nullptr;
-//	Expression* exp 				= unary->exp();
-//	NativeType tgtType 				= unary->type();
-//
-//	exp->isExpLeftHand(false);
-//	exp->accept(this);
-//
-//	if (tgtType == Parser::INT) {
-//		switch (unary->opr()) {
-//			case UnaryExpr::MINUS:
-//				newInstruction = new IR::IMinus(this->newTemporary(tgtType), exp->addr());
-//				break;
-//
-//			case UnaryExpr::INCREMENT:
-//				newInstruction = new IR::IInc(exp->addr(), exp->addr());
-//				break;
-//
-//			case UnaryExpr::DECREMENT:
-//				newInstruction = new IR::IDec(exp->addr(), exp->addr());
-//				break;
-//		}
-//	}
-//	else if (tgtType == Parser::FLOAT) {
-//		switch (unary->opr()) {
-//			case UnaryExpr::MINUS:
-//				newInstruction = new IR::FMinus(this->newTemporary(tgtType), exp->addr());
-//				break;
-//
-//			case UnaryExpr::INCREMENT:
-//				newInstruction = new IR::FInc(exp->addr(), exp->addr());
-//				break;
-//
-//			case UnaryExpr::DECREMENT:
-//				newInstruction = new IR::FDec(exp->addr(), exp->addr());
-//				break;
-//		}
-//	}
-//
+	Expression* exp 	= unary->exp();
+	NativeType tgtType 	= unary->type();
+
+	exp->isExpLeftHand(false);
+	exp->accept(this);
+	auto rightInstruction = this->_lastInstruction;
+
+	if (tgtType == Parser::INT) {
+		switch (unary->opr()) {
+			case UnaryExpr::MINUS:
+				this->_lastInstruction = make_shared<IR::IMinus>(this->newTemporary(tgtType), rightInstruction);
+				break;
+
+			case UnaryExpr::INCREMENT:
+				this->_lastInstruction = make_shared<IR::IInc>(rightInstruction, rightInstruction);
+				break;
+
+			case UnaryExpr::DECREMENT:
+				this->_lastInstruction = make_shared<IR::IDec>(rightInstruction, rightInstruction);
+				break;
+		}
+	}
+	else if (tgtType == Parser::FLOAT) {
+		switch (unary->opr()) {
+			case UnaryExpr::MINUS:
+				this->_lastInstruction = make_shared<IR::FMinus>(this->newTemporary(tgtType), rightInstruction);
+				break;
+
+			case UnaryExpr::INCREMENT:
+				this->_lastInstruction = make_shared<IR::FInc>(rightInstruction, rightInstruction);
+				break;
+
+			case UnaryExpr::DECREMENT:
+				this->_lastInstruction = make_shared<IR::FDec>(rightInstruction, rightInstruction);
+				break;
+		}
+	}
+
 //	unary->addr( newInstruction->tgt() );
 //
 //	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
@@ -811,47 +816,48 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 }
 
 void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
-//	IR::Instruction* newInstruction = nullptr;
-//	auto exp1 	 = binop->getExp1();
-//	auto exp2 	 = binop->getExp2();
-//	auto tgtType = binop->type();
-//
-//	exp1->isExpLeftHand(false);
-//	exp1->tLabel(nullptr);
-//	exp1->fLabel(nullptr);
-//	exp1->accept(this);
-//
-//	exp2->isExpLeftHand(false);
-//	exp2->tLabel(nullptr);
-//	exp2->fLabel(nullptr);
-//	exp2->accept(this);
-//
-//	switch (binop->opr()) {
-//		case BinaryExpr::COMPARE:
-//			newInstruction = new IR::REqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
-//			break;
-//
-//		case BinaryExpr::DIFFERENCE:
-//			newInstruction = new IR::RNotEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
-//			break;
-//
-//		case BinaryExpr::LT:
-//			newInstruction = new IR::RLesThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
-//			break;
-//
-//		case BinaryExpr::LTE:
-//			newInstruction = new IR::RLesThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
-//			break;
-//
-//		case BinaryExpr::GT:
-//			newInstruction = new IR::RGreaterThan(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
-//			break;
-//
-//		case BinaryExpr::GTE:
-//			newInstruction = new IR::RGreaterThanEqual(this->newTemporary(tgtType), exp1->addr(), exp2->addr());
-//			break;
-//	}
-//
+	auto exp1 	 = binop->getExp1();
+	auto exp2 	 = binop->getExp2();
+	auto tgtType = binop->type();
+
+	exp1->isExpLeftHand(false);
+	exp1->tLabel(nullptr);
+	exp1->fLabel(nullptr);
+	exp1->accept(this);
+	auto leftInstruction = this->_lastInstruction;
+
+	exp2->isExpLeftHand(false);
+	exp2->tLabel(nullptr);
+	exp2->fLabel(nullptr);
+	exp2->accept(this);
+	auto rightInstruction = this->_lastInstruction;
+
+	switch (binop->opr()) {
+		case BinaryExpr::COMPARE:
+			this->_lastInstruction = make_shared<IR::REqual>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
+			break;
+
+		case BinaryExpr::DIFFERENCE:
+			this->_lastInstruction = make_shared<IR::RNotEqual>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
+			break;
+
+		case BinaryExpr::LT:
+			this->_lastInstruction = make_shared<IR::RLesThan>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
+			break;
+
+		case BinaryExpr::LTE:
+			this->_lastInstruction = make_shared<IR::RLesThanEqual>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
+			break;
+
+		case BinaryExpr::GT:
+			this->_lastInstruction = make_shared<IR::RGreaterThan>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
+			break;
+
+		case BinaryExpr::GTE:
+			this->_lastInstruction = make_shared<IR::RGreaterThanEqual>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
+			break;
+	}
+
 //	binop->addr( newInstruction->tgt() );
 //	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 //
