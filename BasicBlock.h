@@ -27,7 +27,7 @@ namespace IR {
 		BasicBlock_list_sptr _succs;
 
 	public:
-		BasicBlock(unsigned int id) :
+		BasicBlock(int id) :
 			_id(id),
 			_usageCounter(0),
 			_instructions(nullptr),
@@ -48,10 +48,6 @@ namespace IR {
 		Instruction_list_sptr instructions() const { return _instructions; }
 
 		void appendInstruction(Instruction_sptr instr) {
-			if (this->_instructions == nullptr) {
-				cout << "Fucking instrs are null" << endl;
-			}
-
 			this->_instructions->push_back( instr );
 		}
 

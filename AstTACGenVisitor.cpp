@@ -858,36 +858,40 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 			break;
 	}
 
-//	binop->addr( newInstruction->tgt() );
-//	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
-//
-//	auto tLabel = binop->tLabel();
-//	auto fLabel = binop->fLabel();
-//	auto fall = this->_fallLabel;
-//
-//	/* If neither targets were informed then it is because this
-//	 * expression is part of a larger expression and in this case
-//	 * we cannot have short-circuit code yet. */
-//	if (tLabel != nullptr && fLabel != nullptr) {
+	auto tLabel = binop->tLabel();
+	auto fLabel = binop->fLabel();
+	auto fall = this->_fallLabel;
+
+	/* If neither targets were informed then it is because this
+	 * expression is part of a larger expression and in this case
+	 * we cannot have short-circuit code yet. */
+	if (tLabel != nullptr && fLabel != nullptr) {
+		this->_currentFunction->appendInstruction( make_shared<IR::CondTrueJump>(this->_lastInstruction, tLabel, fLabel) );
+		this->_lastInstruction = nullptr;
+
 //		/* In this case jumps were informed for both targets, this
 //		 * may happen when this expression is part of a larger expression
 //		 * that is inside conditionals. */
 //		if (tLabel != fall && fLabel != fall) {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), tLabel) ) );
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(fLabel) ) );
+//			this->_currentFunction->appendInstruction( make_shared<IR::CondTrueJump>(binop->addr(), tLabel) );
+//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(fLabel) );
 //		}
 //		else if (tLabel != fall) {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(binop->addr(), tLabel) ) );
+//			this->_currentFunction->appendInstruction( make_shared<IR::CondTrueJump>(binop->addr(), tLabel) );
 //		}
 //		else if (fLabel != fall) {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(binop->addr(), fLabel) ) );
+//			this->_currentFunction->appendInstruction( make_shared<IR::CondFalseJump>(binop->addr(), fLabel) );
 //		}
 //		else {
 //			/* I do not expect this to happen, but better be
 //			 * safe than sorry. */
 //			throw System::EXCEPTION_UNREACHABLE_CODE;
 //		}
-//	}
+	}
+	else {
+		this->_currentFunction->appendInstruction( this->_lastInstruction );
+		this->_lastInstruction = nullptr;
+	}
 }
 
 

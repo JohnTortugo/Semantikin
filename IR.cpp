@@ -398,20 +398,11 @@ namespace IR {
 
 
 	void Function::appendBasicBlock(BasicBlock_sptr bb) {
+		this->_bbs->push_back(bb);
+		this->_currentBasicBlock = bb;
 	}
 
-
-
-	void Function::appendLabel(shared_ptr<STLabelDef> label) {
-	//	if (this->_labelPendingSlot)
-	//		this->_subtrees->back().second = nullptr;
-
-	//	/* Set the "address" to which the label points to. */
-	//	label->address((int)this->_subtrees->size());
-
-	//	this->_subtrees->push_back( make_pair(label, nullptr) );
-	//	this->_labelPendingSlot = true;
-	}
+	void Function::appendLabel(shared_ptr<STLabelDef> label) { }
 
 	void Function::appendInstruction(shared_ptr<IR::Instruction> instr) {
 		this->_currentBasicBlock->appendInstruction(instr);

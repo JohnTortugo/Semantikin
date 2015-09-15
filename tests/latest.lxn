@@ -1,4 +1,9 @@
 int fun2(int a, int b, int c) {
+	int d, e;
+
+	while (d < e) {
+		d++;
+	}
 
 	return 0;
 }
