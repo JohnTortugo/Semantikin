@@ -133,7 +133,7 @@ private:
 	/* This label is just a sentinel pointer to convey the
 	 * information that the expression should consider a
 	 * fallthrough path. */
-	shared_ptr<Parser::STLabelDef> _fallLabel;
+	BasicBlock_sptr _fallLabel;
 
 	/* Count the number of constants/labels/tmps found/added to the symbol table of
 	 * a function. 													 			 */
@@ -192,13 +192,14 @@ public:
 	void translateArithmeticExpr(Parser::UnaryExpr* unary);
 	void translateBooleanExp(Parser::UnaryExpr* unary);
 
-	void emitBranchesBasedOnExpValue(Instruction_sptr, shared_ptr<STLabelDef> lTrue, shared_ptr<STLabelDef> lFalse);
+	void emitBranchesBasedOnExpValue(Instruction_sptr, BasicBlock_sptr lTrue, BasicBlock_sptr lFalse);
 
 	template<typename T>
 	shared_ptr<STConstantDef> newConstant(T value);
 
 	shared_ptr<STLabelDef> newLabel(string scope, string suffix="");
 	shared_ptr<IR::Register> newTemporary(NativeType type);
+	BasicBlock_sptr newBasicBlock() ;
 };
 
 #endif /* ASTVISITORS_H_ */

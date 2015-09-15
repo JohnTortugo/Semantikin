@@ -38,17 +38,22 @@ namespace IR {
 		Instruction()
 		{ }
 
-		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) :
-			_tgt(tgt), _src1(src1), _src2(src2), _chd1(chd1), _chd2(chd2)
-		{ }
+		//Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) :
+			//_tgt(tgt), _src1(src1), _src2(src2), _chd1(chd1), _chd2(chd2)
+		//{ }
 
-		Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) :
-			_tgt(tgt), _src1(src1), _chd1(chd1)
-		{ }
+		//Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) :
+			//_tgt(tgt), _src1(src1), _chd1(chd1)
+		//{ }
 
 		Instruction(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) :
 			_tgt(nullptr), _src1(nullptr), _src2(nullptr), _chd1(chd1), _chd2(chd2), _chd3(chd3)
 		{ }
+
+		Instruction(Instruction_sptr chd1) :
+			_chd1(chd1), _chd2(nullptr), _chd3(nullptr)
+		{ }
+
 
 		void tgt(SymbolTableEntry_sp tgt) { this->_tgt = tgt; }
 		SymbolTableEntry_sp tgt() { return this->_tgt; }
@@ -377,8 +382,8 @@ namespace IR {
 	/* Parent class of all floating point arithmetic instructions. */
 	class FloatingArithmetic : public Instruction {
 	public:
-		FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
-		{ }
+		//FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
+		//{ }
 
 		FloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
 		{ }
@@ -681,18 +686,29 @@ namespace IR {
 
 	/* Base class for all instructions that change control flow. */
 	class BranchInstruction : public Instruction {
+	protected:
+		BasicBlock_sptr _lbl1;
+		BasicBlock_sptr _lbl2;
+
 	public:
-		BranchInstruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src, Instruction_sptr chd) : Instruction(tgt, src, chd)
+		BranchInstruction(BasicBlock_sptr chd1) : Instruction(nullptr, nullptr, nullptr), _lbl1(chd1), _lbl2(nullptr)
 		{ }
 
-		BranchInstruction(SymbolTableEntry_sp tgt) : Instruction(tgt, nullptr, nullptr)
+		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : Instruction(exp, nullptr, nullptr), _lbl1(chd1), _lbl2(chd2)
 		{ }
 	};
 
 	class Jump : public BranchInstruction {
 	public:
-		Jump(shared_ptr<STLabelDef> tgt) : BranchInstruction(tgt)
-		{ tgt->incrementUses(); }
+		Jump(BasicBlock_sptr tgt) : BranchInstruction(tgt)
+		{ _lbl1->usageCounter()++; }
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { 
+			stringstream ss;
+			ss << "BB" << this->_lbl1->id(); 
+			return ss.str();
+		}
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -703,8 +719,15 @@ namespace IR {
 
 	class CondTrueJump : public BranchInstruction {
 	public:
-		CondTrueJump(SymbolTableEntry_sp exp, shared_ptr<STLabelDef> tgt, Instruction_sptr chd) : BranchInstruction(exp, tgt, chd)
-		{ tgt->incrementUses(); }
+		CondTrueJump(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : BranchInstruction(exp, chd1, chd2)
+		{ _lbl1->usageCounter()++; }
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { 
+			stringstream ss;
+			ss << "BB" << this->_lbl1->id() << " & BB" << this->_lbl2->id(); 
+			return ss.str();
+		}
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -715,8 +738,15 @@ namespace IR {
 
 	class CondFalseJump : public BranchInstruction {
 	public:
-		CondFalseJump(SymbolTableEntry_sp exp, shared_ptr<STLabelDef> tgt, Instruction_sptr chd) : BranchInstruction(exp, tgt, chd)
-		{ tgt->incrementUses(); }
+		CondFalseJump(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : BranchInstruction(exp, chd1, chd2)
+		{ _lbl1->usageCounter()++; }
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		string tgtDataName() { 
+			stringstream ss;
+			ss << "BB" << this->_lbl1->id() << " & BB" << this->_lbl2->id(); 
+			return ss.str();
+		}
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -881,6 +911,7 @@ namespace IR {
 
 		/* Methods related to Linear IR construction. */
 		void appendLabel(shared_ptr<STLabelDef> label);
+		void appendBasicBlock(BasicBlock_sptr bb);
 
 		void appendInstruction(shared_ptr<IR::Instruction> instr);
 

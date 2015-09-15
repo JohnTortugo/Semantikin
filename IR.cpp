@@ -397,6 +397,9 @@ namespace IR {
 	}
 
 
+	void Function::appendBasicBlock(BasicBlock_sptr bb) {
+	}
+
 
 
 	void Function::appendLabel(shared_ptr<STLabelDef> label) {

@@ -43,7 +43,7 @@ namespace Parser {
 	class Statement : public AstNode {
 	protected:
 		/* Pointer to a label after the current AST node. */
-		shared_ptr<STLabelDef> _next = nullptr;
+		BasicBlock_sptr _next = nullptr;
 
 	public:
 		Statement()
@@ -52,8 +52,8 @@ namespace Parser {
 		Statement(location loc) : AstNode(loc)
 		{ }
 
-		void next(shared_ptr<STLabelDef> label) { this->_next = label; }
-		shared_ptr<STLabelDef> next() { return this->_next; }
+		void next(BasicBlock_sptr label) { this->_next = label; }
+		BasicBlock_sptr next() { return this->_next; }
 	};
 
 	class Expression : public Statement {
@@ -74,8 +74,8 @@ namespace Parser {
 		 * evaluating the current expression. If these targets are null it
 		 * means that the current expression is not part of a short circuit
 		 * code (e.g., it is an arithmetic/relation expression). */
-		shared_ptr<STLabelDef> _tLabel = nullptr;
-		shared_ptr<STLabelDef> _fLabel = nullptr;
+		BasicBlock_sptr _tLabel = nullptr;
+		BasicBlock_sptr _fLabel = nullptr;
 
 	public:
 		Expression()
@@ -93,11 +93,11 @@ namespace Parser {
 		void isExpLeftHand(bool isLeft) { this->_isExpLeftHand = isLeft; }
 		bool isExpLeftHand() { return this->_isExpLeftHand; }
 
-		void tLabel(shared_ptr<STLabelDef> label) { this->_tLabel = label; }
-		shared_ptr<STLabelDef> tLabel() { return this->_tLabel; }
+		void tLabel(BasicBlock_sptr label) { this->_tLabel = label; }
+		BasicBlock_sptr tLabel() { return this->_tLabel; }
 
-		void fLabel(shared_ptr<STLabelDef> label) { this->_fLabel = label; }
-		shared_ptr<STLabelDef> fLabel() { return this->_fLabel; }
+		void fLabel(BasicBlock_sptr label) { this->_fLabel = label; }
+		BasicBlock_sptr fLabel() { return this->_fLabel; }
 
 		void isArrayAccess(bool isArray) { this->_isArrayAccess = isArray; }
 		bool isArrayAccess() { return this->_isArrayAccess; }

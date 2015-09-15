@@ -3,7 +3,6 @@
 
 #include "Semantikin.h"
 #include "SymbolTable.h"
-#include "IR.h"
 #include <list>
 #include <iostream>
 #include <sstream>
@@ -15,9 +14,12 @@ class IRTreeVisitor;
 
 namespace IR {
 
+	class Instruction;
+
 	class BasicBlock {
 	private:
 		int _id;
+		int _usageCounter;
 
 		Instruction_list_sptr _instructions;
 
@@ -27,6 +29,7 @@ namespace IR {
 	public:
 		BasicBlock(unsigned int id) :
 			_id(id),
+			_usageCounter(0),
 			_instructions(nullptr),
 			_preds(nullptr),
 			_succs(nullptr)
@@ -38,6 +41,9 @@ namespace IR {
 
 		int id() const { return _id; }
 		void id(int id) { _id = id; }
+
+		int& usageCounter() { return _usageCounter; }
+		void usageCounter(int uc) { _usageCounter = uc; }
 
 		Instruction_list_sptr instructions() const { return _instructions; }
 
