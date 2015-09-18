@@ -20,13 +20,31 @@ void IRToDotVisitor::visit(IR::Module* module) {
 void IRToDotVisitor::visit(IR::Function* func) {
 	cout << "On ITD-Func " << endl;
 
-	this->newline() << endl << "subgraph cluster_" << func << " { " << endl;
+	///// For creating the basic blocks with their subtrees
+	this->newline() << endl << "subgraph cluster_bbs_" << func << " { " << endl;
 	this->incIdentation();
-	this->newline() << "label=\"Function: " << func->name() << "\";" << endl;
+	this->newline() << "label=\"BBs of function " << func->name() << "\";" << endl;
 
+	// Produces node/edges for each BB
 	for (auto& bb: *func->bbs()) {
 		bb->accept(this);
 	}
+
+	this->decIdentation();
+	this->newline() << "}" << endl;
+
+
+
+	///// For creating the CFG
+	this->newline() << endl << "subgraph cluster_cfg_" << func << " { " << endl;
+	this->incIdentation();
+	this->newline() << "label=\"CFG for function " << func->name() << "\";" << endl;
+
+	// Create the CFG
+	for (auto& edge: this->crossEdges) {
+		this->newline() << "BB" << std::get<0>(edge) << " -> BB" << std::get<1>(edge) << " [label=" << std::get<2>(edge) << "];" << endl;
+	}
+
 
 	this->decIdentation();
 	this->newline() << "}" << endl;
@@ -35,9 +53,12 @@ void IRToDotVisitor::visit(IR::Function* func) {
 void IRToDotVisitor::visit(IR::BasicBlock* bb) {
 	cout << "On ITD-BasicBlock " << endl;
 
+	this->_currentBasicBlock = bb;
+
 	this->newline() << endl << "subgraph cluster_" << bb << " { " << endl;
 	this->incIdentation();
 	this->newline() << "label=\"BB" << bb->id() << "\";" << endl;
+	this->newline() << "invis_" << bb << " [style=invisible,label=x,height=.1, width=.1];" << endl;
 
 	for (auto subtree : *bb->instructions()) {
 		subtree->accept(this);
@@ -131,12 +152,15 @@ void IRToDotVisitor::visit(IR::IMinus* node) {
 	binaryDispatcher(node, "-");
 }
 
-void IRToDotVisitor::visit(IR::IInc* visitor) {
+void IRToDotVisitor::visit(IR::IInc* node) {
+	cout << "On ITD-IInc " << endl;
+	unaryDispatcher(node, "++");
 
 }
 
-void IRToDotVisitor::visit(IR::IDec* visitor) {
-
+void IRToDotVisitor::visit(IR::IDec* node) {
+	cout << "On ITD-IDec" << endl;
+	unaryDispatcher(node, "--");
 }
 
 
@@ -168,12 +192,14 @@ void IRToDotVisitor::visit(IR::FMinus* node) {
 	binaryDispatcher(node, "-");
 }
 
-void IRToDotVisitor::visit(IR::FInc* visitor) {
-
+void IRToDotVisitor::visit(IR::FInc* node) {
+	cout << "On ITD-FInc " << endl;
+	unaryDispatcher(node, "++");
 }
 
-void IRToDotVisitor::visit(IR::FDec* visitor) {
-
+void IRToDotVisitor::visit(IR::FDec* node) {
+	cout << "On ITD-FDec " << endl;
+	unaryDispatcher(node, "--");
 }
 
 
@@ -235,9 +261,25 @@ void IRToDotVisitor::visit(IR::RNotEqual* node) {
 
 
 
-void IRToDotVisitor::visit(IR::Jump* visitor) { }
-void IRToDotVisitor::visit(IR::CondTrueJump* visitor) { }
-void IRToDotVisitor::visit(IR::CondFalseJump* visitor) { }
+void IRToDotVisitor::visit(IR::Jump* node) { 
+	cout << "On ITD-Jump" << endl;
+
+	this->newline() << DOT_NEW_NODE(node, "goto") << endl;
+
+	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl1()->id(), "goto") );
+}
+
+void IRToDotVisitor::visit(IR::Conditional* node) { 
+	cout << "On ITD-If" << endl;
+
+	this->newline() << DOT_NEW_NODE(node, "if") << endl;
+	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
+
+	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl1()->id(), "True") );
+	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl2()->id(), "False") );
+
+	node->chd1()->accept(this);
+}
 
 
 

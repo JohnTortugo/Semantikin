@@ -1,4 +1,3 @@
-#include "Semantikin.h"
 #include "AstVisitors.h"
 #include "SymbolTable.h"
 #include <memory>
@@ -29,9 +28,8 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
 		/* Something like an inherited attribute. */
 		this->_currentFunction = shared_ptr<IR::Function>(new IR::Function(function->getSymbTable()));
 
-		/* Reset the counters for temps/labels/constants. */
+		/* Reset the counters for temps/constants. */
 		this->constCounter = 1;
-		this->labelCounter = 1;
 		this->tempCounter = 1;
 		this->_currentOffset = function->currentOffset();
 
@@ -56,9 +54,6 @@ void AstTACGenVisitor::visit(Parser::Function* function) {
 	/* We need to keep a pointer to the current function definition, right? */
 	this->_currentFunction->addr( function->getSymbTable()->getParent()->lookup(function->getName()) );
 
-	/* The first instruction of every function needs to have a label. */
-	this->_currentFunction->appendBasicBlock( this->newBasicBlock() );
-
 	/* Produce IR instructions for the statements in the function's code block. */
 	function->getBody()->accept(this);
 }
@@ -76,22 +71,29 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 		Expression* initializer = spec->getInitializer();
 
 		if (initializer != nullptr) {
-//			initializer->accept(this);
-//
-//			if (initializer->type() == Parser::INT || initializer->type() == Parser::FLOAT) {
-//				this->_currentFunction->appendInstruction(shared_ptr<IR::ScalarCopy>(new IR::ScalarCopy(st->lookup(spec->getName()), initializer->addr())));
-//			}
-//			else if (initializer->type() == Parser::STRING) {
-//				shared_ptr<IR::Call> newInstruction = shared_ptr<IR::Call>( new IR::Call(st->lookup(System::NAT_FUN_STRCPY), nullptr) );
-//
-//				newInstruction->addArgument(st->lookup(spec->getName()));
-//				newInstruction->addArgument(initializer->addr());
-//
-//				this->_currentFunction->appendInstruction(shared_ptr<IR::Call>(newInstruction));
-//			}
-//			else {
-//				throw System::EXCEPTION_UNEXPECTED_TYPE;
-//			}
+			auto varDeclRaw = dynamic_cast<STVariableDeclaration*>( st->lookup(spec->getName()).get() );
+			auto memInstr = make_shared<IR::Memory>( shared_ptr<STVariableDeclaration>( varDeclRaw ) );
+
+			initializer->accept(this);
+
+			if (initializer->type() == Parser::INT || initializer->type() == Parser::FLOAT) {
+				this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(memInstr, this->_lastInstruction) );
+				this->_lastInstruction = nullptr;
+			}
+			else if (initializer->type() == Parser::STRING) {
+				auto funCopyRaw 	= dynamic_cast<STFunctionDeclaration*>( st->lookup(System::NAT_FUN_STRCPY).get() );
+				auto lblFunCopy 	= make_shared<IR::Func>( shared_ptr<STFunctionDeclaration>( funCopyRaw ) );
+				auto newInstruction = make_shared<IR::Call>( lblFunCopy, this->newTemporary(Parser::INT));
+
+				newInstruction->addArgument( memInstr );
+				newInstruction->addArgument( this->_lastInstruction );
+
+				this->_currentFunction->appendInstruction(newInstruction);
+				this->_lastInstruction = nullptr;
+			}
+			else {
+				throw System::EXCEPTION_UNEXPECTED_TYPE;
+			}
 		}
 	}
 }
@@ -101,137 +103,160 @@ void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
 	auto condition 	= loop->getCondition();
 	auto codeBlock 	= loop->getBody();
 
-	condition->tLabel( this->_fallLabel );
+	condition->tLabel( this->newBasicBlock() );
 	condition->fLabel( loop->next() );
 	codeBlock->next( begin );
 
+	/// For now we are using jumps in these cases where the code also fallthrough
+	this->_currentFunction->appendInstruction( make_shared<IR::Jump>(begin) );
+
+	/// The start of the basic block that computes the condition
 	this->_currentFunction->appendBasicBlock(begin);
+
+	/// The code to compute the condition
 	condition->accept(this);
+
+	/// The basic block that comprises the loop body
 	this->_currentFunction->appendBasicBlock(condition->tLabel());
+
+	/// The code of the loop body
 	codeBlock->accept(this);
+
+	/// We jump back to the condition computation
 	this->_currentFunction->appendInstruction( make_shared<IR::Jump>(begin) );
 }
 
 void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
-	auto condition = ifStmt->getCondition();
-	auto thenBlock = ifStmt->getThenBlock();
-	auto elseBlock = ifStmt->getElseBlock();
-	list<shared_ptr<Parser::ElseIfStmt>>* elseIfChain = ifStmt->getElseIfChain();
+	auto condition   = ifStmt->getCondition();
+	auto thenBlock   = ifStmt->getThenBlock();
+	auto elseBlock 	 = ifStmt->getElseBlock();
+	auto elseIfChain = ifStmt->getElseIfChain();
 
+	/* Does not have else-if nor else blocks. */
 	if ((elseIfChain == nullptr || elseIfChain->size() == 0) && elseBlock == nullptr) {
-		/* Does not have else-if nor else blocks. */
-
-		condition->tLabel( this->_fallLabel );
+		condition->tLabel( this->newBasicBlock() );
 		condition->fLabel( ifStmt->next() );
 		thenBlock->next( ifStmt->next() );
 
+		/// Emit the instructions for calculating the condition
 		condition->accept(this);
+
+		/// Basic block representing the then block
+		this->_currentFunction->appendBasicBlock(condition->tLabel());
+	
+		/// Instructions of the "then block"
 		thenBlock->accept(this);
+
+		/// Jump from the "then block" to the basic block after the "if statement"
+		this->_currentFunction->appendInstruction(make_shared<IR::Jump>(thenBlock->next()));
 	}
-//	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
-//		/* Only have else block. */
-//
-//		condition->tLabel( this->_fallLabel );
-//		condition->fLabel( this->newBasicBlock() );
-//
-//		thenBlock->next( ifStmt->next() );
-//		elseBlock->next( ifStmt->next() );
-//
-//		condition->accept(this);
-//
-//		this->_currentFunction->appendBasicBlock(condition->tLabel());
-//		thenBlock->accept(this);
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
-//		this->_currentFunction->appendBasicBlock(condition->fLabel());
-//		elseBlock->accept(this);
-//	}
-//	else if (elseBlock == nullptr) {
-//		/* Only have else-if blocks. */
-//		auto nextCondLabel = this->newBasicBlock();
-//
-//		condition->tLabel( this->_fallLabel );
-//		condition->fLabel( nextCondLabel );
-//
-//		/* Process the condition. */
-//		condition->accept(this);
-//
-//		/* Then block appended. */
-//		//this->_currentFunction->appendBasicBlock(condition->tLabel());
-//		thenBlock->accept(this);
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
-//
-//		unsigned int size = elseIfChain->size() - 1;
-//		unsigned int indx = 0;
-//		for (auto elseif : *elseIfChain) {
-//			/* Label to begin of the condition check. */
-//			this->_currentFunction->appendBasicBlock(nextCondLabel);
-//
-//			/* In the last else-if we jump off of the if it's false. */
-//			nextCondLabel = (indx < size) ? this->newBasicBlock() : ifStmt->next();
-//
-//			/* As usual.. */
-//			elseif->getCondition()->tLabel( this->_fallLabel );
-//			elseif->getCondition()->fLabel( nextCondLabel );
-//
-//			/* Process the condition. */
-//			elseif->getCondition()->accept(this);
-//
-//			/* Then block appended. */
-//			//this->_currentFunction->appendBasicBlock( elseif->getCondition()->tLabel() );
-//			elseif->getElseIfBlock()->accept(this);
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
-//
-//			/* We need to know when we are at the last position. */
-//			indx++;
-//		}
-//	}
-//	else {
-//		/* Have else and else-if blocks. */
-//
-//		/* Only have else-if blocks. */
-//		auto nextCondLabel = this->newBasicBlock();
-//		auto elseLabel = this->newBasicBlock();
-//
-//		condition->tLabel( this->_fallLabel );
-//		condition->fLabel( nextCondLabel );
-//
-//		/* Process the condition. */
-//		condition->accept(this);
-//
-//		/* Then block appended. */
-//		//this->_currentFunction->appendBasicBlock(condition->tLabel());
-//		thenBlock->accept(this);
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
-//
-//		unsigned int size = elseIfChain->size() - 1;
-//		unsigned int indx = 0;
-//		for (auto elseif : *elseIfChain) {
-//			/* Label to begin of the condition check. */
-//			this->_currentFunction->appendBasicBlock(nextCondLabel);
-//
-//			/* In the last else-if we jump off of the if it's false. */
-//			nextCondLabel = (indx < size) ? this->newBasicBlock() : elseLabel;
-//
-//			/* As usual.. */
-//			elseif->getCondition()->tLabel( this->_fallLabel );
-//			elseif->getCondition()->fLabel( nextCondLabel );
-//
-//			/* Process the condition. */
-//			elseif->getCondition()->accept(this);
-//
-//			/* Then block appended. */
-//			//this->_currentFunction->appendBasicBlock( elseif->getCondition()->tLabel() );
-//			elseif->getElseIfBlock()->accept(this);
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(ifStmt->next()) ) );
-//
-//			/* We need to know when we are at the last position. */
-//			indx++;
-//		}
-//
-//		/* The else part. */
-//		this->_currentFunction->appendBasicBlock(elseLabel);
-//		elseBlock->accept(this);
-//	}
+	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
+		/* Only have else block. */
+
+		condition->tLabel( this->newBasicBlock() );
+		condition->fLabel( this->newBasicBlock() );
+
+		thenBlock->next( ifStmt->next() );
+		elseBlock->next( ifStmt->next() );
+
+		condition->accept(this);
+
+		this->_currentFunction->appendBasicBlock(condition->tLabel());
+		thenBlock->accept(this);
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+
+		this->_currentFunction->appendBasicBlock(condition->fLabel());
+		elseBlock->accept(this);
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+	}
+	else if (elseBlock == nullptr) {
+		/* Only have else-if blocks. */
+		auto nextCondLabel = this->newBasicBlock();
+
+		condition->tLabel( this->newBasicBlock() );
+		condition->fLabel( nextCondLabel );
+
+		/* Append the first condition check */
+		condition->accept(this);
+
+		/* Append the instructions to the first "then-block" */
+		this->_currentFunction->appendBasicBlock(condition->tLabel());
+		thenBlock->accept(this);
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+
+		unsigned int size = elseIfChain->size() - 1;
+		unsigned int indx = 0;
+		for (auto elseif : *elseIfChain) {
+			/* Label to begin of the condition check. */
+			this->_currentFunction->appendBasicBlock(nextCondLabel);
+
+			/* In the last else-if we jump off of the if it's false. */
+			nextCondLabel = (indx < size) ? this->newBasicBlock() : ifStmt->next();
+
+			/* As usual.. */
+			elseif->getCondition()->tLabel( this->newBasicBlock() );
+			elseif->getCondition()->fLabel( nextCondLabel );
+
+			/* Emit instructions to check the condition */
+			elseif->getCondition()->accept(this);
+
+			/* Then block appended. */
+			this->_currentFunction->appendBasicBlock( elseif->getCondition()->tLabel() );
+			elseif->getElseIfBlock()->accept(this);
+			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+
+			/* We need to know when we are at the last position. */
+			indx++;
+		}
+	}
+	else {
+		/* Has else and else-if blocks. */
+
+		/* Only have else-if blocks. */
+		auto nextCondLabel = this->newBasicBlock();
+		auto elseLabel = this->newBasicBlock();
+
+		condition->tLabel( this->newBasicBlock() );
+		condition->fLabel( nextCondLabel );
+
+		/* Append the first condition check. */
+		condition->accept(this);
+
+		/* Then block appended. */
+		this->_currentFunction->appendBasicBlock(condition->tLabel());
+		thenBlock->accept(this);
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+
+		unsigned int size = elseIfChain->size() - 1;
+		unsigned int indx = 0;
+		for (auto elseif : *elseIfChain) {
+			/* Label to begin of the condition check. */
+			this->_currentFunction->appendBasicBlock(nextCondLabel);
+
+			/* In the last else-if we jump off of the if it's false. */
+			nextCondLabel = (indx < size) ? this->newBasicBlock() : elseLabel;
+
+			/* As usual.. */
+			elseif->getCondition()->tLabel( this->newBasicBlock() );
+			elseif->getCondition()->fLabel( nextCondLabel );
+
+			/* Emit instructions to check the condition */
+			elseif->getCondition()->accept(this);
+
+			/* Then block appended. */
+			this->_currentFunction->appendBasicBlock( elseif->getCondition()->tLabel() );
+			elseif->getElseIfBlock()->accept(this);
+			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+
+			/* We need to know when we are at the last position. */
+			indx++;
+		}
+
+		/* The else part. */
+		this->_currentFunction->appendBasicBlock(elseLabel);
+		elseBlock->accept(this);
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(ifStmt->next()) );
+	}
 }
 
 void AstTACGenVisitor::visit(Parser::ElseIfStmt* elseIfStmt) { }
@@ -261,6 +286,15 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
 		statement->next( this->newBasicBlock() );
 		statement->accept(this);
 
+		/**
+		 * If we parsed an instruction that could be part of a larger expressionn, but
+		 * in fact it was not inside one then we add that instruction as a subtree.
+		 */
+		if (this->_lastInstruction != nullptr) {
+			this->_currentFunction->appendInstruction(this->_lastInstruction);
+			this->_lastInstruction = nullptr;
+		}
+
 		/* If in fact happened to be some instruction branching
 		 * to statement->next() label then we append it. */
 		if (statement->next()->usageCounter() > 0)
@@ -278,14 +312,14 @@ void AstTACGenVisitor::visit(Parser::StringExpr* str) {
 		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
 	}
 	else {
-//		/* We are inside conditional expression. We evaluate the parameters
-//		 * and goes to the correct direction. */
-//		if (str->value() == "") {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(str->fLabel()) ) );
-//		}
-//		else {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(str->tLabel()) ) );
-//		}
+		/* We are inside conditional expression. We evaluate the parameters
+		 * and goes to the correct direction. */
+		if (str->value() == "") {
+			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(str->fLabel()) );
+		}
+		else {
+			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(str->tLabel()) );
+		}
 	}
 }
 
@@ -299,14 +333,14 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
 	}
 	else {
-//		/* We are inside conditional expression. We evaluate the parameters
-//		 * and goes to the correct direction. */
-//		if (flt->value() == 0) {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(flt->fLabel()) ) );
-//		}
-//		else {
-//			this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(flt->tLabel()) ) );
-//		}
+		/* We are inside conditional expression. We evaluate the parameters
+		 * and goes to the correct direction. */
+		if (flt->value() == 0) {
+			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->fLabel()) );
+		}
+		else {
+			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->tLabel()) );
+		}
 	}
 }
 
@@ -320,16 +354,16 @@ void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
 	}
 	else {
-//		/* We are inside conditional expression. We evaluate the parameters
-//		 * and goes to the correct direction. */
-//		if (integer->value() == 0) {
-//			if (integer->fLabel() != this->_fallLabel)
-//				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(integer->fLabel()) ) );
-//		}
-//		else {
-//			if (integer->tLabel() != this->_fallLabel)
-//				this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(integer->tLabel()) ) );
-//		}
+		/* We are inside conditional expression. We evaluate the parameters
+		 * and goes to the correct direction. */
+		if (integer->value() == 0) {
+			if (integer->fLabel() != this->_fallLabel)
+				this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->fLabel()) );
+		}
+		else {
+			if (integer->tLabel() != this->_fallLabel)
+				this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->tLabel()) );
+		}
 	}
 }
 
@@ -349,8 +383,6 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		if (id->dimsExprs()->size() != decl->dims().size()) {
 			auto varEntryInstr = make_shared<IR::Memory>( shared_ptr<Parser::STVariableDeclaration>(decl) );
 			this->_lastInstruction = make_shared<IR::Addr>(this->newTemporary(Parser::INT), varEntryInstr);
-			//this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( entryAddr ) );
-			//id->addr( entryAddr->tgt() );
 			return ;
 		}
 
@@ -384,8 +416,6 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 			/* multiply index*DIM_SIZE and store it. */
 			auto newInstruction = make_shared<IR::IMul>(tempResult, idxExprInstr, dimSizeInstr);
 
-			///this->_currentFunction->appendInstruction(newInstruction);
-
 			/* We store back the target because at the end we need to sum up the partial factors. */
 			indExpsInstructions.push_back(newInstruction);
 
@@ -401,8 +431,6 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 			auto tempResult = this->newTemporary(Parser::INT);
 
 			auto newInstruction = make_shared<IR::IAdd>(tempResult, prev, indExpsInstructions[factIndex]);
-
-			//this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( newInstruction ) );
 
 			prev = newInstruction;
 		}
@@ -421,7 +449,6 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		tempResult		   = this->newTemporary(Parser::INT);
 		auto varEntryInstr = make_shared<IR::Memory>( shared_ptr<Parser::STVariableDeclaration>(decl) );
 		auto entryAddr 	   = make_shared<IR::Addr>(tempResult, varEntryInstr);
-		//this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( entryAddr ) );
 
 		/**
 		 * Now we sum the address of the base of the array with the number of bytes we
@@ -429,22 +456,17 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		 */
 		tempResult	= this->newTemporary(Parser::INT);
 		auto arrAccess 	= make_shared<IR::AddrDispl>(tempResult, entryAddr, indAccess);
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( arrAccess ) );
 
 		/* If we are parsing a right-hand side expression we will de-refer the pointer and load
 		 * the array value in a temporary. Otherwise, we will just return the address to the previous
 		 * expression, and it will take care of dereferencing. 									   */
 		if (id->isExpLeftHand()) {
 			this->_lastInstruction = arrAccess;
-//			id->addr( arrAccess->tgt() );
 		}
 		else {
 			tempResult	 = this->newTemporary(id->type());
 			auto derefer = make_shared<IR::CopyFromArray>(tempResult, arrAccess);
 			this->_lastInstruction = derefer;
-
-			///this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( derefer ) );
-			///id->addr( derefer->tgt() );
 		}
 	}
 	else {
@@ -487,74 +509,68 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 }
 
 void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
-//	if (unary->opr() == UnaryExpr::NOT) {
-//		translateBooleanExp(unary);
-//	}
-//	else if (unary->opr() == UnaryExpr::ADDR) {
-//		unary->exp()->isExpLeftHand(false);
-//		unary->exp()->accept(this);
-//
-//		auto newInstruction = new IR::Addr(this->newTemporary(unary->type()), unary->exp()->addr());
-//
-//		unary->addr( newInstruction->tgt() );
-//
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
-//	}
-//	else if (unary->opr() == UnaryExpr::BIT_NOT) {
-//		unary->exp()->isExpLeftHand(false);
-//		unary->exp()->accept(this);
-//
-//		auto newInstruction = new IR::BinNot(this->newTemporary(unary->type()), unary->exp()->addr());
-//
-//		unary->addr( newInstruction->tgt() );
-//
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
-//	}
-//	else {
-//		translateArithmeticExpr(unary);
-//	}
+	if (unary->opr() == UnaryExpr::NOT) {
+		translateBooleanExp(unary);
+	}
+	else if (unary->opr() == UnaryExpr::ADDR) {
+		unary->exp()->isExpLeftHand(false);
+		unary->exp()->accept(this);
+		auto rightInstruction = this->_lastInstruction;
+
+		this->_lastInstruction = make_shared<IR::Addr>(this->newTemporary(unary->type()), rightInstruction);
+	}
+	else if (unary->opr() == UnaryExpr::BIT_NOT) {
+		unary->exp()->isExpLeftHand(false);
+		unary->exp()->accept(this);
+		auto rightInstruction = this->_lastInstruction;
+
+		this->_lastInstruction = make_shared<IR::BinNot>(this->newTemporary(unary->type()), rightInstruction);
+	}
+	else {
+		translateArithmeticExpr(unary);
+	}
 }
 
 void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
-//	auto notCond = false;
-//	auto nextNull = false;
-//
-//	/* If the jump labels are nullptr then we are not decoding a boolean
-//	 * expression that is inside a if statement, thus it is an expression
-//	 * and we need to take care to create the appropriate labels to storing
-//	 * the true and false values. */
-//	if (unary->tLabel() == nullptr && unary->fLabel() == nullptr) {
-//		notCond = true;
-//		unary->tLabel( this->newBasicBlock() );
-//		unary->fLabel( this->newBasicBlock() );
-//
-//		/* We need to make sure that there is a target so we can jump over the
-//		 * true/false blocks. */
-//		if (unary->next() == nullptr) {
-//			nextNull = true;
-//			unary->next( this->newBasicBlock() );
-//		}
-//	}
-//
-//	unary->exp()->isExpLeftHand(false);
-//	unary->exp()->tLabel( unary->fLabel() );
-//	unary->exp()->fLabel( unary->tLabel() );
-//	unary->exp()->accept(this);
-//
-//	if (notCond) {
-//		shared_ptr<STTempVar> res = this->newTemporary(Parser::INT);
-//
-//		this->_currentFunction->appendBasicBlock(unary->tLabel());
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::ScalarCopy(res, this->newConstant<int>(1)) ) );
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(unary->next()) ) );
-//		this->_currentFunction->appendBasicBlock(unary->fLabel());
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::ScalarCopy(res, this->newConstant<int>(0)) ) );
-//
-//		if (nextNull)
-//			this->_currentFunction->appendBasicBlock(unary->next());
-//
-//		unary->addr(res);
-//	}
+	auto notCond = false;
+	auto nextNull = false;
+
+	/* If the jump labels are nullptr then we are not decoding a boolean
+	 * expression that is inside a if statement, thus it is an expression
+	 * and we need to take care to create the appropriate labels to storing
+	 * the true and false values. */
+	if (unary->tLabel() == nullptr && unary->fLabel() == nullptr) {
+		notCond = true;
+		unary->tLabel( this->newBasicBlock() );
+		unary->fLabel( this->newBasicBlock() );
+
+		/* We need to make sure that there is a target so we can jump over the
+		 * true/false blocks. */
+		if (unary->next() == nullptr) {
+			nextNull = true;
+			unary->next( this->newBasicBlock() );
+		}
+	}
+
+	unary->exp()->isExpLeftHand(false);
+	unary->exp()->tLabel( unary->fLabel() );
+	unary->exp()->fLabel( unary->tLabel() );
+	unary->exp()->accept(this);
+
+	if (notCond) {
+		auto regRes = this->newTemporary(Parser::INT);
+		auto zero = make_shared<IR::Immediate>( this->newConstant<int>(0) );
+		auto one = make_shared<IR::Immediate>( this->newConstant<int>(1) );
+
+		this->_currentFunction->appendBasicBlock(unary->tLabel());
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regRes, one) );
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(unary->next()) );
+		this->_currentFunction->appendBasicBlock(unary->fLabel());
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regRes, zero) );
+
+		if (nextNull)
+			this->_currentFunction->appendBasicBlock(unary->next());
+	}
 }
 
 void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
@@ -595,10 +611,6 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 				break;
 		}
 	}
-
-//	unary->addr( newInstruction->tgt() );
-//
-//	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>(newInstruction) );
 }
 
 void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
@@ -616,80 +628,72 @@ void AstTACGenVisitor::visit(Parser::BinaryExpr* binop) {
 }
 
 void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
-//	auto exp1 	  = binop->getExp1();
-//	auto exp2 	  = binop->getExp2();
-//	auto tgtType  = binop->type();
-//	auto notCond  = false;
-//	auto nextNull = false;
-//
-//	/* If the jump labels are nullptr then we are not decoding a boolean
-//	 * expression that is inside a if statement, thus it is an expression
-//	 * and we need to take care to create the appropriate labels to storing
-//	 * the true and false values. */
-//	if (binop->tLabel() == nullptr && binop->fLabel() == nullptr) {
-//		notCond = true;
-//		binop->tLabel( this->_fallLabel );
-//		binop->fLabel( this->newBasicBlock() );
-//
-//		/* We need to make sure that there is a target so we can jump over the
-//		 * true/false blocks. */
-//		if (binop->next() == nullptr) {
-//			nextNull = true;
-//			binop->next( this->newBasicBlock() );
-//		}
-//	}
-//
-//	exp1->isExpLeftHand(false);
-//	exp2->isExpLeftHand(false);
-//
-//	if (binop->opr() == BinaryExpr::LOG_AND) {
-//		auto newLabel = (binop->fLabel() != this->_fallLabel) ? binop->fLabel() : this->newBasicBlock();
-//
-//		exp1->tLabel( this->_fallLabel );
-//		exp1->fLabel( newLabel );
-//
-//		exp2->tLabel( binop->tLabel() );
-//		exp2->fLabel( binop->fLabel() );
-//
-//		exp1->accept(this);
-//		exp2->accept(this);
-//
-//		if (binop->fLabel() == this->_fallLabel) {
-//			this->_currentFunction->appendBasicBlock(newLabel);
-//		}
-//	}
-//	else if (binop->opr() == BinaryExpr::LOG_OR) {
-//		auto newLabel = (binop->tLabel() != this->_fallLabel) ? binop->tLabel() : this->newBasicBlock();
-//
-//		exp1->tLabel( newLabel );
-//		exp1->fLabel( this->_fallLabel );
-//		exp2->tLabel( binop->tLabel() );
-//		exp2->fLabel( binop->fLabel() );
-//
-//		exp1->accept(this);
-//		exp2->accept(this);
-//
-//		if (binop->tLabel() == this->_fallLabel) {
-//			this->_currentFunction->appendBasicBlock(newLabel);
-//		}
-//	}
-//
-//	/* We aren't inside a conditional, then we insert the labels
-//	 * were we create the result of the conditionals. */
-//	if (notCond) {
-//		shared_ptr<STTempVar> res = this->newTemporary(Parser::INT);
-//
-//		//this->_currentFunction->appendBasicBlock(binop->tLabel());
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::ScalarCopy(res, this->newConstant<int>(1)) ) );
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(binop->next()) ) );
-//		this->_currentFunction->appendBasicBlock(binop->fLabel());
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::ScalarCopy(res, this->newConstant<int>(0)) ) );
-//
-//		if (nextNull)
-//			this->_currentFunction->appendBasicBlock(binop->next());
-//
-//		binop->addr(res);
-//	}
+	auto exp1 	  = binop->getExp1();
+	auto exp2 	  = binop->getExp2();
+	auto tgtType  = binop->type();
+	auto topLevel  = false;
+	auto nextNull  = false;
+	BasicBlock_sptr end = nullptr;
+
+	exp1->isExpLeftHand(false);
+	exp2->isExpLeftHand(false);
+
+	/* If the jump labels are nullptr then we are not decoding a boolean
+	 * expression that is inside a if statement, thus it is an expression
+	 * and we need to take care to create the appropriate labels to storing
+	 * the true and false values. */
+	if (binop->tLabel() == nullptr && binop->fLabel() == nullptr) {
+		topLevel = true;
+
+		binop->tLabel( this->newBasicBlock() );
+		binop->fLabel( this->newBasicBlock() );
+
+		end = this->newBasicBlock();
+	}
+
+	if (binop->opr() == BinaryExpr::LOG_OR) {
+		exp1->tLabel( binop->tLabel() );
+		exp1->fLabel( this->newBasicBlock() );
+		exp1->accept(this);
+
+		exp2->tLabel( binop->tLabel() );
+		exp2->fLabel( binop->fLabel() );
+
+		this->_currentFunction->appendBasicBlock( exp1->fLabel() );
+
+		exp2->accept(this);
+	 }
+	 else if (binop->opr() == BinaryExpr::LOG_AND) {
+		exp1->tLabel( this->newBasicBlock() );
+		exp1->fLabel( binop->fLabel() );
+		exp1->accept(this);
+
+		exp2->tLabel( binop->tLabel() );
+		exp2->fLabel( binop->fLabel() );
+
+		this->_currentFunction->appendBasicBlock( exp1->tLabel() );
+
+		exp2->accept(this);
+	}
+
+	/* We aren't inside a conditional, then we insert the labels
+	 * were we create the result of the conditionals. */
+	if (topLevel) {
+		auto res  = this->newTemporary(Parser::INT);
+		auto zero = make_shared<IR::Immediate>( this->newConstant<int>(0) );
+		auto one  = make_shared<IR::Immediate>( this->newConstant<int>(1) );
+
+		this->_currentFunction->appendBasicBlock(binop->tLabel());
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(res, one) );
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(end) );
+
+		this->_currentFunction->appendBasicBlock(binop->fLabel());
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(res, zero) );
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(end) );
+
+		this->_currentFunction->appendBasicBlock(end);
+		this->_lastInstruction = res;
+	}
 }
 
 void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
@@ -698,10 +702,12 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 	auto tgtType = binop->type();
 
 	exp1->isExpLeftHand(binop->opr() == BinaryExpr::ASSIGN);
+	exp1->next(binop->next());
 	exp1->accept(this);
 	auto leftInstruction = this->_lastInstruction;
 
 	exp2->isExpLeftHand(false);
+	exp2->next(binop->next());
 	exp2->accept(this);
 	auto rightInstruction = this->_lastInstruction;
 
@@ -798,15 +804,20 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 				break;
 		}
 	}
-//	else if (tgtType == Parser::STRING) {
-//		if (binop->opr() == BinaryExpr::ASSIGN) {
-//			auto st 	   = this->_currentFunction->symbolTable();
-//			newInstruction = new IR::Call(st->lookup(System::NAT_FUN_STRCPY), this->newTemporary(Parser::STRING));
-//
-//			newInstruction->addArgument( exp1->addr() );
-//			newInstruction->addArgument( exp2->addr() );
-//		}
-//	}
+	else if (tgtType == Parser::STRING) {
+		if (binop->opr() == BinaryExpr::ASSIGN) {
+			auto st 			= this->_currentFunction->symbolTable();
+			auto funCopyRaw 	= dynamic_cast<STFunctionDeclaration*>( st->lookup(System::NAT_FUN_STRCPY).get() );
+			auto lblFunCopy 	= make_shared<IR::Func>( shared_ptr<STFunctionDeclaration>( funCopyRaw ) );
+			auto newInstruction = make_shared<IR::Call>( lblFunCopy, this->newTemporary(Parser::INT));
+
+			newInstruction->addArgument( leftInstruction );
+			newInstruction->addArgument( rightInstruction );
+
+			this->_currentFunction->appendInstruction(newInstruction);
+			this->_lastInstruction = nullptr;
+		}
+	}
 
 	/* If we are inside a conditional we need to use the result
 	 * of this expression to consider the jump targets. */
@@ -866,27 +877,8 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 	 * expression is part of a larger expression and in this case
 	 * we cannot have short-circuit code yet. */
 	if (tLabel != nullptr && fLabel != nullptr) {
-		this->_currentFunction->appendInstruction( make_shared<IR::CondTrueJump>(this->_lastInstruction, tLabel, fLabel) );
+		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(this->_lastInstruction, tLabel, fLabel) );
 		this->_lastInstruction = nullptr;
-
-//		/* In this case jumps were informed for both targets, this
-//		 * may happen when this expression is part of a larger expression
-//		 * that is inside conditionals. */
-//		if (tLabel != fall && fLabel != fall) {
-//			this->_currentFunction->appendInstruction( make_shared<IR::CondTrueJump>(binop->addr(), tLabel) );
-//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(fLabel) );
-//		}
-//		else if (tLabel != fall) {
-//			this->_currentFunction->appendInstruction( make_shared<IR::CondTrueJump>(binop->addr(), tLabel) );
-//		}
-//		else if (fLabel != fall) {
-//			this->_currentFunction->appendInstruction( make_shared<IR::CondFalseJump>(binop->addr(), fLabel) );
-//		}
-//		else {
-//			/* I do not expect this to happen, but better be
-//			 * safe than sorry. */
-//			throw System::EXCEPTION_UNREACHABLE_CODE;
-//		}
 	}
 	else {
 		this->_currentFunction->appendInstruction( this->_lastInstruction );
@@ -897,21 +889,10 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 
 
 void AstTACGenVisitor::emitBranchesBasedOnExpValue(Instruction_sptr result, BasicBlock_sptr lTrue, BasicBlock_sptr lFalse) {
-//	auto cmpInstr = new IR::REqual(this->newTemporary(Parser::INT), result, this->newConstant<int>(0));
-//	this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( cmpInstr ) );
-//
-//	if (lTrue != this->_fallLabel && lFalse != this->_fallLabel) {
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), lFalse) ) );
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::Jump(lTrue) ) );
-//	}
-//	else if (lTrue == this->_fallLabel) {
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondTrueJump(cmpInstr->tgt(), lFalse) ) );
-//	}
-//	else if (lFalse == this->_fallLabel) {
-//		this->_currentFunction->appendInstruction( shared_ptr<IR::Instruction>( new IR::CondFalseJump(cmpInstr->tgt(), lTrue) ) );
-//	}
-//	else
-//		throw System::EXCEPTION_UNREACHABLE_CODE;
+	auto immediate = make_shared<IR::Immediate>( this->newConstant<int>(0) );
+	auto cmpInstr = make_shared<IR::RNotEqual>(this->newTemporary(Parser::INT), result, immediate);
+
+	this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(cmpInstr, lTrue, lFalse) );
 }
 
 
@@ -927,13 +908,7 @@ shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
 }
 
 BasicBlock_sptr AstTACGenVisitor::newBasicBlock() {
-	return make_shared<IR::BasicBlock>(-1);
-}
-
-shared_ptr<STLabelDef> AstTACGenVisitor::newLabel(string scope, string suffix) {
-	int tempId = this->labelCounter++;
-
-	return make_shared<STLabelDef>("_L" + scope + "." + suffix + std::to_string(tempId));
+	return make_shared<IR::BasicBlock>(0);
 }
 
 shared_ptr<IR::Register> AstTACGenVisitor::newTemporary(NativeType type) {
@@ -946,6 +921,4 @@ shared_ptr<IR::Register> AstTACGenVisitor::newTemporary(NativeType type) {
 
 	return make_shared<IR::Register>(tempVar);
 }
-
-
 

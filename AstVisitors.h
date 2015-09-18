@@ -135,10 +135,10 @@ private:
 	 * fallthrough path. */
 	BasicBlock_sptr _fallLabel;
 
-	/* Count the number of constants/labels/tmps found/added to the symbol table of
+	/* Count the number of constants/basicblocks/tmps found/added to the symbol table of
 	 * a function. 													 			 */
 	unsigned int constCounter = 1;
-	unsigned int labelCounter = 1;
+	unsigned int basicBlockCounter = 1;
 	unsigned int tempCounter = 1;
 
 	/* This is a parameter imported from the Semantic Analyzer, it indicates
@@ -164,7 +164,7 @@ private:
 
 
 public:
-	AstTACGenVisitor(int currOffset) : _module(nullptr), _fallLabel(nullptr), _currentOffset(currOffset), constCounter(1), labelCounter(1), tempCounter(1) { }
+	AstTACGenVisitor(int currOffset) : _module(nullptr), _fallLabel(nullptr), _currentOffset(currOffset), constCounter(1), basicBlockCounter(1), tempCounter(1) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);

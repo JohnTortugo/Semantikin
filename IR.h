@@ -190,7 +190,12 @@ namespace IR {
 	class Copy : public Instruction {
 	public:
 		Copy(Instruction_sptr tgt, Instruction_sptr value) : Instruction(tgt, value, nullptr)
-		{ }
+		{
+			if (tgt == nullptr || value == nullptr) {
+				cout << "Some parameter is null..." << endl;
+			}
+
+		}
 	};
 
 	class ScalarCopy : public Copy {
@@ -696,6 +701,13 @@ namespace IR {
 
 		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : Instruction(exp, nullptr, nullptr), _lbl1(chd1), _lbl2(chd2)
 		{ }
+
+
+		BasicBlock_sptr lbl1() { return this->_lbl1; }
+		void lbl1(BasicBlock_sptr lbl) { this->_lbl1 = lbl; }
+
+		BasicBlock_sptr lbl2() { return this->_lbl2; }
+		void lbl2(BasicBlock_sptr lbl) { this->_lbl2 = lbl; }
 	};
 
 	class Jump : public BranchInstruction {
@@ -717,29 +729,10 @@ namespace IR {
 		void linearDumpTox86(stringstream& buffer);
 	};
 
-	class CondTrueJump : public BranchInstruction {
+	class Conditional : public BranchInstruction {
 	public:
-		CondTrueJump(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : BranchInstruction(exp, chd1, chd2)
-		{ _lbl1->usageCounter()++; }
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { 
-			stringstream ss;
-			ss << "BB" << this->_lbl1->id() << " & BB" << this->_lbl2->id(); 
-			return ss.str();
-		}
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
-
-		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
-	};
-
-	class CondFalseJump : public BranchInstruction {
-	public:
-		CondFalseJump(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : BranchInstruction(exp, chd1, chd2)
-		{ _lbl1->usageCounter()++; }
+		Conditional(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : BranchInstruction(exp, chd1, chd2)
+		{ _lbl1->usageCounter()++; _lbl2->usageCounter()++; }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
 		string tgtDataName() { 

@@ -2,6 +2,7 @@
 #define IRVISITORS_H_
 
 #include <iostream>
+#include <tuple>
 #include "IR.h"
 
 class IRTreeVisitor {
@@ -49,8 +50,7 @@ public:
 	virtual void visit(IR::RNotEqual* visitor) = 0;
 
 	virtual void visit(IR::Jump* visitor) = 0;
-	virtual void visit(IR::CondTrueJump* visitor) = 0;
-	virtual void visit(IR::CondFalseJump* visitor) = 0;
+	virtual void visit(IR::Conditional* visitor) = 0;
 
 	virtual void visit(IR::Addr* visitor) = 0;
 	virtual void visit(IR::AddrDispl* visitor) = 0;
@@ -67,6 +67,12 @@ private:
 
 	/** Used to specify the identation of the next line */
 	unsigned int _identation = 0;
+
+
+	/**
+	 * Stores a pointer to the address of the basic block currently being processed.
+	 */
+	IR::BasicBlock* _currentBasicBlock;
 
 	/** Used to add a new line to the output */
 	std::ofstream& newline() {
@@ -85,12 +91,23 @@ private:
 	void unaryDispatcher(IR::Instruction* node, const char* label);
 
 
+	/**
+	 * Used to store the source/target of edges across basic blocks. This
+	 * is necessary because otherwise DOT would not understand the output
+	 * correctly.
+	 */
+	std::vector< std::tuple<int, int, string> > crossEdges;
+
+
 public:
 	IRToDotVisitor(string filename) {
 		this->dotfile.open(filename);
 		this->dotfile << "digraph IRGraph {" << endl;
 		this->dotfile << "	node [fontsize=10, width=\".2\", height=\".2\", margin=0];" << endl;
 		this->dotfile << "	graph[fontsize=8];" << endl;
+		this->dotfile << "	edge[fontsize=8];" << endl;
+		this->dotfile << "	compound=true;" << endl;
+		this->dotfile << "	rankdir=TB;" << endl;
 		this->dotfile << "	label=\"This is the IR Tree for " << filename << " \";" << endl;
 	}
 
@@ -142,8 +159,7 @@ public:
 	void visit(IR::RNotEqual* visitor);
 
 	void visit(IR::Jump* visitor);
-	void visit(IR::CondTrueJump* visitor);
-	void visit(IR::CondFalseJump* visitor);
+	void visit(IR::Conditional* visitor);
 
 	void visit(IR::Addr* visitor);
 	void visit(IR::AddrDispl* visitor);

@@ -29,10 +29,7 @@ namespace Util {
 	}
 
 	STLabelDef_sptr branchTarget(Instruction_sptr instruction) {
-		if (auto branch = dynamic_cast<IR::CondTrueJump*>(instruction.get())) {
-			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
-		}
-		else if (auto branch = dynamic_cast<IR::CondFalseJump*>(instruction.get())) {
+		if (auto branch = dynamic_cast<IR::Conditional*>(instruction.get())) {
 			return std::dynamic_pointer_cast<STLabelDef>( branch->src1() );
 		}
 		else if (auto branch = dynamic_cast<IR::Jump*>(instruction.get())) {
@@ -154,8 +151,7 @@ namespace IR {
 	void RNotEqual::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 	void Jump::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-	void CondTrueJump::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-	void CondFalseJump::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+	void Conditional::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 	void Addr::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void AddrDispl::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
@@ -321,12 +317,8 @@ namespace IR {
 		buffer << "goto " << this->_tgt->getName() << ";" << endl;
 	}
 
-	void CondTrueJump::dump(stringstream& buffer) {
-		buffer << "ifTrue " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
-	}
-
-	void CondFalseJump::dump(stringstream& buffer) {
-		buffer << "ifFalse " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
+	void Conditional::dump(stringstream& buffer) {
+		buffer << "if " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
 	}
 
 
@@ -398,6 +390,7 @@ namespace IR {
 
 
 	void Function::appendBasicBlock(BasicBlock_sptr bb) {
+		bb->id( this->_bbs->size() );
 		this->_bbs->push_back(bb);
 		this->_currentBasicBlock = bb;
 	}
@@ -754,14 +747,9 @@ namespace IR {
 		buffer << "jmp " << this->_tgt->getName() << endl;
 	}
 
-	void CondTrueJump::linearDumpTox86(stringstream& buffer) {
+	void Conditional::linearDumpTox86(stringstream& buffer) {
 		// jump if the "zero" flag is set
 		buffer << "jz " << this->_src1->getName() << endl;
-	}
-
-	void CondFalseJump::linearDumpTox86(stringstream& buffer) {
-		// jump if the "zero" flag is not set
-		buffer << "jnz " << this->_src1->getName() << endl;
 	}
 
 
