@@ -1,17 +1,10 @@
+void fun20(int a) {
+	a = a + 1;
 
-int fatorial(int n) {
-
-	if (n <= 1) {
-		return  1;
-	}
-	else {
-		return n * fatorial(n - 1);
+	if (2 < 3) {
+		a = a + 5;
 	}
 
+	a = a + 10;
 }
 
-void main() {
-
-	fatorial(10);
-
-}

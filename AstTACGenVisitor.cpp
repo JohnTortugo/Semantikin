@@ -333,14 +333,20 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
 	}
 	else {
-		/* We are inside conditional expression. We evaluate the parameters
-		 * and goes to the correct direction. */
-		if (flt->value() == 0) {
-			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->fLabel()) );
-		}
-		else {
-			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->tLabel()) );
-		}
+		auto cttEntry = newConstant(flt->value());
+		auto immInstr = make_shared<IR::Immediate>(cttEntry);
+
+		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(immInstr, flt->tLabel(), flt->fLabel()) );
+		this->_lastInstruction = nullptr;
+
+//		/* We are inside conditional expression. We evaluate the parameters
+//		 * and goes to the correct direction. */
+//		if (flt->value() == 0) {
+//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->fLabel()) );
+//		}
+//		else {
+//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->tLabel()) );
+//		}
 	}
 }
 
@@ -349,21 +355,23 @@ void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 	if ( integer->tLabel() == nullptr || integer->fLabel() == nullptr ) {
 		auto cttEntry = newConstant(integer->value());
 
-		this->_currentFunction->symbolTable()->add(cttEntry);
-
 		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
 	}
 	else {
-		/* We are inside conditional expression. We evaluate the parameters
-		 * and goes to the correct direction. */
-		if (integer->value() == 0) {
-			if (integer->fLabel() != this->_fallLabel)
-				this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->fLabel()) );
-		}
-		else {
-			if (integer->tLabel() != this->_fallLabel)
-				this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->tLabel()) );
-		}
+		auto cttEntry = newConstant(integer->value());
+		auto immInstr = make_shared<IR::Immediate>(cttEntry);
+
+		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(immInstr, integer->tLabel(), integer->fLabel()) );
+		this->_lastInstruction = nullptr;
+
+//		/* We are inside conditional expression. We evaluate the parameters
+//		 * and goes to the correct direction. */
+//		if (integer->value() == 0) {
+//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->fLabel()) );
+//		}
+//		else {
+//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->tLabel()) );
+//		}
 	}
 }
 
@@ -505,7 +513,7 @@ void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
 		this->_lastInstruction = nullptr;
 	}
 
-	this->_currentFunction->appendInstruction(funCallInstr);
+	this->_lastInstruction = funCallInstr;
 }
 
 void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
@@ -520,6 +528,7 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 		this->_lastInstruction = make_shared<IR::Addr>(this->newTemporary(unary->type()), rightInstruction);
 	}
 	else if (unary->opr() == UnaryExpr::BIT_NOT) {
+
 		unary->exp()->isExpLeftHand(false);
 		unary->exp()->accept(this);
 		auto rightInstruction = this->_lastInstruction;
@@ -532,24 +541,20 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 }
 
 void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
-	auto notCond = false;
+	auto topLevel = false;
 	auto nextNull = false;
+	BasicBlock_sptr endBb = nullptr;
 
 	/* If the jump labels are nullptr then we are not decoding a boolean
 	 * expression that is inside a if statement, thus it is an expression
 	 * and we need to take care to create the appropriate labels to storing
 	 * the true and false values. */
 	if (unary->tLabel() == nullptr && unary->fLabel() == nullptr) {
-		notCond = true;
+		topLevel = true;
+		endBb = this->newBasicBlock();
+
 		unary->tLabel( this->newBasicBlock() );
 		unary->fLabel( this->newBasicBlock() );
-
-		/* We need to make sure that there is a target so we can jump over the
-		 * true/false blocks. */
-		if (unary->next() == nullptr) {
-			nextNull = true;
-			unary->next( this->newBasicBlock() );
-		}
 	}
 
 	unary->exp()->isExpLeftHand(false);
@@ -557,19 +562,18 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 	unary->exp()->fLabel( unary->tLabel() );
 	unary->exp()->accept(this);
 
-	if (notCond) {
+	if (topLevel) {
 		auto regRes = this->newTemporary(Parser::INT);
-		auto zero = make_shared<IR::Immediate>( this->newConstant<int>(0) );
-		auto one = make_shared<IR::Immediate>( this->newConstant<int>(1) );
+		auto zero 	= make_shared<IR::Immediate>( this->newConstant<int>(0) );
+		auto one 	= make_shared<IR::Immediate>( this->newConstant<int>(1) );
 
 		this->_currentFunction->appendBasicBlock(unary->tLabel());
 		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regRes, one) );
-		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(unary->next()) );
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(endBb) );
 		this->_currentFunction->appendBasicBlock(unary->fLabel());
 		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regRes, zero) );
-
-		if (nextNull)
-			this->_currentFunction->appendBasicBlock(unary->next());
+		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(endBb) );
+		this->_currentFunction->appendBasicBlock(endBb);
 	}
 }
 
@@ -878,10 +882,6 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 	 * we cannot have short-circuit code yet. */
 	if (tLabel != nullptr && fLabel != nullptr) {
 		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(this->_lastInstruction, tLabel, fLabel) );
-		this->_lastInstruction = nullptr;
-	}
-	else {
-		this->_currentFunction->appendInstruction( this->_lastInstruction );
 		this->_lastInstruction = nullptr;
 	}
 }

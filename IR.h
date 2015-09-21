@@ -113,7 +113,7 @@ namespace IR {
 
 		STConstantDef_sptr value() { return this->_value; }
 
-		string tgtDataName() { return this->_value->getName(); }
+		string tgtDataName() { return Util::escapeStr(this->_value->getName()); }
 
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer) { }
@@ -387,9 +387,6 @@ namespace IR {
 	/* Parent class of all floating point arithmetic instructions. */
 	class FloatingArithmetic : public Instruction {
 	public:
-		//FloatingArithmetic(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(tgt, src1, src2, chd1, chd2)
-		//{ }
-
 		FloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
 		{ }
 	};
@@ -475,20 +472,6 @@ namespace IR {
 		void dump(stringstream& buffer);
 		void linearDumpTox86(stringstream& buffer);
 	};
-
-//	class FPlus : public UnaryFloatingArithmetic {
-//	public:
-//		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
-//
-//		/** Used to dump in a "human readable" way the instruction's target operand */
-//		string tgtDataName() { return this->chd1()->tgtDataName(); }
-//
-//		/* Used to traverse the IR tree. */
-//		void accept(IRTreeVisitor* visitor);
-//
-//		void dump(stringstream& buffer);
-//		void linearDumpTox86(stringstream& buffer);
-//	};
 
 	class FInc : public UnaryFloatingArithmetic {
 	public:
@@ -818,7 +801,11 @@ namespace IR {
 	class Return : public Instruction {
 	public:
 		Return(Instruction_sptr exp) : Instruction(exp, nullptr, nullptr)
-		{ }
+		{ 
+			if (exp == nullptr) {
+				cout << "Exp on return is nullptr." << endl;
+			}
+		}
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
 		string tgtDataName() { return this->chd1()->tgtDataName(); }

@@ -1,28 +1,29 @@
-int fun1(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
-	return a;
-}
-
-int fun2() {
-	int a, b, c, d, e, f, g, h, i, j, k, l, m;
-	int xa = 10, xb = 20, xd = 30;
-	int dk = a, asd = c, asdf = j;
-	
-	int aa[20][30][40], bas[10][20][3], asdffff[100];
-
-	return aa[20][30][4];
-}
-
-float fun3() {
-	int k=0, j=30, i=k, ja=k, kjj = k;
-
-	return 2.67;
-}
-
-int fun4(float p[10][20][30], int c[10], string v[303]) {
+//int fun1(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
+//	return a;
+//}
+//
+//int fun2() {
+//	int a, b, c, d, e, f, g, h, i, j, k, l, m;
+//	int xa = 10, xb = 20, xd = 30;
+//	int dk = a, asd = c, asdf = j;
+//	
+//	int aa[20][30][40], bas[10][20][3], asdffff[100];
+//
+//	return aa[20][30][4];
+//}
+//
+//float fun3() {
+//	int k=0, j=30, i=k, ja=k, kjj = k;
+//
+//	return 2.67;
+//}
+//
+int fun4(float p[10][20][30], int c[10], string u[303]) {
 	int a[20][20][20][20][20];
 	int b[10][20][30];
+	int v[10];
 
-	v[303] = "asdf";
+	v[3] = 50; //"asdf";
 
 	return 3030303;
 }
