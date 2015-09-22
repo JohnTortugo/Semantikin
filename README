@@ -1,4 +1,0 @@
-The Language
-------------
-
-	It's not valid to use nested assignments. e.g., a = b = c;
