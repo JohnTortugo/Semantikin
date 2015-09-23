@@ -71,6 +71,109 @@ void fun8(int a, int b) {
 	}
 }
 
+void fun9() {
+	int a = 0, b = 0;
+
+	if (a + b > 0) {
+		a++;
+	}
+	elseif (a * b >= 10) {
+		b++;
+	}
+	elseif (10 <= b / a) {
+		a++;
+		b++;
+	}
+}
+
+void fun10() {
+	int a = 0, b = 0;
+
+	if (a + b > 0) {
+		a++;
+	}
+	elseif (a * b >= 10) {
+		b++;
+	}
+	elseif (10 <= b / a) {
+		a++;
+		b++;
+	}
+	else {
+		a = 1;	
+	}
+}
+
+void fun11() {
+	int a = 0, b = 0;
+
+	if (a + b > 0) {
+		a++;
+	}
+	elseif (a * b >= 10) {
+		b++;
+	}
+	elseif (10 <= b / a) {
+		a++;
+		b++;
+	}
+	else {
+		if (a + b > 0) {
+			a++;
+		}
+		elseif (a * b >= 10) {
+			b++;
+		}
+		elseif (10 <= b / a) {
+			a++;
+			b++;
+		}
+		else {
+			a = a + b;
+			b = b + a;
+		}
+	}
+}
+
+void fun12() {
+	int a = 10;
+
+
+	while (a <= 1000) {
+
+		while (a >= 0) {
+
+			while (a != 50) {
+
+				while (a > 10) {
+
+					while (a < 9999) {
+
+						if (a + a != 10 + 10) {
+							a = 10;
+						}
+						else {
+							a++;
+						}
+
+						int b = 10;
+
+						if (a == b) {
+							a = b + 10;
+						}
+					}
+
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+
 int main() {
 
 	return 0;

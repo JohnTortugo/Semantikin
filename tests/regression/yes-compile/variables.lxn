@@ -1,23 +1,23 @@
-//int fun1(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
-//	return a;
-//}
-//
-//int fun2() {
-//	int a, b, c, d, e, f, g, h, i, j, k, l, m;
-//	int xa = 10, xb = 20, xd = 30;
-//	int dk = a, asd = c, asdf = j;
-//	
-//	int aa[20][30][40], bas[10][20][3], asdffff[100];
-//
-//	return aa[20][30][4];
-//}
-//
-//float fun3() {
-//	int k=0, j=30, i=k, ja=k, kjj = k;
-//
-//	return 2.67;
-//}
-//
+int fun1(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
+	return a;
+}
+
+int fun2() {
+	int a, b, c, d, e, f, g, h, i, j, k, l, m;
+	int xa = 10, xb = 20, xd = 30;
+	int dk = a, asd = c, asdf = j;
+	
+	int aa[20][30][40], bas[10][20][3], asdffff[100];
+
+	return aa[20][30][4];
+}
+
+float fun3() {
+	int k=0, j=30, i=k, ja=k, kjj = k;
+
+	return 2.67;
+}
+
 int fun4(float p[10][20][30], int c[10], string u[303]) {
 	int a[20][20][20][20][20];
 	int b[10][20][30];
@@ -37,4 +37,67 @@ void fun5() {
 int main() {
 
 	return 0;
+}
+
+void soma() {
+	int add = 3 - 2;
+	int sub = 10 - 8;
+	int mul = 5 * 6;
+	int div = 9 / 3;
+	int mod = 10 % 3;
+	
+	add += 1 * add;
+	sub -= 1 - sub;
+	mul *= 1 - mul;
+	div /= 1 - div;
+	mod %= 1 - mod;
+	
+	sub = 3 * 2;
+	sub = 3;
+	sub = add;
+}
+
+void somaAgain() {
+	int add = 3 - 2;
+	int sub = 10 - 8;
+	int mul = 5 * 6;
+	int div = 9 / 3;
+	int mod = 10 % 3;
+	
+	add += 1 * add;
+	sub -= 1 - sub;
+	mul *= 1 - mul;
+	div /= 1 - div;
+	mod %= 1 - mod;
+	
+	sub = 3 * 2;
+	sub = 3;
+	sub = add;
+}
+
+
+void main1(int a, int b) {
+	int e = (a < b) || (b < a);
+}
+
+void main2(int a, int b) {
+	int e = (a < b) && (b < a);
+}
+
+void main3(int a, int b) {
+	int e = (a == b) || (a < b) || (a <= b) || (a > b) || (a >= b);
+}
+
+void main4(int a, int b) {
+	int e1 = (a < b) || (b < a);
+
+	int e2 = (a < b) && (b < a);
+
+	int e3 = (a == b) || (a < b) || (a <= b) || (a > b) || (a >= b);
+}
+
+void main5(int a, int b) {
+
+	int e = (a * b) - (a / b) + (a * b) - (a / b);
+
 }

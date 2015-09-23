@@ -47,3 +47,90 @@ int main() {
 
 	return 0;
 }
+
+int arithm1(int a, int b, float c) {
+	int d, e, f;
+	
+	while (c < 3.3) {
+	
+		if (c > 3) {
+	
+			a = a + 3 * b;
+	
+		}
+	
+		elseif (a > b) {
+	
+			b += 3 * c;
+	
+		}
+		
+		elseif (a == b) {
+		
+			int g = 3, b2 = 2*a;
+		
+		}
+	
+		else {
+		
+			int h = arithm1(a,b,c);
+	
+			int b3[3][4][5];
+		}
+	
+	}
+
+	return a * a + 2;
+}
+
+void arithm2(int b, int c) {
+	int a[1][2][3][4];
+	
+	arithm1(a[3][2][c+2][c*2+3], b, c);
+}
+
+int arithm3(int x[2][3], float vf[10]) {
+	int a = 10, b = 3;
+	
+	if (a > 10) {
+		if (a == 20) {
+			arithm1(1, 2, 3);
+		}
+		elseif (a == 30) {
+			if (a == 20) {
+				arithm1(1, 2, 3);
+			}
+			elseif (a == 30) {
+				while (a < 100) { arithm1(1, 2, 3); }
+			}
+			elseif (a == 40) {
+					if (a == 20) {
+						arithm1(1, 2, 3);
+					}
+					elseif (a == 30) {
+						arithm1(1, 2, 3);
+					}
+					elseif (a == 40) {
+						arithm1(1, 2, 3);
+					}
+					else {
+						arithm1(1, 2, 3);
+					}
+			}
+			else {
+				arithm1(1, 2, 3);
+			}
+		}
+		elseif (a == 40) {
+			arithm1(1, 2, 3);
+		}
+		else {
+			arithm1(1, 2, 3);
+		}	
+	}
+	elseif (a == 10) {
+		printStr("Divino pai\n");
+	}
+
+	return 0;
+}

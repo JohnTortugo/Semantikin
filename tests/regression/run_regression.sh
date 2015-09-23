@@ -1,9 +1,11 @@
 #!/bin/bash
 
-ROOT=../..
+ROOT=~/Workspace/Semantikin/
 
-exp_succ=`find $ROOT/tests/regression/yes-compile/ -name *.lxn`
-exp_errs=`find $ROOT/tests/regression/no-compile/ -name *.lxn`
+echo $ROOT
+
+exp_succ=`find $ROOT/tests/regression/yes-compile/ -name '*.lxn'`
+exp_errs=`find $ROOT/tests/regression/no-compile/ -name '*.lxn'`
 
 echo  ""
 echo "Should compile: "
@@ -13,9 +15,9 @@ echo "Should compile: "
 		$ROOT/Semantikin -i $src > /dev/null
 
 		if [ $? -eq 0 ] ; then
-			printf "[%70s] [OK ] compiled successfully\n" $src
+			printf "[%50s] [ OK] compiled successfully.\n" `basename $src`
 		else 
-			printf "[%70s] [ERR] did not compile.\n" $src
+			printf "[%50s] [ERR] did not compile.\n" `basename $src`
 		fi
 
 	done
@@ -29,9 +31,9 @@ echo "Should NOT compile: "
 		$ROOT/Semantikin -i $src > /dev/null
 
 		if [ $? -eq 0 ] ; then
-			printf "[%70s] [ERR] compiled successfully\n" $src
+			printf "[%50s] [ERR] compiled successfully.\n" `basename $src`
 		else 
-			printf "[%70s] [OK ] did not compile.\n" $src
+			printf "[%50s] [ OK] did not compile.\n" `basename $src`
 		fi
 
 	done

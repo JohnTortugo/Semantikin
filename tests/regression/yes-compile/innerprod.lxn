@@ -1,0 +1,15 @@
+int main() {
+	int u[100], v[100];
+	int i = 0, sum = 0;
+	
+	while (i < 100) {
+		sum += (u[i] * v[i]);
+		i++;
+	}
+
+	printStr("Inner-prod = ");
+	printInt(sum);
+	printStr("\n");
+
+	return 0;
+}
