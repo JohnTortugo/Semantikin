@@ -12,7 +12,7 @@ echo "Should compile: "
 
 	for src in ${exp_succ[@]} ; do
 
-		$ROOT/Semantikin -i $src > /dev/null
+		$ROOT/Semantikin -i $src -dumps -dumpIRTree > /dev/null
 
 		if [ $? -eq 0 ] ; then
 			printf "[%50s] [ OK] compiled successfully.\n" `basename $src`
@@ -28,7 +28,7 @@ echo "Should NOT compile: "
 
 	for src in ${exp_errs[@]} ; do
 
-		$ROOT/Semantikin -i $src > /dev/null
+		$ROOT/Semantikin -i $src -dumps -dumpIRTree > /dev/null
 
 		if [ $? -eq 0 ] ; then
 			printf "[%50s] [ERR] compiled successfully.\n" `basename $src`

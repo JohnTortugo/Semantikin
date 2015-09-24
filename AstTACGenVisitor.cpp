@@ -380,9 +380,6 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 	shared_ptr<SymbolTableEntry> entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
 	auto decl 							= dynamic_cast<STVariableDeclaration*>( entry.get() );
 
-
-	cout << "Parsing an identifier " << id->value() << endl;
-
 	if (decl->dims().size() > 0) {
 		/* Tells parent "visiting" methods that this is an array access. */
 		id->isArrayAccess(true);
@@ -528,7 +525,6 @@ void AstTACGenVisitor::visit(Parser::UnaryExpr* unary) {
 		this->_lastInstruction = make_shared<IR::Addr>(this->newTemporary(unary->type()), rightInstruction);
 	}
 	else if (unary->opr() == UnaryExpr::BIT_NOT) {
-
 		unary->exp()->isExpLeftHand(false);
 		unary->exp()->accept(this);
 		auto rightInstruction = this->_lastInstruction;
@@ -561,19 +557,23 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 	unary->exp()->tLabel( unary->fLabel() );
 	unary->exp()->fLabel( unary->tLabel() );
 	unary->exp()->accept(this);
+	this->_lastInstruction = nullptr;
 
 	if (topLevel) {
-		auto regRes = this->newTemporary(Parser::INT);
-		auto zero 	= make_shared<IR::Immediate>( this->newConstant<int>(0) );
-		auto one 	= make_shared<IR::Immediate>( this->newConstant<int>(1) );
+		auto regResT = this->newTemporary(Parser::INT);
+		auto regResF = make_shared<IR::Register>( regResT->value() );
+		auto regResE = make_shared<IR::Register>( regResT->value() );
+		auto zero 	 = make_shared<IR::Immediate>( this->newConstant<int>(0) );
+		auto one 	 = make_shared<IR::Immediate>( this->newConstant<int>(1) );
 
 		this->_currentFunction->appendBasicBlock(unary->tLabel());
-		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regRes, one) );
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regResT, one) );
 		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(endBb) );
 		this->_currentFunction->appendBasicBlock(unary->fLabel());
-		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regRes, zero) );
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regResF, zero) );
 		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(endBb) );
 		this->_currentFunction->appendBasicBlock(endBb);
+		this->_lastInstruction = regResE;
 	}
 }
 
@@ -683,20 +683,22 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 	/* We aren't inside a conditional, then we insert the labels
 	 * were we create the result of the conditionals. */
 	if (topLevel) {
-		auto res  = this->newTemporary(Parser::INT);
+		auto resT  = this->newTemporary(Parser::INT);
+		auto resF  = make_shared<IR::Register>( resT->value() );
+		auto resE  = make_shared<IR::Register>( resT->value() );
 		auto zero = make_shared<IR::Immediate>( this->newConstant<int>(0) );
 		auto one  = make_shared<IR::Immediate>( this->newConstant<int>(1) );
 
 		this->_currentFunction->appendBasicBlock(binop->tLabel());
-		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(res, one) );
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(resT, one) );
 		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(end) );
 
 		this->_currentFunction->appendBasicBlock(binop->fLabel());
-		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(res, zero) );
+		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(resF, zero) );
 		this->_currentFunction->appendInstruction( make_shared<IR::Jump>(end) );
 
 		this->_currentFunction->appendBasicBlock(end);
-		this->_lastInstruction = res;
+		this->_lastInstruction = resE;
 	}
 }
 

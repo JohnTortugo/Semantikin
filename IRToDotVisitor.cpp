@@ -3,13 +3,13 @@
 
 using namespace IR;
 
-#define DOT_NODE_ID(_node_)				"ND" << std::setw(5) << _node_
-#define DOT_NEW_NODE(_node_, _label_)	DOT_NODE_ID(_node_) << " [label=\"" << _label_ << "\"];"
-#define DOT_EDGE(_src_, _dst_)			DOT_NODE_ID(_src_) << " -> " << DOT_NODE_ID(_dst_) << ";"
+
+#define DOT_NODE_ID(_node_)								"ND" << std::setw(5) << _node_
+#define DOT_NEW_NODE_NO_TGT(_node_, _opr_)				DOT_NODE_ID(_node_) << " [shape=circle, label=\"" << Util::escapeStr(_opr_) << "\"];"
+#define DOT_NEW_NODE_WITH_TGT(_node_, _opr_, __tgt__)	DOT_NODE_ID(_node_) << " [shape=record, margin=\".1\" label=\"{" << __tgt__ << " | " << Util::escapeStr(_opr_) << "}\"];"
+#define DOT_EDGE(_src_, _dst_)							DOT_NODE_ID(_src_) << " -> " << DOT_NODE_ID(_dst_) << ";"
 
 void IRToDotVisitor::visit(IR::Module* module) {
-	cout << "On ITD-Module " << endl;
-
 	this->incIdentation();
 
 	for (auto func : *module->functions()) {
@@ -18,8 +18,6 @@ void IRToDotVisitor::visit(IR::Module* module) {
 }
 
 void IRToDotVisitor::visit(IR::Function* func) {
-	cout << "On ITD-Func " << endl;
-
 	// Reset the cross edges
 	this->crossEdges.clear();
 
@@ -51,121 +49,96 @@ void IRToDotVisitor::visit(IR::Function* func) {
 		this->newline() << "BB" << std::get<0>(edge) << func << " -> BB" << std::get<1>(edge) << func << " [label=" << std::get<2>(edge) << "];" << endl;
 	}
 
-
 	this->decIdentation();
 	this->newline() << "}" << endl;
 }
 
 void IRToDotVisitor::visit(IR::BasicBlock* bb) {
-	cout << "On ITD-BasicBlock " << endl;
-
 	this->_currentBasicBlock = bb;
 
 	this->newline() << endl << "subgraph cluster_" << bb << " { " << endl;
 	this->incIdentation();
 	this->newline() << "label=\"BB" << bb->id() << "\";" << endl;
-	this->newline() << "invis_" << bb << " [style=invisible,label=x,height=.1, width=.1];" << endl;
+	this->newline() << "invis_" << bb << " [style=invisible,label=x,height=.1,width=.1];" << endl;
 
-	for (auto subtree : *bb->instructions()) {
+	Instruction_sptr prev = nullptr;
+	for (auto& subtree : *bb->instructions()) {
 		subtree->accept(this);
+
+		if (prev != nullptr) {
+			this->newline() << "{" << endl;
+			this->newline() << "	rank=\"same\";" << endl;
+			this->newline() << "	rankdir=\"LR\";" << endl;
+			this->newline() << "	ND" << prev << " -> ND" << subtree << " [style=dotted, color=blue, minlen=2];" << endl;
+			this->newline() << "}" << endl;
+		}
+
+		prev = subtree;
 	}
 
 	this->decIdentation();
 	this->newline() << "}" << endl;
 }
 
-void IRToDotVisitor::visit(IR::ScalarCopy* copy) {
-	cout << "On ITD-ScalarCopy " << endl;
-
-	this->newline() << DOT_NEW_NODE(copy, "=") << endl;
-	this->newline() << DOT_EDGE(copy, copy->chd1()) << endl;
-	this->newline() << DOT_EDGE(copy, copy->chd2()) << endl;
-
-	copy->chd1()->accept(this);
-	copy->chd2()->accept(this);
+void IRToDotVisitor::visit(IR::ScalarCopy* node) {
+	unaryDispatcher(node, "=");
 }
 
-void IRToDotVisitor::visit(IR::CopyFromArray* copy) {
-	cout << "On ITD-CopyFromArray " << endl;
-
-	this->newline() << DOT_NEW_NODE(copy, "=[]") << endl;
-	this->newline() << DOT_EDGE(copy, copy->chd1()) << endl;
-	this->newline() << DOT_EDGE(copy, copy->chd2()) << endl;
-
-	copy->chd1()->accept(this);
-	copy->chd2()->accept(this);
+void IRToDotVisitor::visit(IR::CopyFromArray* node) {
+	unaryDispatcher(node, "=[]");
 }
 
-void IRToDotVisitor::visit(IR::CopyToArray* copy) {
-	cout << "On ITD-CopyToArray " << endl;
-
-	this->newline() << DOT_NEW_NODE(copy, "[]=") << endl;
-	this->newline() << DOT_EDGE(copy, copy->chd1()) << endl;
-	this->newline() << DOT_EDGE(copy, copy->chd2()) << endl;
-
-	copy->chd1()->accept(this);
-	copy->chd2()->accept(this);
+void IRToDotVisitor::visit(IR::CopyToArray* node) {
+	unaryDispatcher(node, "[]=");
 }
 
 
 void IRToDotVisitor::visit(IR::Register* reg) {
-	cout << "On ITD-Reg " << endl;
-	this->newline() << DOT_NEW_NODE(reg, reg->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(reg, reg->tgtDataName()) << endl;
 }
 
 void IRToDotVisitor::visit(IR::Memory* mem) {
-	cout << "On ITD-Mem " << endl;
-	this->newline() << DOT_NEW_NODE(mem, mem->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(mem, mem->tgtDataName()) << endl;
 }
 
 void IRToDotVisitor::visit(IR::Immediate* imm) {
-	cout << "On ITD-Imm " << endl;
-	this->newline() << DOT_NEW_NODE(imm, imm->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(imm, imm->tgtDataName()) << endl;
 }
 
 void IRToDotVisitor::visit(IR::Func* func) {
-	cout << "On ITD-Func " << endl;
-	this->newline() << DOT_NEW_NODE(func, func->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(func, func->tgtDataName()) << endl;
 }
 
 void IRToDotVisitor::visit(IR::IAdd* node) {
-	cout << "On ITD-IAdd " << endl;
 	binaryDispatcher(node, "+");
 }
 
 void IRToDotVisitor::visit(IR::ISub* node) {
-	cout << "On ITD-ISub " << endl;
 	binaryDispatcher(node, "-");
 }
 
 void IRToDotVisitor::visit(IR::IMul* node) {
-	cout << "On ITD-IMul " << endl;
 	binaryDispatcher(node, "*");
 }
 
 void IRToDotVisitor::visit(IR::IDiv* node) {
-	cout << "On ITD-IDiv " << endl;
 	binaryDispatcher(node, "/");
 }
 
 void IRToDotVisitor::visit(IR::IMod* node) {
-	cout << "On ITD-IMod " << endl;
 	binaryDispatcher(node, "%");
 }
 
 void IRToDotVisitor::visit(IR::IMinus* node) {
-	cout << "On ITD-IMinus " << endl;
 	unaryDispatcher(node, "-");
 }
 
 void IRToDotVisitor::visit(IR::IInc* node) {
-	cout << "On ITD-IInc " << endl;
 	unaryDispatcher(node, "++");
 
 }
 
 void IRToDotVisitor::visit(IR::IDec* node) {
-	cout << "On ITD-IDec" << endl;
 	unaryDispatcher(node, "--");
 }
 
@@ -174,37 +147,30 @@ void IRToDotVisitor::visit(IR::IDec* node) {
 
 
 void IRToDotVisitor::visit(IR::FAdd* node) {
-	cout << "On ITD-FAdd " << endl;
 	binaryDispatcher(node, "+");
 }
 
 void IRToDotVisitor::visit(IR::FSub* node) {
-	cout << "On ITD-FSub " << endl;
 	binaryDispatcher(node, "-");
 }
 
 void IRToDotVisitor::visit(IR::FMul* node) {
-	cout << "On ITD-FMul " << endl;
 	binaryDispatcher(node, "*");
 }
 
 void IRToDotVisitor::visit(IR::FDiv* node) {
-	cout << "On ITD-FDiv " << endl;
 	binaryDispatcher(node, "/");
 }
 
 void IRToDotVisitor::visit(IR::FMinus* node) {
-	cout << "On ITD-FMinus " << endl;
 	unaryDispatcher(node, "-");
 }
 
 void IRToDotVisitor::visit(IR::FInc* node) {
-	cout << "On ITD-FInc " << endl;
 	unaryDispatcher(node, "++");
 }
 
 void IRToDotVisitor::visit(IR::FDec* node) {
-	cout << "On ITD-FDec " << endl;
 	unaryDispatcher(node, "--");
 }
 
@@ -214,71 +180,57 @@ void IRToDotVisitor::visit(IR::FDec* node) {
 
 
 void IRToDotVisitor::visit(IR::BinAnd* node) {
-	cout << "On ITD-BinAnd " << endl;
 	binaryDispatcher(node, "&");
 }
 
 void IRToDotVisitor::visit(IR::BinOr* node) {
-	cout << "On ITD-BinOr " << endl;
 	binaryDispatcher(node, "|");
 }
 
 void IRToDotVisitor::visit(IR::BinXor* node) {
-	cout << "On ITD-BinXor " << endl;
 	binaryDispatcher(node, "^");
 }
 
 void IRToDotVisitor::visit(IR::BinNot* node) {
-	cout << "On ITD-BinNot " << endl;
-	binaryDispatcher(node, "!");
+	unaryDispatcher(node, "!");
 }
 
 
 
 void IRToDotVisitor::visit(IR::RLesThan* node) {
-	cout << "On ITD-RLesThan " << endl;
 	binaryDispatcher(node, "<");
 }
 
 void IRToDotVisitor::visit(IR::RLesThanEqual* node) {
-	cout << "On ITD-RLesThanEqual " << endl;
 	binaryDispatcher(node, "<=");
 }
 
 void IRToDotVisitor::visit(IR::RGreaterThan* node) {
-	cout << "On ITD-RGreaterThan " << endl;
 	binaryDispatcher(node, ">");
 }
 
 void IRToDotVisitor::visit(IR::RGreaterThanEqual* node) {
-	cout << "On ITD-RGreaterThanEqual " << endl;
 	binaryDispatcher(node, ">=");
 }
 
 void IRToDotVisitor::visit(IR::REqual* node) {
-	cout << "On ITD-REqual " << endl;
 	binaryDispatcher(node, "==");
 }
 
 void IRToDotVisitor::visit(IR::RNotEqual* node) {
-	cout << "On ITD-RNotEqual " << endl;
 	binaryDispatcher(node, "!=");
 }
 
 
 
 void IRToDotVisitor::visit(IR::Jump* node) { 
-	cout << "On ITD-Jump" << endl;
-
-	this->newline() << DOT_NEW_NODE(node, "goto") << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, "goto") << endl;
 
 	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl1()->id(), "goto") );
 }
 
 void IRToDotVisitor::visit(IR::Conditional* node) { 
-	cout << "On ITD-If" << endl;
-
-	this->newline() << DOT_NEW_NODE(node, "if") << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, "if") << endl;
 	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
 
 	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl1()->id(), "True") );
@@ -290,19 +242,15 @@ void IRToDotVisitor::visit(IR::Conditional* node) {
 
 
 void IRToDotVisitor::visit(IR::Addr* node) {
-	cout << "On ITD-Addr " << endl;
 	unaryDispatcher(node, "@");
 }
 
 void IRToDotVisitor::visit(IR::AddrDispl* node) {
-	cout << "On ITD-AddrDisp " << endl;
 	binaryDispatcher(node, "[]");
 }
 
 void IRToDotVisitor::visit(IR::Call* node) { 
-	cout << "On ITD-FunCall" << endl;
-
-	this->newline() << DOT_NEW_NODE(node, "call") << endl;
+	this->newline() << DOT_NEW_NODE_WITH_TGT(node, "call", node->chd1()->tgtDataName()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
@@ -318,9 +266,7 @@ void IRToDotVisitor::visit(IR::Call* node) {
 }
 
 void IRToDotVisitor::visit(IR::Return* node) { 
-	cout << "On ITD-Return" << endl;
-
-	this->newline() << DOT_NEW_NODE(node, "Ret") << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, "Ret") << endl;
 	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
 
 	node->chd1()->accept(this);
@@ -331,21 +277,17 @@ void IRToDotVisitor::visit(IR::Phi* visitor) { cout << "Not implemented." << end
 
 
 void IRToDotVisitor::binaryDispatcher(IR::Instruction* node, const char* label) {
-	this->newline() << DOT_NEW_NODE(node, label) << endl;
-	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
+	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->chd1()->tgtDataName()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd3()) << endl;
 
-	node->chd1()->accept(this);
 	node->chd2()->accept(this);
 	node->chd3()->accept(this);
 }
 
 void IRToDotVisitor::unaryDispatcher(IR::Instruction* node, const char* label) {
-	this->newline() << DOT_NEW_NODE(node, label) << endl;
-	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
+	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->chd1()->tgtDataName()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
-	node->chd1()->accept(this);
 	node->chd2()->accept(this);
 }

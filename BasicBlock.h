@@ -34,9 +34,7 @@ namespace IR {
 			_preds(nullptr),
 			_succs(nullptr)
 		{ 
-			cout << "creating a basic block." << endl;
 			this->_instructions =  make_shared< list<shared_ptr<IR::Instruction>> >();
-		
 		}
 
 		int id() const { return _id; }

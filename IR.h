@@ -863,7 +863,6 @@ namespace IR {
 			_subtrees(nullptr),
 			_bbs(nullptr)
 		{
-			cout << "creating a function." << endl;
 			this->_bbs = make_shared< list<shared_ptr<BasicBlock>> >();
 			this->_currentBasicBlock = make_shared<BasicBlock>(0);
 			this->_bbs->push_back( this->_currentBasicBlock );

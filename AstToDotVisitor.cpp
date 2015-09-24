@@ -14,6 +14,8 @@ namespace Util {
 			else if (*it == '<') ret += "&lt;";
 			else if (*it == '>') ret += "&gt;";
 			else if (*it == '&') ret += "&amp;";
+			else if (*it == '|') ret += "&#124;";
+			else if (*it == '#') ret += "&#35;";
 			else ret += *it;
 
 			it++;
