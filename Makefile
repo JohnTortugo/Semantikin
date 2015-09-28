@@ -44,13 +44,15 @@ view-ast:$(ASTS_PNG)
 
 clean:
 	rm -rf Semantikin Parsin.tab.cc Parsin.tab.hh Parsin.output location.hh position.hh stack.hh lex.yy.cc tmp *.dot *.png *.o
+	find . -name "*.dot" -type f -delete
+	find . -name "*.png" -type f -delete
 
 
 
 ###############################################################################
 ######### Just to clear the screen
 CLEAR:
-	@clear
+	#@clear
 
 
 

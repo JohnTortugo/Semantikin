@@ -1,35 +1,7 @@
-int fun0() { return -1; }
-
-int fun1() { return -1 * -1; }
-int fun2() { return -1 / -1; }
-int fun3() { return -1 + -1; }
-int fun4() { return -1 - -1; }
-int fun5() { return -1 % -1; }
-
-int fun6(int a) { return -a * -a; }
-int fun7(int a) { return -a / -a; }
-int fun8(int a) { return -a + -a; }
-int fun9(int a) { return -a - -a; }
-int fun10(int a) { return -a % -a; }
-
-int fun11(int a) { return -a--; }
-int fun12(int a) { return -a++; }
-
-int fun13(int a) { return -a++ + a++ + a++ + a++; }
-int fun14(int a) { return -a++ - a++ - a++ - a++; }
-int fun15(int a) { return -a-- + a-- + a-- + a--; }
-int fun16(int a) { return -a-- - a-- - a-- - a--; }
-
-int fun17(int a) { return 1++; }
-int fun18(int a) { return 0--; }
-int fun19(int a) { return a++; }
-int fun20(int a) { return a--; }
-
-
-int fun21(int a, int b) { return (a % a)++ - (a / a)--; }
-
-
 int main() {
+	int a = 10;
+	int b = 20;
+	int c = a + b;
 
 	return 0;
 }
