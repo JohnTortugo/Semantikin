@@ -130,11 +130,6 @@ private:
 	/* Pointer to the function currently being IR generated. */
 	shared_ptr<IR::Function> _currentFunction;
 
-	/* This label is just a sentinel pointer to convey the
-	 * information that the expression should consider a
-	 * fallthrough path. */
-	BasicBlock_sptr _fallLabel;
-
 	/* Count the number of constants/basicblocks/tmps found/added to the symbol table of
 	 * a function. 													 			 */
 	unsigned int constCounter = 1;
@@ -145,7 +140,6 @@ private:
 	 * the function frame index used to store new temporary variables.    */
 	int _currentOffset;
 
-
 	/**
 	 * This is a pointer for the last IR node (instruction) added to a subtree.
 	 * Therefore, essentially this instruction is a root of a subtree. Since we
@@ -155,16 +149,9 @@ private:
 	 */
 	Instruction_sptr _lastInstruction = nullptr;
 
-	/* This will be true whenever we are generating code for an expression that
-	 * is being used as an argument to a function call. This is helpful when generating
-	 * calls that receive matrixes as parameters. Usually multidimensional variable accesses
-	 * are dereferenced and the !value! is returned, but in the case of funcion calls the
-	 * matrix is not dereferenced, the pointer is passed as parameter, not the value. */
-	// bool isAArgumentExpression = false;
-
 
 public:
-	AstTACGenVisitor(int currOffset) : _module(nullptr), _fallLabel(nullptr), _currentOffset(currOffset), constCounter(1), basicBlockCounter(1), tempCounter(1) { }
+	AstTACGenVisitor(int currOffset) : _module(nullptr), _currentOffset(currOffset), constCounter(1), basicBlockCounter(1), tempCounter(1) { }
 
 	void visit(Parser::CompilationUnit* module);
 	void visit(Parser::Function* module);
@@ -198,8 +185,10 @@ public:
 	shared_ptr<STConstantDef> newConstant(T value);
 
 	shared_ptr<STLabelDef> newLabel(string scope, string suffix="");
+
 	shared_ptr<IR::Register> newTemporary(NativeType type);
-	BasicBlock_sptr newBasicBlock() ;
+
+	BasicBlock_sptr newBasicBlock() { return make_shared<IR::BasicBlock>(0); }
 };
 
 #endif /* ASTVISITORS_H_ */
