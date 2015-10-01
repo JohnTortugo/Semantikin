@@ -476,7 +476,16 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 	}
 	else {
 		id->isArrayAccess(false);
-		this->_lastInstruction = make_shared<IR::Memory>( shared_ptr<STVariableDeclaration>(decl) );
+
+		if (id->isExpLeftHand()) {
+			this->_lastInstruction = make_shared<IR::Memory>( shared_ptr<STVariableDeclaration>(decl) );
+		}
+		else {
+			auto memAccInstr = make_shared<IR::Memory>( shared_ptr<STVariableDeclaration>(decl) );
+			auto destReg = this->newTemporary(id->type());
+
+			this->_lastInstruction = make_shared<IR::ScalarCopy>(destReg, memAccInstr);
+		}
 	}
 
 	if (id->tLabel() != nullptr && id->fLabel() != nullptr) {
