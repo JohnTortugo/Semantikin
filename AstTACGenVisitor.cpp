@@ -5,57 +5,52 @@
 
 using namespace Parser;
 
-void AstTACGenVisitor::visit(Parser::CompilationUnit* module) {
-	if (module->getSymbTable() == nullptr) {
+void AstTACGenVisitor::visit(Parser::CompilationUnit* astModule) {
+	if (astModule->getSymbTable() == nullptr) {
 		cout << "IRGen error:" << endl;
 		cout << "\tThe SymbolTable for this module has not been computed!" << endl;
 		return ;
 	}
 
 	/* Create a new TAC IR module. */
-	this->_module = shared_ptr<IR::Module>(new IR::Module());
+	this->_module = make_shared<IR::Module>();
 
 	/* The IR module owns the symbol table. */
-	this->_module->symbolTable(module->getSymbTable());
+	this->_module->symbolTable(astModule->getSymbTable());
 
 	/* Continue visiting children. */
-	for (auto function : *module->getFunctions()) {
-		/* This label is just a sentinel pointer to convey the
-		 * information that the expression should consider a fallthrough
-		 * path. */
-		this->_fallLabel = this->newBasicBlock();
-
-		/* Something like an inherited attribute. */
-		this->_currentFunction = shared_ptr<IR::Function>(new IR::Function(function->getSymbTable()));
+	for (auto& astFunction : *astModule->getFunctions()) {
+		/* An object representing the function that we are currently generating code for. */
+		this->_currentFunction = make_shared<IR::Function>( astFunction->getSymbTable() );
 
 		/* Reset the counters for temps/constants. */
 		this->constCounter = 1;
 		this->tempCounter = 1;
-		this->_currentOffset = function->currentOffset();
+		this->_currentOffset = astFunction->currentOffset();
 
 		/* Produce IR instructions for the components of function. */
-		function->accept(this);
+		astFunction->accept(this);
 
 		/* Add the function with its IR instructions to the module. */
-		this->_module->addFunction( shared_ptr<IR::Function>( this->_currentFunction ) );
+		this->_module->addFunction(this->_currentFunction);
 	}
 }
 
-void AstTACGenVisitor::visit(Parser::Function* function) {
-	if (function->getSymbTable() == nullptr) {
+void AstTACGenVisitor::visit(Parser::Function* astFunction) {
+	if (astFunction->getSymbTable() == nullptr) {
 		cout << "IRGen error:" << endl;
 		cout << "\tThe SymbolTable for this function has not been computed!" << endl;
 		return ;
 	}
 
 	/* The IR function must assume the ownership of the symbol table. */
-	this->_currentFunction->symbolTable(function->getSymbTable());
+	this->_currentFunction->symbolTable( astFunction->getSymbTable() );
 
 	/* We need to keep a pointer to the current function definition, right? */
-	this->_currentFunction->addr( function->getSymbTable()->getParent()->lookup(function->getName()) );
+	this->_currentFunction->addr( astFunction->getSymbTable()->getParent()->lookup(astFunction->getName()) );
 
 	/* Produce IR instructions for the statements in the function's code block. */
-	function->getBody()->accept(this);
+	astFunction->getBody()->accept(this);
 }
 
 void AstTACGenVisitor::visit(const Parser::ParamDecl* param)
@@ -64,17 +59,20 @@ void AstTACGenVisitor::visit(const Parser::ParamDecl* param)
 void AstTACGenVisitor::visit(const Parser::VarSpec* spec) {
 }
 
-void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
-	shared_ptr<SymbolTable> st = this->_currentFunction->symbolTable();
+void AstTACGenVisitor::visit(const Parser::VarDecl* astVarDec) {
+	auto st = this->_currentFunction->symbolTable();
 
-	for (auto spec : *varDec->getVars()) {
-		Expression* initializer = spec->getInitializer();
+	for (auto& spec : *astVarDec->getVars()) {
+		auto initializer = spec->getInitializer();
 
+		/** If there is an initializer for the variable we produce instruction for it */
 		if (initializer != nullptr) {
 			auto varDeclRaw = dynamic_cast<STVariableDeclaration*>( st->lookup(spec->getName()).get() );
-			auto memInstr = make_shared<IR::Memory>( shared_ptr<STVariableDeclaration>( varDeclRaw ) );
+			auto memInstr 	= make_shared<IR::Memory>( shared_ptr<STVariableDeclaration>( varDeclRaw ) );
 
 			initializer->accept(this);
+
+			assert(this->_lastInstruction != nullptr && "Empty initializer for variable.");
 
 			if (initializer->type() == Parser::INT || initializer->type() == Parser::FLOAT) {
 				this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(memInstr, this->_lastInstruction) );
@@ -98,13 +96,13 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* varDec) {
 	}
 }
 
-void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
+void AstTACGenVisitor::visit(Parser::LoopStmt* astLoopStmt) {
 	auto begin 		= this->newBasicBlock();
-	auto condition 	= loop->getCondition();
-	auto codeBlock 	= loop->getBody();
+	auto condition 	= astLoopStmt->getCondition();
+	auto codeBlock 	= astLoopStmt->getBody();
 
 	condition->tLabel( this->newBasicBlock() );
-	condition->fLabel( loop->next() );
+	condition->fLabel( astLoopStmt->next() );
 	codeBlock->next( begin );
 
 	/// For now we are using jumps in these cases where the code also fallthrough
@@ -116,10 +114,10 @@ void AstTACGenVisitor::visit(Parser::LoopStmt* loop) {
 	/// The code to compute the condition
 	condition->accept(this);
 
-	/// The basic block that comprises the loop body
+	/// The basic block that comprises the astLoopStmt body
 	this->_currentFunction->appendBasicBlock(condition->tLabel());
 
-	/// The code of the loop body
+	/// The code of the astLoopStmt body
 	codeBlock->accept(this);
 
 	/// We jump back to the condition computation
@@ -152,7 +150,6 @@ void AstTACGenVisitor::visit(Parser::IfStmt* ifStmt) {
 	}
 	else if (elseIfChain == nullptr || elseIfChain->size() == 0) {
 		/* Only have else block. */
-
 		condition->tLabel( this->newBasicBlock() );
 		condition->fLabel( this->newBasicBlock() );
 
@@ -267,36 +264,40 @@ void AstTACGenVisitor::visit(const Parser::ReturnStmt* ret) {
 	exp->isExpLeftHand(false);
 	exp->accept(this);
 
+	assert(this->_lastInstruction && "Null instruction at return statement.");
+
 	this->_currentFunction->appendInstruction( make_shared<IR::Return>(this->_lastInstruction) );
+
 	this->_lastInstruction = nullptr;
 }
 
-void AstTACGenVisitor::visit(Parser::CodeBlock* block) {
-	if (block->getSymbTable() == nullptr) {
+void AstTACGenVisitor::visit(Parser::CodeBlock* astCodeBlock) {
+	if (astCodeBlock->getSymbTable() == nullptr) {
 		cout << "IRGen error:" << endl;
 		cout << "\tThe SymbolTable for this block has not been computed!" << endl;
 		return ;
 	}
 
-	/* The IR function symbol table has all definitions of the function's blocks. */
-	this->_currentFunction->addSymbolTable(block->getSymbTable());
+	// The IR function symbol table has all definitions of the function's blocks.
+	this->_currentFunction->addSymbolTable(astCodeBlock->getSymbTable());
 
-	/* Produce IR for each statement in the code block. */
-	for (auto statement : *block->getStatements()) {
+	// Produce IR for each statement in the code block.
+	for (auto& statement : *astCodeBlock->getStatements()) {
+		// This label is used in situations that is necessary to jump directoy to the 
+		// next instruction. E.g., when are parsing a boolean expression. 
 		statement->next( this->newBasicBlock() );
+
+		// Produce code for the expression/statement 
 		statement->accept(this);
 
-		/**
-		 * If we parsed an instruction that could be part of a larger expressionn, but
-		 * in fact it was not inside one then we add that instruction as a subtree.
-		 */
+		// If we parsed an instruction that could be part of a larger expressionn, but
+		// in fact it was not inside one then we add that instruction as a subtree.
 		if (this->_lastInstruction != nullptr) {
 			this->_currentFunction->appendInstruction(this->_lastInstruction);
 			this->_lastInstruction = nullptr;
 		}
 
-		/* If in fact happened to be some instruction branching
-		 * to statement->next() label then we append it. */
+		// If some instruction branch to statement->next() then we append it. 
 		if (statement->next()->usageCounter() > 0)
 			this->_currentFunction->appendBasicBlock( statement->next() );
 	}
@@ -320,6 +321,8 @@ void AstTACGenVisitor::visit(Parser::StringExpr* str) {
 		else {
 			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(str->tLabel()) );
 		}
+
+		this->_lastInstruction = nullptr;
 	}
 }
 
@@ -327,8 +330,6 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 	/* If we are not inside a conditional expression. */
 	if ( flt->tLabel() == nullptr || flt->fLabel() == nullptr ) {
 		auto cttEntry = newConstant(flt->value());
-
-		this->_currentFunction->symbolTable()->add(cttEntry);
 
 		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
 	}
@@ -338,15 +339,6 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 
 		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(immInstr, flt->tLabel(), flt->fLabel()) );
 		this->_lastInstruction = nullptr;
-
-//		/* We are inside conditional expression. We evaluate the parameters
-//		 * and goes to the correct direction. */
-//		if (flt->value() == 0) {
-//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->fLabel()) );
-//		}
-//		else {
-//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(flt->tLabel()) );
-//		}
 	}
 }
 
@@ -363,22 +355,13 @@ void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 
 		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(immInstr, integer->tLabel(), integer->fLabel()) );
 		this->_lastInstruction = nullptr;
-
-//		/* We are inside conditional expression. We evaluate the parameters
-//		 * and goes to the correct direction. */
-//		if (integer->value() == 0) {
-//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->fLabel()) );
-//		}
-//		else {
-//			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(integer->tLabel()) );
-//		}
 	}
 }
 
 void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 	/* We look into the symbol table to find the dimensions sizes. */
-	shared_ptr<SymbolTableEntry> entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
-	auto decl 							= dynamic_cast<STVariableDeclaration*>( entry.get() );
+	auto entry 	= this->_currentFunction->symbolTable()->lookup(id->value());
+	auto decl 	= dynamic_cast<STVariableDeclaration*>( entry.get() );
 
 	if (decl->dims().size() > 0) {
 		/* Tells parent "visiting" methods that this is an array access. */
@@ -386,13 +369,13 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 
 		/* If no dimensions were specified then we just return the base addr of the array. */
 		if (id->dimsExprs()->size() != decl->dims().size()) {
-			auto varEntryInstr = make_shared<IR::Memory>( shared_ptr<Parser::STVariableDeclaration>(decl) );
-			this->_lastInstruction = make_shared<IR::Addr>(this->newTemporary(Parser::INT), varEntryInstr);
+			auto varEntryInstr 		= make_shared<IR::Memory>( shared_ptr<Parser::STVariableDeclaration>(decl) );
+			this->_lastInstruction 	= make_shared<IR::Addr>(this->newTemporary(Parser::INT), varEntryInstr);
 			return ;
 		}
 
 		/* Here we are going to store the factors for each index. */
-		vector<shared_ptr<IR::Instruction>> indExpsInstructions;
+		vector<Instruction_sptr> indExpsInstructions;
 
 		/* Here we are going to store the accumulated (from right to left) size of each dimension. */
 		vector<int> sizes(decl->dims());
@@ -503,10 +486,10 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 }
 
 void AstTACGenVisitor::visit(Parser::FunctionCall* funCall) {
-	auto decl 	= this->_currentFunction->symbolTable()->lookup(funCall->name());
-	auto funDecPtr = shared_ptr<STFunctionDeclaration>( dynamic_cast<STFunctionDeclaration*>(decl.get()) );
-	auto irFun  = make_shared<IR::Func>(funDecPtr);
-	auto tmpRes = this->newTemporary( decl->type() );
+	auto decl 		= this->_currentFunction->symbolTable()->lookup(funCall->name());
+	auto funDecPtr 	= shared_ptr<STFunctionDeclaration>( dynamic_cast<STFunctionDeclaration*>(decl.get()) );
+	auto irFun  	= make_shared<IR::Func>(funDecPtr);
+	auto tmpRes 	= this->newTemporary( decl->type() );
 
 	auto funCallInstr = make_shared<IR::Call>(tmpRes, irFun);
 
@@ -886,11 +869,10 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 
 	auto tLabel = binop->tLabel();
 	auto fLabel = binop->fLabel();
-	auto fall = this->_fallLabel;
 
-	/* If neither targets were informed then it is because this
-	 * expression is part of a larger expression and in this case
-	 * we cannot have short-circuit code yet. */
+	// If neither targets were informed then it is because this
+	// expression is part of a larger expression and in this case
+	// we cannot have short-circuit code yet.
 	if (tLabel != nullptr && fLabel != nullptr) {
 		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(this->_lastInstruction, tLabel, fLabel) );
 		this->_lastInstruction = nullptr;
@@ -906,8 +888,6 @@ void AstTACGenVisitor::emitBranchesBasedOnExpValue(Instruction_sptr result, Basi
 	this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(cmpInstr, lTrue, lFalse) );
 }
 
-
-
 template<typename T>
 shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
 	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("_ct" + std::to_string(this->constCounter), value));
@@ -916,10 +896,6 @@ shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
 	this->constCounter++;
 
 	return cttEntry;
-}
-
-BasicBlock_sptr AstTACGenVisitor::newBasicBlock() {
-	return make_shared<IR::BasicBlock>(0);
 }
 
 shared_ptr<IR::Register> AstTACGenVisitor::newTemporary(NativeType type) {

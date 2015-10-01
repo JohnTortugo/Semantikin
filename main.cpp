@@ -2,6 +2,7 @@
 #include "Driver.h"
 #include "AstVisitors.h"
 #include "IRVisitors.h"
+#include "MaximalMunch.h"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -53,9 +54,11 @@ int main(int argc, char *argv[]) {
 	Parser::Driver driver;
 	Parser::CompilationUnit* astModule = nullptr;
 
-	/* Parsing. */
 	char* inputFileName = getCmdOption(argv, argv+argc, "-i");
 
+
+
+	/** Start parsing */
 	if (access(inputFileName, F_OK | R_OK)) {
 		fprintf(stderr, "Could not access the specified input file.\n");
 		exit(1);
@@ -64,25 +67,11 @@ int main(int argc, char *argv[]) {
 	if (!driver.parse(inputFileName, astModule))
 		exit(1);
 
+
+
 	/* Do semantic analyzis. */
 	AstSemaVisitor semantic;
 	astModule->accept(&semantic);
-
-	/* Generate TAC-SSA Tree-Like IR. */
-	AstTACGenVisitor irgen(semantic.currentOffset());
-	astModule->accept(&irgen);
-
-	/* Obtain pointer to the IR generated module. */
-	shared_ptr<IR::Module> irModule = irgen.module();
-
-
-	/* Check if we need to print the IR-Tree */
-	if (cmdOptionExists(argv, argv+argc, "-dumpIRTree")) {
-		string dotFileName(inputFileName);
-
-		IRToDotVisitor itdVisitor(dotFileName + ".dot");
-		irModule->accept(&itdVisitor);
-	}
 
 	/* Just print out the AST of the function */
 	if (cmdOptionExists(argv, argv+argc, "-dumpAsts")) {
@@ -92,30 +81,39 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-//	/* print out the cfg of the function */
-//	if (cmdOptionExists(argv, argv+argc, "-dumpCfgs")) {
-//		for (auto& func : *irModule->functions()) {
-//			auto cfg = func->cfg();
-//			cfg->dumpToDot("cfg_" + func->addr()->getName() + ".dot");
-//		}
-//	}
+
+
+
+	/* Generate the intermediate representation */
+	AstTACGenVisitor irgen(semantic.currentOffset());
+	astModule->accept(&irgen);
+
+	/* Obtain pointer to the IR generated module. */
+	shared_ptr<IR::Module> irModule = irgen.module();
+
+	/* Check if we need to print the IR-Tree */
+	if (cmdOptionExists(argv, argv+argc, "-dumpIRTree")) {
+		string dotFileName(inputFileName);
+
+		IRToDotVisitor itdVisitor(dotFileName + ".dot");
+		irModule->accept(&itdVisitor);
+	}
 
 	/* Just dump the IR */
 	if (cmdOptionExists(argv, argv+argc, "-dumpIR")) {
-		irModule->dump();
+		cout << " -dumpIR is currently not working." << endl;
+		// irModule->dump();
 	}
 
-//	/* print the x86 assembly of each instruction */
-//	stringstream x86Stream;
-//	irModule->linearDumpTox86(x86Stream);
-//
-//
-//	if (cmdOptionExists(argv, argv+argc, "-dumpX86")) {
-//		std::ofstream asmFile(getCmdOption(argv, argv+argc, "-dumpX86"));
-//		asmFile << x86Stream.str() << std::endl;
-//		asmFile.close();
-//	}
-//
+
+
+	/* Generate code using maximal munch algorithm */
+	MaximalMunch codeGen;
+	irModule->accept(&codeGen);
+
+
+
+
 //	/**
 //	 * If the user specified that no further processing [assemblying/linking]
 //	 * is required the part below should be skipped.

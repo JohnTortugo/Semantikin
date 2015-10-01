@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <memory>
+#include <assert.h>
 
 using std::shared_ptr;
 using std::string;

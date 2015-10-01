@@ -1,5 +1,5 @@
 #ifndef IRVISITORS_H_
-#define IRVISITORS_H_
+#define IRVISITORS_H_ 1
 
 #include <iostream>
 #include <tuple>
