@@ -2,7 +2,15 @@
 
 using namespace IR;
 
-#define NOT_IMPLEMENTED 			cout << "MaxMuch: not implemented. " << __FILE__ << ":" << __LINE__ << endl;
+#define NOT_IMPLEMENTED 								cout << "MaxMuch: not implemented. " << __FILE__ << ":" << __LINE__ << endl;
+
+#define checkOprAndRetType(obj, ret, opr, operand)		((std::dynamic_pointer_cast<ret>(obj->chd1()) != nullptr) && 	\
+														(std::dynamic_pointer_cast<opr>(obj) != nullptr) && 			\
+														(std::dynamic_pointer_cast<operand>(obj->chd2()) != nullptr))
+
+
+#define checkOpr(obj, operand)							(std::dynamic_pointer_cast<operand>(obj) != nullptr)
+
 
 void MaximalMunch::visit(IR::Module* module) {
 	cout << "MaxMuch: module " << endl;
@@ -30,6 +38,10 @@ void MaximalMunch::visit(IR::BasicBlock* bb) {
 
 void MaximalMunch::visit(IR::ScalarCopy* node) {
 	cout << "MaxMuch: scalarcopy " << endl;
+
+	/// Just temporary
+	node->chd1()->accept(this);
+	node->chd2()->accept(this);
 }
 
 void MaximalMunch::visit(IR::CopyFromArray* node) {
@@ -59,6 +71,26 @@ void MaximalMunch::visit(IR::ISub* node) {
 }
 
 void MaximalMunch::visit(IR::IMul* node) {
+	cout << "MaxMuch: IMul " << endl;
+
+	if ( checkOprAndRetType(node->chd2(), IR::Register, IR::ScalarCopy, IR::Memory) && checkOprAndRetType(node->chd3(), IR::Register, IR::ScalarCopy, IR::Memory) ) {
+		cout << "IMul Match 1 " << endl;
+	}
+	else if ( checkOprAndRetType(node->chd2(), IR::Register, IR::ScalarCopy, IR::Memory) && checkOpr(node->chd3(), IR::Immediate) ) {
+		cout << "IMul Match 2 " << endl;
+	}
+	else if ( checkOpr(node->chd2(), IR::Immediate) && checkOprAndRetType(node->chd3(), IR::Register, IR::ScalarCopy, IR::Memory) ) {
+		cout << "IMul Match 3 " << endl;
+	}
+	else if ( checkOpr(node->chd2(), IR::Immediate) && checkOpr(node->chd3(), IR::Immediate) ) {
+		cout << "IMul Match 4 " << endl;
+	}
+	else if ( checkOpr(node->chd2(), IR::Register) && checkOpr(node->chd3(), IR::Register) ) {
+		cout << "IMul Match 5 " << endl;
+	}
+	else {
+		cout << "ERROR:: Unmatched IMul." << endl;
+	}
 }
 
 void MaximalMunch::visit(IR::IDiv* node) {

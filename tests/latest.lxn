@@ -1,7 +1,13 @@
 int main() {
-	int a = 10;
-	int b = 20;
-	int c = a + b;
+	int x = 10;
+	int y = 20;
+
+	int a = x * y;
+	int b = 2 * 3;
+	int c = x * 3;
+	int d = 2 * y;
+	int e = a * b * c * d;
+	int f = a + b;
 
 	return 0;
 }
