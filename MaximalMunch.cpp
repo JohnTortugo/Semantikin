@@ -2,46 +2,109 @@
 
 using namespace IR;
 
-#define NOT_IMPLEMENTED 								cout << "MaxMuch: not implemented. " << __FILE__ << ":" << __LINE__ << endl;
+#define NOT_IMPLEMENTED 		cout << "MaxMuch: not implemented. " << __FILE__ << ":" << __LINE__ << endl;
 
-#define checkOprAndRetType(obj, ret, opr, operand)		((std::dynamic_pointer_cast<ret>(obj->chd1()) != nullptr) && 	\
-														(std::dynamic_pointer_cast<opr>(obj) != nullptr) && 			\
-														(std::dynamic_pointer_cast<operand>(obj->chd2()) != nullptr))
+#define isMemoryLoad(obj)		((std::dynamic_pointer_cast<IR::ScalarCopy>(obj) != nullptr) && 		\
+								 (std::dynamic_pointer_cast<IR::Register>(obj->chd1()) != nullptr) && 	\
+								 (std::dynamic_pointer_cast<IR::Memory>(obj->chd2()) != nullptr))
+
+#define isImmediateLoad(obj)	((std::dynamic_pointer_cast<IR::ScalarCopy>(obj) != nullptr) && 		\
+								 (std::dynamic_pointer_cast<IR::Register>(obj->chd1()) != nullptr) && 	\
+								 (std::dynamic_pointer_cast<IR::Immediate>(obj->chd2()) != nullptr))
+
+#define nodeType(obj, operand)	(std::dynamic_pointer_cast<operand>(obj) != nullptr)
+
+#define setColor(obj, color)	obj->myColor(color);													\
+								obj->fillColor( this->fillColor(color) );
+
+#define setNodeColors(obj1, obj2, obj3, color)		obj1->myColor(color);								\
+													obj1->fillColor( this->fillColor(color) );			\
+													obj2->myColor(color);								\
+													obj2->fillColor( this->fillColor(color) );			\
+													obj3->myColor(color);								\
+													obj3->fillColor( this->fillColor(color) );
 
 
-#define checkOpr(obj, operand)							(std::dynamic_pointer_cast<operand>(obj) != nullptr)
 
 
 void MaximalMunch::visit(IR::Module* module) {
-	cout << "MaxMuch: module " << endl;
-
 	for (auto& func : *(module->functions())) {
 		func->accept(this);
 	}
 }
 
 void MaximalMunch::visit(IR::Function* func) {
-	cout << "MaxMuch: func " << endl;
-
 	for (auto& bb : *(func->bbs())) {
 		bb->accept(this);
 	}
 }
 
 void MaximalMunch::visit(IR::BasicBlock* bb) {  
-	cout << "MaxMuch: basicblock " << endl;
-
 	for (auto& tree : *(bb->instructions())) {
+		setColor(tree, 0);
 		tree->accept(this);
 	}
 }
 
 void MaximalMunch::visit(IR::ScalarCopy* node) {
-	cout << "MaxMuch: scalarcopy " << endl;
+	if (nodeType(node->chd1(), IR::Memory) && nodeType(node->chd2(), IR::Immediate)) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), node->myColor());
+	}
+	else if (nodeType(node->chd1(), IR::Memory) && nodeType(node->chd2(), IR::Register)) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), this->otherColor(node->myColor()));
 
-	/// Just temporary
-	node->chd1()->accept(this);
-	node->chd2()->accept(this);
+		node->chd2()->accept(this);
+	}
+	else if (nodeType(node->chd1(), IR::Memory) && nodeType(node->chd2()->chd1(), IR::Register) ) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+
+		node->chd2()->accept(this);
+	}
+	else if (nodeType(node->chd1(), IR::Memory) && isImmediateLoad(node->chd2()) ) {
+		setColor(node->chd1(), node->myColor());
+
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+	}
+	else if (nodeType(node->chd1(), IR::Register) && nodeType(node->chd2(), IR::Register) ) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+
+		node->chd2()->accept(this);
+	}
+	else if (nodeType(node->chd1(), IR::Register) && nodeType(node->chd2(), IR::Immediate) ) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), node->myColor());
+	}
+	else if (nodeType(node->chd1(), IR::Register) && nodeType(node->chd2(), IR::Memory) ) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), node->myColor());
+	}
+	else if (nodeType(node->chd1(), IR::Register) && isMemoryLoad(node->chd2()) ) {
+		setColor(node->chd1(), node->myColor());
+
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+	}
+	else if (nodeType(node->chd1(), IR::Register) && isImmediateLoad(node->chd2()) ) {
+		setColor(node->chd1(), node->myColor());
+
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+	}
+	else if (nodeType(node->chd1(), IR::Register) && nodeType(node->chd2()->chd1(), IR::Register) ) {
+		setColor(node->chd1(), node->myColor());
+		setColor(node->chd2(), node->myColor());
+	}
+	else {
+		cout << "CRITICAL: Unmatched ScalarCopy." << endl;
+	}
 }
 
 void MaximalMunch::visit(IR::CopyFromArray* node) {
@@ -64,29 +127,143 @@ void MaximalMunch::visit(IR::Func* func) {
 }
 
 void MaximalMunch::visit(IR::IAdd* node) {
-	cout << "MaxMuch: IAdd " << endl;
+	if (isMemoryLoad(node->chd2()) && isMemoryLoad(node->chd3()) ) {
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd3()->accept(this);
+	}
+	else if ( isMemoryLoad(node->chd2()) && isImmediateLoad(node->chd3()) ) {
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+
+		setColor(node->chd3(), node->myColor());
+		setColor(node->chd3()->chd1(), node->myColor());
+		setColor(node->chd3()->chd2(), node->myColor());
+	}
+	else if ( isImmediateLoad(node->chd2())	&& isMemoryLoad(node->chd3()) ) {
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+
+		setColor(node->chd3(), node->myColor());
+		setColor(node->chd3()->chd1(), node->myColor());
+		setColor(node->chd3()->chd2(), node->myColor());
+	}
+	else if ( nodeType(node->chd2()->chd1(), IR::Register) && isMemoryLoad(node->chd3()) ) {
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+
+		setColor(node->chd3(), node->myColor());
+		setColor(node->chd3()->chd1(), node->myColor());
+		setColor(node->chd3()->chd2(), node->myColor());
+
+		node->chd2()->accept(this);
+	}
+	else if ( isMemoryLoad(node->chd2()) && nodeType(node->chd3()->chd1(), IR::Register) ) {
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd3()->accept(this);
+	}
+	else if ( isImmediateLoad(node->chd2())	&& isImmediateLoad(node->chd3()) ) {
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd3()->accept(this);
+	}
+	else if ( nodeType(node->chd2()->chd1(), IR::Register) && nodeType(node->chd3()->chd1(), IR::Register) ) {
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd2()->accept(this);
+		node->chd3()->accept(this);
+	}
+	else if ( nodeType(node->chd2()->chd1(), IR::Register) && isImmediateLoad(node->chd3()) ) {
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+
+		setColor(node->chd3(), node->myColor());
+		setColor(node->chd3()->chd1(), node->myColor());
+		setColor(node->chd3()->chd2(), node->myColor());
+
+		node->chd2()->accept(this);
+	}
+	else if ( isImmediateLoad(node->chd2())	&& nodeType(node->chd3()->chd1(), IR::Register) ) {
+		setColor(node->chd2(), node->myColor());
+		setColor(node->chd2()->chd1(), node->myColor());
+		setColor(node->chd2()->chd2(), node->myColor());
+
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd3()->accept(this);
+	}
+	else {
+		cout << "ERROR:: Unmatched IMul." << endl;
+	}
 }
 
 void MaximalMunch::visit(IR::ISub* node) {
 }
 
 void MaximalMunch::visit(IR::IMul* node) {
-	cout << "MaxMuch: IMul " << endl;
+	if (isMemoryLoad(node->chd2()) && isMemoryLoad(node->chd3()) ) {
+		setNodeColors(node->chd2(), node->chd2()->chd1(), node->chd2()->chd2(), this->otherColor(node->myColor()));
+		setNodeColors(node->chd3(), node->chd3()->chd1(), node->chd3()->chd2(), this->otherColor(node->myColor()));
 
-	if ( checkOprAndRetType(node->chd2(), IR::Register, IR::ScalarCopy, IR::Memory) && checkOprAndRetType(node->chd3(), IR::Register, IR::ScalarCopy, IR::Memory) ) {
-		cout << "IMul Match 1 " << endl;
+		node->chd2()->accept(this);
+		node->chd3()->accept(this);
 	}
-	else if ( checkOprAndRetType(node->chd2(), IR::Register, IR::ScalarCopy, IR::Memory) && checkOpr(node->chd3(), IR::Immediate) ) {
-		cout << "IMul Match 2 " << endl;
+	else if ( isMemoryLoad(node->chd2()) && isImmediateLoad(node->chd3()) ) {
+		setNodeColors(node->chd2(), node->chd2()->chd1(), node->chd2()->chd2(), node->myColor());
+		setNodeColors(node->chd3(), node->chd3()->chd1(), node->chd3()->chd2(), node->myColor());
 	}
-	else if ( checkOpr(node->chd2(), IR::Immediate) && checkOprAndRetType(node->chd3(), IR::Register, IR::ScalarCopy, IR::Memory) ) {
-		cout << "IMul Match 3 " << endl;
+	else if ( isImmediateLoad(node->chd2())	&& isMemoryLoad(node->chd3()) ) {
+		setNodeColors(node->chd2(), node->chd2()->chd1(), node->chd2()->chd2(), node->myColor());
+		setNodeColors(node->chd3(), node->chd3()->chd1(), node->chd3()->chd2(), node->myColor());
 	}
-	else if ( checkOpr(node->chd2(), IR::Immediate) && checkOpr(node->chd3(), IR::Immediate) ) {
-		cout << "IMul Match 4 " << endl;
+	else if ( nodeType(node->chd2()->chd1(), IR::Register) && isMemoryLoad(node->chd3()) ) {
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+		setNodeColors(node->chd3(), node->chd3()->chd1(), node->chd3()->chd2(), node->myColor());
+
+		node->chd2()->accept(this);
 	}
-	else if ( checkOpr(node->chd2(), IR::Register) && checkOpr(node->chd3(), IR::Register) ) {
-		cout << "IMul Match 5 " << endl;
+	else if ( isMemoryLoad(node->chd2()) && nodeType(node->chd3()->chd1(), IR::Register) ) {
+		setNodeColors(node->chd2(), node->chd2()->chd1(), node->chd2()->chd2(), node->myColor());
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd3()->accept(this);
+	}
+	else if ( isImmediateLoad(node->chd2())	&& isImmediateLoad(node->chd3()) ) {
+		setNodeColors(node->chd2(), node->chd2()->chd1(), node->chd2()->chd2(), node->myColor());
+		setNodeColors(node->chd3(), node->chd3()->chd1(), node->chd3()->chd2(), node->myColor());
+	}
+	else if ( nodeType(node->chd2()->chd1(), IR::Register) && nodeType(node->chd3()->chd1(), IR::Register) ) {
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd2()->accept(this);
+		node->chd3()->accept(this);
+	}
+	else if ( nodeType(node->chd2()->chd1(), IR::Register) && isImmediateLoad(node->chd3()) ) {
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+		setNodeColors(node->chd3(), node->chd3()->chd1(), node->chd3()->chd2(), node->myColor());
+
+		node->chd2()->accept(this);
+	}
+	else if ( isImmediateLoad(node->chd2())	&& nodeType(node->chd3()->chd1(), IR::Register) ) {
+		setNodeColors(node->chd2(), node->chd2()->chd1(), node->chd2()->chd2(), this->otherColor(node->myColor()));
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+
+		node->chd3()->accept(this);
 	}
 	else {
 		cout << "ERROR:: Unmatched IMul." << endl;

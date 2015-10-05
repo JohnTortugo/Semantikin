@@ -103,7 +103,7 @@ public:
 	IRToDotVisitor(string filename) {
 		this->dotfile.open(filename);
 		this->dotfile << "digraph IRGraph {" << endl;
-		this->dotfile << "	node [fontsize=10, style=rounded, width=\".2\", height=\".2\", margin=0];" << endl;
+		this->dotfile << "	node [fontsize=10, style=\"rounded,filled\", fillcolor=\"#ffffff\" width=\".2\", height=\".2\", margin=0];" << endl;
 		this->dotfile << "	graph [fontsize=8];" << endl;
 		this->dotfile << "	edge [fontsize=8];" << endl;
 		this->dotfile << "	compound=true;" << endl;

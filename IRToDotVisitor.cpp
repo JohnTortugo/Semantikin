@@ -5,8 +5,8 @@ using namespace IR;
 
 
 #define DOT_NODE_ID(_node_)								"ND" << std::setw(5) << _node_
-#define DOT_NEW_NODE_NO_TGT(_node_, _opr_)				DOT_NODE_ID(_node_) << " [shape=circle, label=\"" << Util::escapeStr(_opr_) << "\"];"
-#define DOT_NEW_NODE_WITH_TGT(_node_, _opr_, __tgt__)	DOT_NODE_ID(_node_) << " [shape=record, margin=\".1\" label=\"{" << __tgt__ << " | " << Util::escapeStr(_opr_) << "}\"];"
+#define DOT_NEW_NODE_NO_TGT(_node_, _opr_)				DOT_NODE_ID(_node_) << " [shape=circle, fillcolor=\"#" << _node_->fillColor() << "\", label=\"" << Util::escapeStr(_opr_) << "\"];"
+#define DOT_NEW_NODE_WITH_TGT(_node_, _opr_, __tgt__)	DOT_NODE_ID(_node_) << " [shape=record, fillcolor=\"#" << _node_->fillColor() << "\", margin=\".1\", label=\"{" << __tgt__ << " | " << Util::escapeStr(_opr_) << "}\"];"
 #define DOT_EDGE(_src_, _dst_)							DOT_NODE_ID(_src_) << " -> " << DOT_NODE_ID(_dst_) << ";"
 
 void IRToDotVisitor::visit(IR::Module* module) {
@@ -251,7 +251,6 @@ void IRToDotVisitor::visit(IR::AddrDispl* node) {
 
 void IRToDotVisitor::visit(IR::Call* node) { 
 	this->newline() << DOT_NEW_NODE_WITH_TGT(node, "call", node->chd1()->tgtDataName()) << endl;
-	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
 	if (node->arguments() != nullptr) {

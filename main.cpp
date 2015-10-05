@@ -73,14 +73,6 @@ int main(int argc, char *argv[]) {
 	AstSemaVisitor semantic;
 	astModule->accept(&semantic);
 
-	/* Just print out the AST of the function */
-	if (cmdOptionExists(argv, argv+argc, "-dumpAsts")) {
-		for (auto& func : *astModule->getFunctions()) {
-			AstToDotVisitor ast("ast_" + func->getName() + ".dot");
-			func->accept(&ast);
-		}
-	}
-
 
 
 
@@ -90,6 +82,26 @@ int main(int argc, char *argv[]) {
 
 	/* Obtain pointer to the IR generated module. */
 	shared_ptr<IR::Module> irModule = irgen.module();
+
+
+
+
+
+	/* Generate code using maximal munch algorithm */
+	MaximalMunch codeGen;
+	irModule->accept(&codeGen);
+
+
+
+
+
+	/* Just print out the AST of the function */
+	if (cmdOptionExists(argv, argv+argc, "-dumpAsts")) {
+		for (auto& func : *astModule->getFunctions()) {
+			AstToDotVisitor ast("ast_" + func->getName() + ".dot");
+			func->accept(&ast);
+		}
+	}
 
 	/* Check if we need to print the IR-Tree */
 	if (cmdOptionExists(argv, argv+argc, "-dumpIRTree")) {
@@ -105,11 +117,6 @@ int main(int argc, char *argv[]) {
 		// irModule->dump();
 	}
 
-
-
-	/* Generate code using maximal munch algorithm */
-	MaximalMunch codeGen;
-	irModule->accept(&codeGen);
 
 
 

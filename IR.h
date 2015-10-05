@@ -26,9 +26,9 @@ namespace IR {
 	/* This class is the parent of all Three-address-code (TAC) IR instructions. */
 	class Instruction {
 	protected:
-		SymbolTableEntry_sp _tgt = nullptr;
-		SymbolTableEntry_sp _src1 = nullptr;
-		SymbolTableEntry_sp _src2 = nullptr;
+		// This is only used when dumping the IR to a visual format
+		string _fillColor = "ffffff";
+		unsigned int _myColor = 0;
 
 		Instruction_sptr _chd1 = nullptr;
 		Instruction_sptr _chd2 = nullptr;
@@ -38,16 +38,8 @@ namespace IR {
 		Instruction()
 		{ }
 
-		//Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, SymbolTableEntry_sp src2, Instruction_sptr chd1, Instruction_sptr chd2) :
-			//_tgt(tgt), _src1(src1), _src2(src2), _chd1(chd1), _chd2(chd2)
-		//{ }
-
-		//Instruction(SymbolTableEntry_sp tgt, SymbolTableEntry_sp src1, Instruction_sptr chd1) :
-			//_tgt(tgt), _src1(src1), _chd1(chd1)
-		//{ }
-
 		Instruction(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) :
-			_tgt(nullptr), _src1(nullptr), _src2(nullptr), _chd1(chd1), _chd2(chd2), _chd3(chd3)
+			_chd1(chd1), _chd2(chd2), _chd3(chd3)
 		{ }
 
 		Instruction(Instruction_sptr chd1) :
@@ -55,14 +47,11 @@ namespace IR {
 		{ }
 
 
-		void tgt(SymbolTableEntry_sp tgt) { this->_tgt = tgt; }
-		SymbolTableEntry_sp tgt() { return this->_tgt; }
+		void myColor(unsigned int mc) { this->_myColor = mc; }
+		unsigned int myColor() { return this->_myColor; }
 
-		void src1(SymbolTableEntry_sp src) { this->_src1 = src; }
-		SymbolTableEntry_sp src1() { return this->_src1; }
-
-		void src2(SymbolTableEntry_sp src) { this->_src2 = src; }
-		SymbolTableEntry_sp src2() { return this->_src2; }
+		void fillColor(const string& fc) { this->_fillColor = fc; }
+		const string& fillColor() { return this->_fillColor; }
 
 		void chd1(Instruction_sptr chd) { this->_chd1 = chd; }
 		Instruction_sptr chd1() { return this->_chd1; }
