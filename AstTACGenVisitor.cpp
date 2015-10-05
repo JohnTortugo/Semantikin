@@ -1,3 +1,8 @@
+/**
+ * What still require some work:
+ *		- Operations on strings.
+ *
+ */
 #include "AstVisitors.h"
 #include "SymbolTable.h"
 #include <memory>
@@ -329,9 +334,10 @@ void AstTACGenVisitor::visit(Parser::StringExpr* str) {
 void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 	/* If we are not inside a conditional expression. */
 	if ( flt->tLabel() == nullptr || flt->fLabel() == nullptr ) {
-		auto cttEntry = newConstant(flt->value());
+		auto immInst = make_shared<IR::Immediate>( newConstant(flt->value()) );
+		auto regDest = newTemporary(flt->type());
 
-		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
+		this->_lastInstruction = make_shared<IR::ScalarCopy>(regDest, immInst);
 	}
 	else {
 		auto cttEntry = newConstant(flt->value());
@@ -345,9 +351,10 @@ void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
 void AstTACGenVisitor::visit(Parser::IntegerExpr* integer) {
 	/* If we are not inside a conditional expression. */
 	if ( integer->tLabel() == nullptr || integer->fLabel() == nullptr ) {
-		auto cttEntry = newConstant(integer->value());
+		auto immInst = make_shared<IR::Immediate>( newConstant(integer->value()) );
+		auto regDest = newTemporary(integer->type());
 
-		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
+		this->_lastInstruction = make_shared<IR::ScalarCopy>(regDest, immInst);
 	}
 	else {
 		auto cttEntry = newConstant(integer->value());
