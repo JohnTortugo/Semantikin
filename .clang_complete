@@ -1,0 +1,17 @@
+-std=c++11
+-include ./main.cpp
+-include ./AstToDotVisitor.cpp
+-include ./Driver.cpp
+-include ./ErrorReporting.cpp
+-include ./AstTACGenVisitor.cpp
+-include ./AstSemaVisitor.cpp
+-include ./IRToDotVisitor.cpp
+-include ./Parsin.tab.cc
+-include ./lex.yy.cc
+-include ./AbstractSyntaxTree.cpp
+-include ./SymbolTable.cpp
+-include ./IR.cpp
+-include ./MaximalMunch.cpp
+-g
+-std=c++0x
+-O3

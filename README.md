@@ -161,6 +161,11 @@ What is Not Supported
 5. Pointers are not supported.
 6. There is no preprocessor.
 
+TODO
+===============
+
+1. Rename the fields chd1, chd2, chd3 of the IR::Instruction class for something more meaningful, e.g., target, left and right.
+
 
 References
 ===============

@@ -44,9 +44,9 @@ namespace IR {
 	class BranchInstruction;
 	class Call;
 	class Return;
-	class Function;
 
 	class BasicBlock;
+	class Function;
 }
 
 
@@ -126,9 +126,6 @@ namespace Util {
 	 */
 	string typeName(Parser::NativeType type);
 
-	string linearDumpTox86VarLocation(shared_ptr<Parser::SymbolTableEntry> var);
-
-	string linearDumpTox86ParamRegName(int paramIndex);
 }
 
 

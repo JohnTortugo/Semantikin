@@ -2,7 +2,6 @@
 #define IR_H_
 
 #include "Semantikin.h"
-#include "BasicBlock.h"
 #include "AbstractSyntaxTree.h"
 
 #include <string>
@@ -23,7 +22,152 @@ using namespace Parser;
 class IRTreeVisitor;
 
 namespace IR {
-	/* This class is the parent of all Three-address-code (TAC) IR instructions. */
+
+	/** Well, this represents a basic block =) */
+	class BasicBlock {
+	private:
+		int _id;
+		int _usageCounter;
+
+		Instruction_list_sptr _instructions;
+
+		BasicBlock_list_sptr _preds;
+		BasicBlock_list_sptr _succs;
+
+	public:
+		BasicBlock(int id) :
+			_id(id),
+			_usageCounter(0),
+			_instructions(nullptr),
+			_preds(nullptr),
+			_succs(nullptr)
+		{ 
+			this->_instructions =  make_shared< list<shared_ptr<IR::Instruction>> >();
+		}
+
+		int id() const { return _id; }
+		void id(int id) { _id = id; }
+
+		int& usageCounter() { return _usageCounter; }
+		void usageCounter(int uc) { _usageCounter = uc; }
+
+		Instruction_list_sptr instructions() const { return _instructions; }
+
+		void appendInstruction(Instruction_sptr instr) {
+			this->_instructions->push_back( instr );
+		}
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		void dumpToDot(stringstream& buffer);
+	};
+
+
+
+
+
+
+
+	/* Represent function definitions. */
+	class Function {
+	private:
+		/* Pointer to the symbol table entry describing this function. */
+		SymbolTableEntry_sp _addr;
+
+		/* Pointer to this function's symbol table. */
+		shared_ptr<SymbolTable> _symbTable;
+
+		/* Keep track of how many times each name was used inside the
+		 * same function so we can rename them.  				   */
+		map<string, int> nameVersions;
+
+		/* The set of basic blocks composing this function */
+		BasicBlock_list_sptr _bbs;
+
+		/* Points to the current basic block being constructed. Used *only* during 
+		 * IR construction */
+		BasicBlock_sptr _currentBasicBlock;
+
+	public:
+		Function(shared_ptr<SymbolTable> st) :
+			_symbTable(st),
+			_bbs(nullptr)
+		{
+			this->_bbs = make_shared< list<shared_ptr<BasicBlock>> >();
+			this->_currentBasicBlock = make_shared<BasicBlock>(0);
+			this->_bbs->push_back( this->_currentBasicBlock );
+		}
+
+
+		string name() { return dynamic_cast<STFunctionDeclaration*>(this->_addr.get())->getLabel(); }
+
+
+		BasicBlock_list_sptr bbs() { return this->_bbs; };
+
+
+
+		/* Methods related to setting/getting the function's declaration. */
+		void addr(SymbolTableEntry_sp addr) { this->_addr = addr; }
+
+		SymbolTableEntry_sp addr() { return this->_addr; }
+
+
+		/* Methods related to IR construction. */
+		void appendLabel(shared_ptr<STLabelDef> label);
+		void appendBasicBlock(BasicBlock_sptr bb);
+
+		void appendInstruction(shared_ptr<IR::Instruction> instr);
+
+
+		/* Symbol Table Management Methods. */
+		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
+
+		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
+
+		void addSymbolTable(shared_ptr<SymbolTable> st);
+
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		/* Mostly debug related methods. */
+		void dump(stringstream& buffer);
+	};
+
+
+
+	/* Represent a whole compilation unit. */
+	class Module {
+	private:
+		shared_ptr<list<shared_ptr<Function>>> _functions;
+
+		shared_ptr<SymbolTable> _symbTable;
+
+	public:
+		Module() : _functions(shared_ptr<list<shared_ptr<Function>>>(new list<shared_ptr<Function>>())) { }
+
+		void addFunction(shared_ptr<Function> fun) { this->_functions->push_back(fun); }
+
+		Function_sptr_list_sptr functions() const { return this->_functions; }
+
+		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
+		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
+
+		/* Used to traverse the IR tree. */
+		void accept(IRTreeVisitor* visitor);
+
+		void dump();
+	};
+
+
+
+
+
+
+
+
+	/* This class is the parent of all IR instructions. */
 	class Instruction {
 	protected:
 		// This is only used when dumping the IR to a visual format
@@ -38,21 +182,18 @@ namespace IR {
 		Instruction()
 		{ }
 
-		Instruction(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) :
+		Instruction(Instruction_sptr chd1, Instruction_sptr chd2=nullptr, Instruction_sptr chd3=nullptr) :
 			_chd1(chd1), _chd2(chd2), _chd3(chd3)
 		{ }
 
-		Instruction(Instruction_sptr chd1) :
-			_chd1(chd1), _chd2(nullptr), _chd3(nullptr)
-		{ }
-
-
+		// Set/get the color of this IR node. Used for graphical visualization of the IR tree
 		void myColor(unsigned int mc) { this->_myColor = mc; }
 		unsigned int myColor() { return this->_myColor; }
 
 		void fillColor(const string& fc) { this->_fillColor = fc; }
 		const string& fillColor() { return this->_fillColor; }
 
+		// Used to Get/set the operands of the instruction
 		void chd1(Instruction_sptr chd) { this->_chd1 = chd; }
 		Instruction_sptr chd1() { return this->_chd1; }
 
@@ -74,8 +215,6 @@ namespace IR {
 
 		virtual void dump(stringstream& buffer) = 0;
 
-		virtual void linearDumpTox86(stringstream& buffer) = 0;
-
 		virtual ~Instruction() {};
 	};
 
@@ -86,7 +225,8 @@ namespace IR {
 	/********************************************************/
 	/* Parent class of all instructions that are actually
 	 * placeholder for data. Like immediates, registers and
-	 * memory addresses. 									*/
+	 * memory addresses. 									
+	 */
 	class Data : public Instruction { };
 
 	class Immediate : public Data {
@@ -105,7 +245,6 @@ namespace IR {
 		string tgtDataName() { return Util::escapeStr(this->_value->getName()); }
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer) { }
 	};
 
 	class Register : public Data {
@@ -124,7 +263,6 @@ namespace IR {
 		string tgtDataName() { return this->_value->getName(); }
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer) { }
 	};
 
 	class Memory : public Data {
@@ -143,7 +281,6 @@ namespace IR {
 		string tgtDataName() { return this->_value->getName(); }
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer) { }
 	};
 
 	class Func : public Data {
@@ -162,7 +299,6 @@ namespace IR {
 		string tgtDataName() { return this->_value->getName(); }
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer) { }
 	};
 
 
@@ -198,7 +334,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyFromArray : public Copy {
@@ -211,7 +346,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class CopyToArray : public Copy {
@@ -224,7 +358,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -264,7 +397,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class ISub : public BinaryIntegerArithmetic {
@@ -278,7 +410,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IMul : public BinaryIntegerArithmetic {
@@ -292,7 +423,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IDiv : public BinaryIntegerArithmetic {
@@ -306,7 +436,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IMod : public BinaryIntegerArithmetic {
@@ -320,7 +449,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IMinus : public UnaryIntegerArithmetic {
@@ -334,7 +462,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IInc : public UnaryIntegerArithmetic {
@@ -348,7 +475,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class IDec : public UnaryIntegerArithmetic {
@@ -362,7 +488,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -403,7 +528,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FSub : public BinaryFloatingArithmetic {
@@ -417,7 +541,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FMul : public BinaryFloatingArithmetic {
@@ -431,7 +554,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FDiv : public BinaryFloatingArithmetic {
@@ -445,7 +567,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FMinus : public UnaryFloatingArithmetic {
@@ -459,7 +580,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FInc : public UnaryFloatingArithmetic {
@@ -473,7 +593,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class FDec : public UnaryFloatingArithmetic {
@@ -487,7 +606,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -514,7 +632,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinOr : public BitArithmetic {
@@ -528,7 +645,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinXor : public BitArithmetic {
@@ -542,7 +658,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class BinNot : public BitArithmetic {
@@ -557,7 +672,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -586,7 +700,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RLesThanEqual : public RelationalArithmetic {
@@ -600,7 +713,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RGreaterThan : public RelationalArithmetic {
@@ -614,7 +726,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RGreaterThanEqual : public RelationalArithmetic {
@@ -628,7 +739,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class REqual : public RelationalArithmetic {
@@ -642,7 +752,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class RNotEqual : public RelationalArithmetic {
@@ -656,7 +765,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -698,7 +806,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	class Conditional : public BranchInstruction {
@@ -717,7 +824,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -735,7 +841,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	/**
@@ -754,7 +859,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
@@ -783,7 +887,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	/* Represent a return instruction. */
@@ -803,7 +906,6 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 	/* Represent SSA phi functions. */
@@ -813,125 +915,11 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor);
 
 		void dump(stringstream& buffer);
-		void linearDumpTox86(stringstream& buffer);
 	};
 
 
 
-	/* Represent function definitions. */
-	class Function {
-	private:
-		/* Pointer to the symbol table entry describing this function. */
-		SymbolTableEntry_sp _addr;
 
-		/* Pointer to this function's symbol table. */
-		shared_ptr<SymbolTable> _symbTable;
-
-		/* Keep track of how many times each name was used inside the
-		 * same function so we can rename them.  				   */
-		map<string, int> nameVersions;
-
-		/* This tells if the last slot in the _instrs array has a label
-		 * added to it. If it has, then the next instruction added to the
-		 * array needs to go into that slot, if it has not, then the instruction
-		 * will be added to a new slot. */
-		bool _labelPendingSlot = false;
-
-		/* The set of basic blocks composing this function */
-		BasicBlock_list_sptr _bbs;
-
-		/* Points to the current basic block being constructed. Used only during IR construction */
-		BasicBlock_sptr _currentBasicBlock;
-
-		/* The instructions that compose this function. */
-		shared_ptr<list< pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>> >> _subtrees;
-
-	public:
-		Function(shared_ptr<SymbolTable> st) :
-			_symbTable(st),
-			_subtrees(nullptr),
-			_bbs(nullptr)
-		{
-			this->_bbs = make_shared< list<shared_ptr<BasicBlock>> >();
-			this->_currentBasicBlock = make_shared<BasicBlock>(0);
-			this->_bbs->push_back( this->_currentBasicBlock );
-		}
-
-
-		string name() { return dynamic_cast<STFunctionDeclaration*>(this->_addr.get())->getLabel(); }
-
-
-		shared_ptr<list< pair<shared_ptr<STLabelDef>, shared_ptr<Instruction>> >> subtrees() { return this->_subtrees; }
-
-
-		BasicBlock_list_sptr bbs() { return this->_bbs; };
-
-
-
-		/* Methods related to Control Flow Graph construction. */
-		/// ControlFlowGraph_sptr cfg();
-
-		/* Methods related to setting/getting the function's declaration. */
-		void addr(SymbolTableEntry_sp addr) { this->_addr = addr; }
-
-		SymbolTableEntry_sp addr() { return this->_addr; }
-
-
-		/* Methods related to Linear IR construction. */
-		void appendLabel(shared_ptr<STLabelDef> label);
-		void appendBasicBlock(BasicBlock_sptr bb);
-
-		void appendInstruction(shared_ptr<IR::Instruction> instr);
-
-
-		/* Symbol Table Management Methods. */
-		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
-
-		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
-
-		void addSymbolTable(shared_ptr<SymbolTable> st);
-
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
-
-		/* Mostly debug related methods. */
-		void dump(stringstream& buffer);
-
-		/* Dump all instructions to x86. Use a list sweep algorithm on the flat IR. */
-		void linearDumpTox86(stringstream& buffer);
-		void linearDumpTox86Prologue(stringstream& buffer);
-		void linearDumpTox86Epilogue(stringstream& buffer);
-		void linearDumpTox86MemAllocs();
-	};
-
-
-
-	/* Represent a whole compilation unit. */
-	class Module {
-	private:
-		shared_ptr<list<shared_ptr<Function>>> _functions;
-
-		shared_ptr<SymbolTable> _symbTable;
-
-	public:
-		Module() : _functions(shared_ptr<list<shared_ptr<Function>>>(new list<shared_ptr<Function>>())) { }
-
-		void addFunction(shared_ptr<Function> fun) { this->_functions->push_back(fun); }
-
-		Function_sptr_list_sptr functions() const { return this->_functions; }
-
-		void symbolTable(shared_ptr<SymbolTable> st) { this->_symbTable = st; }
-		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
-
-		void dump();
-
-		/* Dump all instructions to x86. Use a list sweep algorithm on the flat IR. */
-		void linearDumpTox86(stringstream& buffer);
-	};
 
 }
 

@@ -2,26 +2,26 @@
 
 using namespace IR;
 
-#define NOT_IMPLEMENTED 		cout << "MaxMuch: not implemented. " << __FILE__ << ":" << __LINE__ << endl;
+#define NOT_IMPLEMENTED 							cout << "MaxMuch: not implemented. " << __FILE__ << ":" << __LINE__ << endl;
 
-#define isMemoryLoad(obj)		((std::dynamic_pointer_cast<IR::ScalarCopy>(obj) != nullptr) && 		\
-								 (std::dynamic_pointer_cast<IR::Register>(obj->chd1()) != nullptr) && 	\
-								 (std::dynamic_pointer_cast<IR::Memory>(obj->chd2()) != nullptr))
+#define isMemoryLoad(obj)							((std::dynamic_pointer_cast<IR::ScalarCopy>(obj) != nullptr) && 				\
+								 					(std::dynamic_pointer_cast<IR::Register>(obj->chd1()) != nullptr) && 			\
+								 					(std::dynamic_pointer_cast<IR::Memory>(obj->chd2()) != nullptr))
 
-#define isImmediateLoad(obj)	((std::dynamic_pointer_cast<IR::ScalarCopy>(obj) != nullptr) && 		\
-								 (std::dynamic_pointer_cast<IR::Register>(obj->chd1()) != nullptr) && 	\
-								 (std::dynamic_pointer_cast<IR::Immediate>(obj->chd2()) != nullptr))
+#define isImmediateLoad(obj)						((std::dynamic_pointer_cast<IR::ScalarCopy>(obj) != nullptr) && 				\
+								 					(std::dynamic_pointer_cast<IR::Register>(obj->chd1()) != nullptr) && 			\
+								 					(std::dynamic_pointer_cast<IR::Immediate>(obj->chd2()) != nullptr))
 
-#define nodeType(obj, operand)	(std::dynamic_pointer_cast<operand>(obj) != nullptr)
+#define nodeType(obj, operand)						(std::dynamic_pointer_cast<operand>(obj) != nullptr)
 
-#define setColor(obj, color)	obj->myColor(color);													\
-								obj->fillColor( this->fillColor(color) );
+#define setColor(obj, color)						obj->myColor(color);						\
+													obj->fillColor( this->fillColor(color) );
 
-#define setNodeColors(obj1, obj2, obj3, color)		obj1->myColor(color);								\
-													obj1->fillColor( this->fillColor(color) );			\
-													obj2->myColor(color);								\
-													obj2->fillColor( this->fillColor(color) );			\
-													obj3->myColor(color);								\
+#define setNodeColors(obj1, obj2, obj3, color)		obj1->myColor(color);						\
+													obj1->fillColor( this->fillColor(color) );	\
+													obj2->myColor(color);						\
+													obj2->fillColor( this->fillColor(color) );	\
+													obj3->myColor(color);						\
 													obj3->fillColor( this->fillColor(color) );
 
 

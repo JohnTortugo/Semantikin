@@ -119,6 +119,23 @@ int main(int argc, char *argv[]) {
 
 
 
+	for (auto& f : *irModule->functions()) {
+		cout << endl << f->name() << endl;
+
+		for (auto& bb : *f->bbs()) {
+			stringstream dump;
+			
+			dump << "\tBB" << bb->id() << endl;
+
+			for (auto& instr : *bb->instructions()) {
+				instr->dump(dump);
+			}
+
+			cout << dump.str() << endl;
+		}
+	}
+
+
 
 
 //	/**
