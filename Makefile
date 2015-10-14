@@ -3,7 +3,7 @@ CFGS_DOT	= 	$(shell find $(SOURCEDIR) -name 'cfg_*.dot')
 ASTS_PNG	= 	$(ASTS_DOT:.dot=.png)
 CFGS_PNG	= 	$(CFGS_DOT:.dot=.png)
 
-CFLAGS	= -g -std=c++0x -O3
+CFLAGS	= -g -std=c++0x 
 
 # All source files
 SOURCES = $(shell find . -regextype sed -regex '\..*\(\.cpp\|\.cc\)')

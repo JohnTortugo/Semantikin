@@ -1,0 +1,8 @@
+<map id="IR::LogicalArithmetic" name="IR::LogicalArithmetic">
+<area shape="rect" id="node4" href="$class_i_r_1_1_log_and.html" title="IR::LogAnd" alt="" coords="5,229,93,256"/>
+<area shape="rect" id="node5" href="$class_i_r_1_1_log_not.html" title="IR::LogNot" alt="" coords="118,229,204,256"/>
+<area shape="rect" id="node6" href="$class_i_r_1_1_log_or.html" title="IR::LogOr" alt="" coords="229,229,307,256"/>
+<area shape="rect" id="node7" href="$class_i_r_1_1_log_xor.html" title="IR::LogXor" alt="" coords="332,229,417,256"/>
+<area shape="rect" id="node2" href="$class_i_r_1_1_instruction.html" title="IR::Instruction" alt="" coords="162,80,267,107"/>
+<area shape="rect" id="node3" href="$class_parser_1_1_r_value.html" title="Parser::RValue" alt="" coords="159,5,269,32"/>
+</map>

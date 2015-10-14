@@ -174,16 +174,20 @@ namespace IR {
 		string _fillColor = "ffffff";
 		unsigned int _myColor = 0;
 
-		Instruction_sptr _chd1 = nullptr;
+		Instruction_sptr _tgt = nullptr;
 		Instruction_sptr _chd2 = nullptr;
 		Instruction_sptr _chd3 = nullptr;
+
+		/* Pointer to next operation (i.e., really an instruction) 
+		 * that should be executed */
+		Instruction_sptr _next = nullptr;
 
 	public:
 		Instruction()
 		{ }
 
-		Instruction(Instruction_sptr chd1, Instruction_sptr chd2=nullptr, Instruction_sptr chd3=nullptr) :
-			_chd1(chd1), _chd2(chd2), _chd3(chd3)
+		Instruction(Instruction_sptr tgt, Instruction_sptr chd2=nullptr, Instruction_sptr chd3=nullptr) :
+			_tgt(tgt), _chd2(chd2), _chd3(chd3), _next(nullptr)
 		{ }
 
 		// Set/get the color of this IR node. Used for graphical visualization of the IR tree
@@ -194,14 +198,18 @@ namespace IR {
 		const string& fillColor() { return this->_fillColor; }
 
 		// Used to Get/set the operands of the instruction
-		void chd1(Instruction_sptr chd) { this->_chd1 = chd; }
-		Instruction_sptr chd1() { return this->_chd1; }
+		void tgt(Instruction_sptr chd) { this->_tgt = chd; }
+		Instruction_sptr tgt() { return this->_tgt; }
 
 		void chd2(Instruction_sptr chd) { this->_chd2 = chd; }
 		Instruction_sptr chd2() { return this->_chd2; }
 
 		void chd3(Instruction_sptr chd) { this->_chd3 = chd; }
 		Instruction_sptr chd3() { return this->_chd3; }
+
+		virtual void next(Instruction_sptr nxt) { this->_next = nxt; }
+		virtual Instruction_sptr next() { return this->_next; }
+
 
 
 		virtual const shared_ptr<vector<SymbolTableEntry_sp>> arguments() { return nullptr; }
@@ -227,7 +235,16 @@ namespace IR {
 	 * placeholder for data. Like immediates, registers and
 	 * memory addresses. 									
 	 */
-	class Data : public Instruction { };
+	class Data : public Instruction {
+		void next(Instruction_sptr nxt) { 
+			cout << "IR Error: Operands should not have next ptrs." << endl; 
+		}
+
+		Instruction_sptr next() { 
+			cout << "IR Error: Operands do not have next ptrs." << endl; 
+			return this->_next; 
+		}
+	};
 
 	class Immediate : public Data {
 	private:
@@ -314,12 +331,8 @@ namespace IR {
 	/* Parent class of all data movement instructions. 		*/
 	class Copy : public Instruction {
 	public:
-		Copy(Instruction_sptr tgt, Instruction_sptr value) : Instruction(tgt, value, nullptr)
-		{
-			if (tgt == nullptr || value == nullptr) {
-				cout << "Some parameter is null..." << endl;
-			}
-
+		Copy(Instruction_sptr tgt, Instruction_sptr value) : Instruction(tgt, value, nullptr) {
+			assert(tgt != nullptr && value != nullptr && "A parameter to IR::Copy is null.\n");
 		}
 	};
 
@@ -328,7 +341,7 @@ namespace IR {
 		using Copy::Copy;
 
 		/** Used to obtain the "human readable" name of the destination operand of the operation. */
-		string tgtDataName() { return this->_chd1->tgtDataName(); }
+		string tgtDataName() { return this->_tgt->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -340,7 +353,7 @@ namespace IR {
 		using Copy::Copy;
 
 		/** Used to obtain the "human readable" name of the destination operand of the operation. */
-		string tgtDataName() { return this->_chd1->tgtDataName(); }
+		string tgtDataName() { return this->_tgt->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -352,7 +365,7 @@ namespace IR {
 		using Copy::Copy;
 
 		/** Used to obtain the "human readable" name of the destination operand of the operation. */
-		string tgtDataName() { return this->_chd1->tgtDataName(); }
+		string tgtDataName() { return this->_tgt->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -370,20 +383,20 @@ namespace IR {
 	/* Parent class of all integer arithmetic instructions. */
 	class IntegerArithmetic : public Instruction {
 	public:
-		IntegerArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
+		IntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
 	};
 
 	class BinaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		BinaryIntegerArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : IntegerArithmetic(chd1, chd2, chd3)
+		BinaryIntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : IntegerArithmetic(tgt, chd2, chd3)
 		{ }
 	};
 
 	class UnaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		UnaryIntegerArithmetic(Instruction_sptr chd1, Instruction_sptr chd2) 
-			: IntegerArithmetic(chd1, chd2, nullptr) { }
+		UnaryIntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) 
+			: IntegerArithmetic(tgt, chd2, nullptr) { }
 	};
 
 	class IAdd : public BinaryIntegerArithmetic {
@@ -391,7 +404,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -404,7 +417,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -417,7 +430,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -430,7 +443,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -443,7 +456,7 @@ namespace IR {
 		using BinaryIntegerArithmetic::BinaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -456,7 +469,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -469,7 +482,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -482,7 +495,7 @@ namespace IR {
 		using UnaryIntegerArithmetic::UnaryIntegerArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -501,19 +514,19 @@ namespace IR {
 	/* Parent class of all floating point arithmetic instructions. */
 	class FloatingArithmetic : public Instruction {
 	public:
-		FloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
+		FloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
 	};
 
 	class BinaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		BinaryFloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : FloatingArithmetic(chd1, chd2, chd3)
+		BinaryFloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : FloatingArithmetic(tgt, chd2, chd3)
 		{ }
 	};
 
 	class UnaryFloatingArithmetic : public FloatingArithmetic {
 	public:
-		UnaryFloatingArithmetic(Instruction_sptr chd1, Instruction_sptr chd2) : FloatingArithmetic(chd1, chd2, nullptr)
+		UnaryFloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) : FloatingArithmetic(tgt, chd2, nullptr)
 		{ }
 	};
 
@@ -522,7 +535,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -535,7 +548,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -548,7 +561,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -561,7 +574,7 @@ namespace IR {
 		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -574,7 +587,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -587,7 +600,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -600,7 +613,7 @@ namespace IR {
 		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -617,7 +630,7 @@ namespace IR {
 	/* Parent class of all binary arithmetic instructions.  */
 	class BitArithmetic : public Instruction {
 	public:
-		BitArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
+		BitArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
 	};
 
@@ -626,7 +639,7 @@ namespace IR {
 		using BitArithmetic::BitArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -639,7 +652,7 @@ namespace IR {
 		using BitArithmetic::BitArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -652,7 +665,7 @@ namespace IR {
 		using BitArithmetic::BitArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -662,11 +675,11 @@ namespace IR {
 
 	class BinNot : public BitArithmetic {
 	public:
-		BinNot(Instruction_sptr chd1, Instruction_sptr chd2) : BitArithmetic(chd1, chd2, nullptr)
+		BinNot(Instruction_sptr tgt, Instruction_sptr chd2) : BitArithmetic(tgt, chd2, nullptr)
 		{ }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -685,7 +698,7 @@ namespace IR {
 	/* Parent class of all relational arithmetic instructions. */
 	class RelationalArithmetic : public Instruction {
 	public:
-		RelationalArithmetic(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
+		RelationalArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
 	};
 
@@ -694,7 +707,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -707,7 +720,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -720,7 +733,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -733,7 +746,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -746,7 +759,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -759,7 +772,7 @@ namespace IR {
 		using RelationalArithmetic::RelationalArithmetic;
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -776,10 +789,10 @@ namespace IR {
 		BasicBlock_sptr _lbl2;
 
 	public:
-		BranchInstruction(BasicBlock_sptr chd1) : Instruction(nullptr, nullptr, nullptr), _lbl1(chd1), _lbl2(nullptr)
+		BranchInstruction(BasicBlock_sptr tgt) : Instruction(nullptr, nullptr, nullptr), _lbl1(tgt), _lbl2(nullptr)
 		{ }
 
-		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : Instruction(exp, nullptr, nullptr), _lbl1(chd1), _lbl2(chd2)
+		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr tgt, BasicBlock_sptr chd2) : Instruction(exp, nullptr, nullptr), _lbl1(tgt), _lbl2(chd2)
 		{ }
 
 
@@ -810,7 +823,7 @@ namespace IR {
 
 	class Conditional : public BranchInstruction {
 	public:
-		Conditional(Instruction_sptr exp, BasicBlock_sptr chd1, BasicBlock_sptr chd2) : BranchInstruction(exp, chd1, chd2)
+		Conditional(Instruction_sptr exp, BasicBlock_sptr tgt, BasicBlock_sptr chd2) : BranchInstruction(exp, tgt, chd2)
 		{ _lbl1->usageCounter()++; _lbl2->usageCounter()++; }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
@@ -831,11 +844,11 @@ namespace IR {
 	/* Represent taking the address of a variable. */
 	class Addr : public Instruction {
 	public:
-		Addr(Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(chd1, chd2, nullptr)
+		Addr(Instruction_sptr tgt, Instruction_sptr chd2) : Instruction(tgt, chd2, nullptr)
 		{ }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -849,11 +862,11 @@ namespace IR {
 	 */
 	class AddrDispl : public Instruction {
 	public:
-		AddrDispl(Instruction_sptr chd1, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(chd1, chd2, chd3)
+		AddrDispl(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);
@@ -868,11 +881,11 @@ namespace IR {
 		shared_ptr<vector<Instruction_sptr>> _arguments;
 
 	public:
-		Call(Instruction_sptr chd1, Instruction_sptr chd2) : Instruction(chd1, chd2, nullptr)
+		Call(Instruction_sptr tgt, Instruction_sptr chd2) : Instruction(tgt, chd2, nullptr)
 		{ }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		const shared_ptr<vector<Instruction_sptr>> arguments() const { return _arguments; }
 
@@ -900,7 +913,7 @@ namespace IR {
 		}
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->chd1()->tgtDataName(); }
+		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor);

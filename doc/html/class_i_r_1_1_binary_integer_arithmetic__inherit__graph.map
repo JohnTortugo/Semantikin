@@ -1,0 +1,10 @@
+<map id="IR::BinaryIntegerArithmetic" name="IR::BinaryIntegerArithmetic">
+<area shape="rect" id="node5" href="$class_i_r_1_1_i_add.html" title="IR::IAdd" alt="" coords="5,304,75,331"/>
+<area shape="rect" id="node6" href="$class_i_r_1_1_i_div.html" title="IR::IDiv" alt="" coords="99,304,167,331"/>
+<area shape="rect" id="node7" href="$class_i_r_1_1_i_mod.html" title="IR::IMod" alt="" coords="191,304,264,331"/>
+<area shape="rect" id="node8" href="$class_i_r_1_1_i_mul.html" title="IR::IMul" alt="" coords="289,304,359,331"/>
+<area shape="rect" id="node9" href="$class_i_r_1_1_i_sub.html" title="IR::ISub" alt="" coords="383,304,453,331"/>
+<area shape="rect" id="node2" href="$class_i_r_1_1_integer_arithmetic.html" title="IR::IntegerArithmetic" alt="" coords="157,155,299,181"/>
+<area shape="rect" id="node3" href="$class_i_r_1_1_instruction.html" title="IR::Instruction" alt="" coords="175,80,280,107"/>
+<area shape="rect" id="node4" href="$class_parser_1_1_r_value.html" title="Parser::RValue" alt="" coords="173,5,283,32"/>
+</map>

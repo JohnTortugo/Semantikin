@@ -3,6 +3,7 @@
 #include "AstVisitors.h"
 #include "IRVisitors.h"
 #include "MaximalMunch.h"
+#include "TreeCanonicalizer.h"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -81,9 +82,12 @@ int main(int argc, char *argv[]) {
 	astModule->accept(&irgen);
 
 	/* Obtain pointer to the IR generated module. */
-	shared_ptr<IR::Module> irModule = irgen.module();
+	auto irModule = irgen.module();
 
-
+	
+	/* Call tree canonicalizer */
+	TreeCanonicalizer tc;
+	irModule->accept(&tc);
 
 
 

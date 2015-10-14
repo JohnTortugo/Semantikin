@@ -132,7 +132,7 @@ namespace IR {
 
 
 	void ScalarCopy::dump(stringstream& buffer) {
-		buffer << this->_chd1->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
 	}
 
 	void CopyFromArray::dump(stringstream& buffer) {

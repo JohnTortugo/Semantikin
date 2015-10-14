@@ -1,0 +1,7 @@
+<map id="IR::Copy" name="IR::Copy">
+<area shape="rect" id="node4" href="$class_i_r_1_1_copy_from_array.html" title="IR::CopyFromArray" alt="" coords="5,229,140,256"/>
+<area shape="rect" id="node5" href="$class_i_r_1_1_copy_to_array.html" title="IR::CopyToArray" alt="" coords="166,229,287,256"/>
+<area shape="rect" id="node6" href="$class_i_r_1_1_scalar_copy.html" title="IR::ScalarCopy" alt="" coords="312,229,423,256"/>
+<area shape="rect" id="node2" href="$class_i_r_1_1_instruction.html" title="IR::Instruction" alt="" coords="174,80,279,107"/>
+<area shape="rect" id="node3" href="$class_parser_1_1_r_value.html" title="Parser::RValue" alt="" coords="171,5,281,32"/>
+</map>

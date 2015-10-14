@@ -231,12 +231,12 @@ void IRToDotVisitor::visit(IR::Jump* node) {
 
 void IRToDotVisitor::visit(IR::Conditional* node) { 
 	this->newline() << DOT_NEW_NODE_NO_TGT(node, "if") << endl;
-	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
+	this->newline() << DOT_EDGE(node, node->tgt()) << endl;
 
 	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl1()->id(), "True") );
 	this->crossEdges.push_back( std::make_tuple(this->_currentBasicBlock->id(), node->lbl2()->id(), "False") );
 
-	node->chd1()->accept(this);
+	node->tgt()->accept(this);
 }
 
 
@@ -250,7 +250,7 @@ void IRToDotVisitor::visit(IR::AddrDispl* node) {
 }
 
 void IRToDotVisitor::visit(IR::Call* node) { 
-	this->newline() << DOT_NEW_NODE_WITH_TGT(node, "call", node->chd1()->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_WITH_TGT(node, "call", node->tgt()->tgtDataName()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
 	if (node->arguments() != nullptr) {
@@ -260,15 +260,15 @@ void IRToDotVisitor::visit(IR::Call* node) {
 		}
 	}
 
-	node->chd1()->accept(this);
+	node->tgt()->accept(this);
 	node->chd2()->accept(this);
 }
 
 void IRToDotVisitor::visit(IR::Return* node) { 
 	this->newline() << DOT_NEW_NODE_NO_TGT(node, "Ret") << endl;
-	this->newline() << DOT_EDGE(node, node->chd1()) << endl;
+	this->newline() << DOT_EDGE(node, node->tgt()) << endl;
 
-	node->chd1()->accept(this);
+	node->tgt()->accept(this);
 }
 
 void IRToDotVisitor::visit(IR::Phi* visitor) { cout << "Not implemented." << endl; }
@@ -276,7 +276,7 @@ void IRToDotVisitor::visit(IR::Phi* visitor) { cout << "Not implemented." << end
 
 
 void IRToDotVisitor::binaryDispatcher(IR::Instruction* node, const char* label) {
-	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->chd1()->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->tgt()->tgtDataName()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd3()) << endl;
 
@@ -285,7 +285,7 @@ void IRToDotVisitor::binaryDispatcher(IR::Instruction* node, const char* label) 
 }
 
 void IRToDotVisitor::unaryDispatcher(IR::Instruction* node, const char* label) {
-	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->chd1()->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->tgt()->tgtDataName()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
 	node->chd2()->accept(this);
