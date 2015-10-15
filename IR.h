@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <map>
 #include <iterator>
+#include <cstddef>
 
 using std::stringstream;
 using std::string;
@@ -24,37 +25,120 @@ class IRTreeVisitor;
 
 namespace IR {
 
-	class InstructionIterator : public std::iterator<std::bidirectional_iterator_tag, IR::Instruction> {
-	private:
+
+
+
+
+
+
+
+	/* This class is the parent of all IR instructions. */
+	class Instruction {
+	protected:
+		// This is only used when dumping the IR to a visual format
+		string _fillColor = "ffffff";
+		unsigned int _myColor = 0;
+
+		Instruction_sptr _tgt = nullptr;
+		Instruction_sptr _chd2 = nullptr;
+		Instruction_sptr _chd3 = nullptr;
+
+		/* Pointer to next operation (i.e., really an instruction) 
+		 * that should be executed */
+		Instruction* _next = nullptr;
 
 	public:
+		Instruction()
+		{ }
+
+		Instruction(Instruction_sptr tgt, Instruction_sptr chd2=nullptr, Instruction_sptr chd3=nullptr) :
+			_tgt(tgt), _chd2(chd2), _chd3(chd3), _next(nullptr)
+		{ }
+
+		// Set/get the color of this IR node. Used for graphical visualization of the IR tree
+		void myColor(unsigned int mc) { this->_myColor = mc; }
+		unsigned int myColor() { return this->_myColor; }
+
+		void fillColor(const string& fc) { this->_fillColor = fc; }
+		const string& fillColor() { return this->_fillColor; }
+
+		// Used to Get/set the operands of the instruction
+		void tgt(Instruction_sptr chd) { this->_tgt = chd; }
+		Instruction_sptr tgt() { return this->_tgt; }
+
+		void chd2(Instruction_sptr chd) { this->_chd2 = chd; }
+		Instruction_sptr chd2() { return this->_chd2; }
+
+		void chd3(Instruction_sptr chd) { this->_chd3 = chd; }
+		Instruction_sptr chd3() { return this->_chd3; }
+
+		virtual void next(Instruction* nxt) { this->_next = nxt; }
+		virtual Instruction* next() { return this->_next; }
+
+
+
+		virtual const shared_ptr<vector<SymbolTableEntry_sp>> arguments() { return nullptr; }
+		virtual void addArgument(SymbolTableEntry_sp argument) { }
+
+		/** Used to traverse the IR tree. */
+		virtual void accept(IRTreeVisitor* visitor) = 0;
+
+		/** Used to dump in a "human readable" way the instruction's target operand */
+		virtual string tgtDataName() = 0;
+
+		virtual void dump(stringstream& buffer) = 0;
+
+		virtual ~Instruction() {};
+	};
+
+
+
+
+
+	class InstructionIterator : public std::iterator<std::bidirectional_iterator_tag, IR::Instruction> {
+	private:
+		Instruction* _current = nullptr;
+
+	public:
+		InstructionIterator(Instruction* head) : _current(head) {
+		}
+
 		InstructionIterator operator=(const InstructionIterator& other) {
+			this->_current = other.current();
 		}
 
-		InstructionIterator& operator++(){
+		Instruction* current() const { 
+			return this->_current; 
+		}
+
+
+
+		InstructionIterator& operator++() {
+			this->_current = this->current()->next();
 			return *this;
 		}
 
-		InstructionIterator operator++(int){
-			return *this;
+		InstructionIterator operator++(int) {
+			InstructionIterator clone(*this);
+			this->_current = this->current()->next();
+			return clone;
 		}
 
 		bool operator==(const InstructionIterator& other) {
-			return false;
+			return this->current() == other.current();
 		}
 
 		bool operator!=(const InstructionIterator& other) {
-			return false;
+			return !(*this == other);
 		}
 
-		InstructionIterator& operator*() {
-			return *this;
+		Instruction& operator*() {
+			return *this->current();
 		}
 
-		InstructionIterator& operator->() {
-			return *this;
+		Instruction& operator->() {
+			return *this->current();
 		}
-
 	};
 
 	class InstructionSequence {
@@ -62,13 +146,20 @@ namespace IR {
 		Instruction* _head;		
 
 	public:
+		typedef InstructionIterator iterator;
+		typedef ptrdiff_t difference_type;
+		typedef size_t size_type;
+		typedef Instruction value_type;
+		typedef Instruction* pointer;
+		typedef Instruction& reference;
+
 		InstructionSequence(Instruction* head) {
 			this->_head = head;
 		}
 
-		InstructionIterator begin() { InstructionIterator(); }
+		iterator begin() { return iterator(this->_head); }
 
-		InstructionIterator end() { InstructionIterator(); }
+		iterator end() { return iterator(nullptr); }
 	};
 
 	/** Well, this represents a basic block =) */
@@ -105,7 +196,7 @@ namespace IR {
 
 		void firstInstruction(Instruction* first) { this->_firstInstruction = first; }
 
-		InstructionSequence* instructions() { return new InstructionSequence(this->_firstInstruction); }
+		InstructionSequence instructions() { return InstructionSequence(this->_firstInstruction); }
 
 		void appendInstruction(Instruction_sptr instr) {
 			this->_subtrees->push_back( instr );
@@ -219,66 +310,6 @@ namespace IR {
 
 
 
-
-
-	/* This class is the parent of all IR instructions. */
-	class Instruction {
-	protected:
-		// This is only used when dumping the IR to a visual format
-		string _fillColor = "ffffff";
-		unsigned int _myColor = 0;
-
-		Instruction_sptr _tgt = nullptr;
-		Instruction_sptr _chd2 = nullptr;
-		Instruction_sptr _chd3 = nullptr;
-
-		/* Pointer to next operation (i.e., really an instruction) 
-		 * that should be executed */
-		Instruction* _next = nullptr;
-
-	public:
-		Instruction()
-		{ }
-
-		Instruction(Instruction_sptr tgt, Instruction_sptr chd2=nullptr, Instruction_sptr chd3=nullptr) :
-			_tgt(tgt), _chd2(chd2), _chd3(chd3), _next(nullptr)
-		{ }
-
-		// Set/get the color of this IR node. Used for graphical visualization of the IR tree
-		void myColor(unsigned int mc) { this->_myColor = mc; }
-		unsigned int myColor() { return this->_myColor; }
-
-		void fillColor(const string& fc) { this->_fillColor = fc; }
-		const string& fillColor() { return this->_fillColor; }
-
-		// Used to Get/set the operands of the instruction
-		void tgt(Instruction_sptr chd) { this->_tgt = chd; }
-		Instruction_sptr tgt() { return this->_tgt; }
-
-		void chd2(Instruction_sptr chd) { this->_chd2 = chd; }
-		Instruction_sptr chd2() { return this->_chd2; }
-
-		void chd3(Instruction_sptr chd) { this->_chd3 = chd; }
-		Instruction_sptr chd3() { return this->_chd3; }
-
-		virtual void next(Instruction* nxt) { this->_next = nxt; }
-		virtual Instruction* next() { return this->_next; }
-
-
-
-		virtual const shared_ptr<vector<SymbolTableEntry_sp>> arguments() { return nullptr; }
-		virtual void addArgument(SymbolTableEntry_sp argument) { }
-
-		/** Used to traverse the IR tree. */
-		virtual void accept(IRTreeVisitor* visitor) = 0;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		virtual string tgtDataName() = 0;
-
-		virtual void dump(stringstream& buffer) = 0;
-
-		virtual ~Instruction() {};
-	};
 
 
 	/********************************************************/

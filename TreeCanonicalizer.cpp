@@ -4,6 +4,9 @@ void TreeCanonicalizer::updateNext(Instruction* node) {
 	if (this->prevInstruction != nullptr) {
 		this->prevInstruction->next(node);
 	}
+	else {
+		this->firstInstruction = node;
+	}
 
 	this->prevInstruction = node;
 }

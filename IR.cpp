@@ -136,45 +136,45 @@ namespace IR {
 	}
 
 	void CopyFromArray::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = *" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = *" << this->_chd2->tgtDataName() << ";" << endl;
 	}
 
 	void CopyToArray::dump(stringstream& buffer) {
-//		buffer << "*" << this->_tgt->getName() << " = " << this->_src1->getName() << ";" << endl;
+		buffer << "*" << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
 	}
 
 
 
 	void IAdd::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " + " << this->_chd3->tgtDataName() << ";" << endl;
 	}
 
 	void ISub::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " - " << this->_chd3->tgtDataName() << ";" << endl;
 	}
 
 	void IMul::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " * " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " * " << this->_chd3->tgtDataName() << ";" << endl;
 	}
 
 	void IDiv::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " / " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " / " << this->_chd3->tgtDataName() << ";" << endl;
 	}
 
 	void IMod::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " % " << this->_src2->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " % " << this->_chd3->tgtDataName() << ";" << endl;
 	}
 
 	void IMinus::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = -" << this->_src1->getName() << ";" << endl;
+		buffer << this->_tgt->tgtDataName() << " = -" << this->_chd2->tgtDataName() << ";" << endl;
 	}
 
 	void IInc::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " + 1;" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " + 1;" << endl;
 	}
 
 	void IDec::dump(stringstream& buffer) {
-//		buffer << this->_tgt->getName() << " = " << this->_src1->getName() << " - 1;" << endl;
+		buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " - 1;" << endl;
 	}
 
 

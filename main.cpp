@@ -123,51 +123,20 @@ int main(int argc, char *argv[]) {
 
 
 
+	stringstream output;
 	for (auto& f : *irModule->functions()) {
-		cout << endl << f->name() << endl;
+		output << endl << "Code for function: " << f->name() << endl;
 
 		for (auto& bb : *f->bbs()) {
-		
 			
-			for (auto& instr : *bb->instructions()) {
-
+			for (auto& instr : bb->instructions()) {
+				instr.dump(output);
 			}
 
 		}
 	}
 
-
-
-
-//	/**
-//	 * If the user specified that no further processing [assemblying/linking]
-//	 * is required the part below should be skipped.
-//	 *
-//	 * Call GCC to assembly and link
-//	 */
-//	if (!cmdOptionExists(argv, argv+argc, "-dumps")) {
-//		char asmFileName[50] 	= {"/tmp/Semantikin_XXXXXX"};
-//		int asmFile 			= mkstemp(asmFileName);
-//
-//		if (!asmFile || asmFile == -1) {
-//			fprintf(stderr, "It was not possible to create a temporary file.\n");
-//			exit(1);
-//		}
-//		else {
-//			write(asmFile, x86Stream.str().c_str(), x86Stream.str().size());
-//			close(asmFile);
-//
-//			string outputName = "executable";
-//
-//			if (cmdOptionExists(argv, argv+argc, "-o"))
-//				outputName = getCmdOption(argv, argv+argc, "-o");
-//
-//			stringstream ss;
-//			ss << "gcc -g lib.c -x assembler " << asmFileName << " -o " << outputName;
-//			cout << ss.str() << endl;
-//			system(ss.str().c_str());
-//		}
-//	}
+	cout << output.str() << endl;
 
 	/* Finish */
 	exit(0);
