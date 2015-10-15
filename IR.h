@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <iterator>
 
 using std::stringstream;
 using std::string;
@@ -23,13 +24,62 @@ class IRTreeVisitor;
 
 namespace IR {
 
+	class InstructionIterator : public std::iterator<std::bidirectional_iterator_tag, IR::Instruction> {
+	private:
+
+	public:
+		InstructionIterator operator=(const InstructionIterator& other) {
+		}
+
+		InstructionIterator& operator++(){
+			return *this;
+		}
+
+		InstructionIterator operator++(int){
+			return *this;
+		}
+
+		bool operator==(const InstructionIterator& other) {
+			return false;
+		}
+
+		bool operator!=(const InstructionIterator& other) {
+			return false;
+		}
+
+		InstructionIterator& operator*() {
+			return *this;
+		}
+
+		InstructionIterator& operator->() {
+			return *this;
+		}
+
+	};
+
+	class InstructionSequence {
+	private:
+		Instruction* _head;		
+
+	public:
+		InstructionSequence(Instruction* head) {
+			this->_head = head;
+		}
+
+		InstructionIterator begin() { InstructionIterator(); }
+
+		InstructionIterator end() { InstructionIterator(); }
+	};
+
 	/** Well, this represents a basic block =) */
 	class BasicBlock {
 	private:
 		int _id;
 		int _usageCounter;
 
-		Instruction_list_sptr _instructions;
+		Instruction_list_sptr _subtrees;
+
+		Instruction* _firstInstruction;
 
 		BasicBlock_list_sptr _preds;
 		BasicBlock_list_sptr _succs;
@@ -38,11 +88,11 @@ namespace IR {
 		BasicBlock(int id) :
 			_id(id),
 			_usageCounter(0),
-			_instructions(nullptr),
+			_subtrees(nullptr),
 			_preds(nullptr),
 			_succs(nullptr)
 		{ 
-			this->_instructions =  make_shared< list<shared_ptr<IR::Instruction>> >();
+			this->_subtrees =  make_shared< list<shared_ptr<IR::Instruction>> >();
 		}
 
 		int id() const { return _id; }
@@ -51,10 +101,14 @@ namespace IR {
 		int& usageCounter() { return _usageCounter; }
 		void usageCounter(int uc) { _usageCounter = uc; }
 
-		Instruction_list_sptr instructions() const { return _instructions; }
+		Instruction_list_sptr subtrees() const { return _subtrees; }
+
+		void firstInstruction(Instruction* first) { this->_firstInstruction = first; }
+
+		InstructionSequence* instructions() { return new InstructionSequence(this->_firstInstruction); }
 
 		void appendInstruction(Instruction_sptr instr) {
-			this->_instructions->push_back( instr );
+			this->_subtrees->push_back( instr );
 		}
 
 		/* Used to traverse the IR tree. */
@@ -180,7 +234,7 @@ namespace IR {
 
 		/* Pointer to next operation (i.e., really an instruction) 
 		 * that should be executed */
-		Instruction_sptr _next = nullptr;
+		Instruction* _next = nullptr;
 
 	public:
 		Instruction()
@@ -207,8 +261,8 @@ namespace IR {
 		void chd3(Instruction_sptr chd) { this->_chd3 = chd; }
 		Instruction_sptr chd3() { return this->_chd3; }
 
-		virtual void next(Instruction_sptr nxt) { this->_next = nxt; }
-		virtual Instruction_sptr next() { return this->_next; }
+		virtual void next(Instruction* nxt) { this->_next = nxt; }
+		virtual Instruction* next() { return this->_next; }
 
 
 
@@ -236,11 +290,11 @@ namespace IR {
 	 * memory addresses. 									
 	 */
 	class Data : public Instruction {
-		void next(Instruction_sptr nxt) { 
+		void next(Instruction* nxt) { 
 			cout << "IR Error: Operands should not have next ptrs." << endl; 
 		}
 
-		Instruction_sptr next() { 
+		Instruction* next() { 
 			cout << "IR Error: Operands do not have next ptrs." << endl; 
 			return this->_next; 
 		}

@@ -3,7 +3,17 @@
 
 #include "InstructionSelection.h"
 
+using namespace IR;
+
 class TreeCanonicalizer : public InstructionSelection {
+private:
+	Instruction* firstInstruction = nullptr;
+	Instruction* prevInstruction = nullptr;
+
+	void updateNext(Instruction* node);
+	void unaryDispatcher(Instruction* node);
+	void binaryDispatcher(Instruction* node);
+
 public:
 	void visit(IR::Module*);
 	void visit(IR::Function*);

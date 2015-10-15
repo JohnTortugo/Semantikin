@@ -62,7 +62,7 @@ void IRToDotVisitor::visit(IR::BasicBlock* bb) {
 	this->newline() << "invis_" << bb << " [style=invisible,label=x,height=.1,width=.1];" << endl;
 
 	Instruction_sptr prev = nullptr;
-	for (auto& subtree : *bb->instructions()) {
+	for (auto& subtree : *bb->subtrees()) {
 		subtree->accept(this);
 
 		if (prev != nullptr) {

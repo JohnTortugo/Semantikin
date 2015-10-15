@@ -40,7 +40,7 @@ void MaximalMunch::visit(IR::Function* func) {
 }
 
 void MaximalMunch::visit(IR::BasicBlock* bb) {  
-	for (auto& tree : *(bb->instructions())) {
+	for (auto& tree : *(bb->subtrees())) {
 		setColor(tree, 0);
 		tree->accept(this);
 	}
