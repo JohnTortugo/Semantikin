@@ -25,7 +25,7 @@ bool cmdOptionExists(char** begin, char** end, const std::string& option) {
 
 void printHeader() {
 	printf("This is Semantikin v. 0.1\n");
-	printf("--------------------------\n\n");
+	printf("--------------------------\n");
 }
 
 void printHelp() {
@@ -117,27 +117,24 @@ int main(int argc, char *argv[]) {
 
 	/* Just dump the IR */
 	if (cmdOptionExists(argv, argv+argc, "-dumpIR")) {
-		cout << " -dumpIR is currently not working." << endl;
-		// irModule->dump();
+		stringstream output;
+
+		for (auto& f : *irModule->functions())  
+			f->dump(output);
+
+		cout << output.str() << endl;
 	}
 
-
-
-	stringstream output;
-	for (auto& f : *irModule->functions()) {
-		output << endl << "Code for function: " << f->name() << endl;
-
-		for (auto& bb : *f->bbs()) {
+	/* Just dump the CFG */
+	if (cmdOptionExists(argv, argv+argc, "-dumpCFG")) {
+		for (auto& function : *irModule->functions()) {
+			for (auto& bb : function->bbs(Function::TOPOL_ORDER)) {
 			
-			for (auto& instr : bb->instructions()) {
-				instr.dump(output);
 			}
-
-		}
+		}		
 	}
 
-	cout << output.str() << endl;
-
+	
 	/* Finish */
 	exit(0);
 }

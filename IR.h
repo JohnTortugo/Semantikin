@@ -25,15 +25,8 @@ class IRTreeVisitor;
 
 namespace IR {
 
-
-
-
-
-
-
-
 	/* This class is the parent of all IR instructions. */
-	class Instruction {
+	class Instruction : public std::enable_shared_from_this<Instruction> {
 	protected:
 		// This is only used when dumping the IR to a visual format
 		string _fillColor = "ffffff";
@@ -91,6 +84,27 @@ namespace IR {
 		virtual ~Instruction() {};
 	};
 
+
+	/* Base class for all instructions that change control flow. */
+	class BranchInstruction : public Instruction {
+	protected:
+		BasicBlock_sptr _lbl1;
+		BasicBlock_sptr _lbl2;
+
+	public:
+		BranchInstruction(BasicBlock_sptr lbl) : Instruction(nullptr, nullptr, nullptr), _lbl1(lbl), _lbl2(nullptr)
+		{ }
+
+		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr lbl1, BasicBlock_sptr lbl2) : Instruction(exp, nullptr, nullptr), _lbl1(lbl1), _lbl2(lbl2)
+		{ }
+
+
+		BasicBlock_sptr lbl1() { return this->_lbl1; }
+		void lbl1(BasicBlock_sptr lbl) { this->_lbl1 = lbl; }
+
+		BasicBlock_sptr lbl2() { return this->_lbl2; }
+		void lbl2(BasicBlock_sptr lbl) { this->_lbl2 = lbl; }
+	};
 
 
 
@@ -163,7 +177,7 @@ namespace IR {
 	};
 
 	/** Well, this represents a basic block =) */
-	class BasicBlock {
+	class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 	private:
 		int _id;
 		int _usageCounter;
@@ -179,11 +193,10 @@ namespace IR {
 		BasicBlock(int id) :
 			_id(id),
 			_usageCounter(0),
-			_subtrees(nullptr),
-			_preds(nullptr),
-			_succs(nullptr)
+			_subtrees(  make_shared<Instruction_list>() ),
+			_preds( make_shared<BasicBlock_list>() ),
+			_succs( make_shared<BasicBlock_list>() )
 		{ 
-			this->_subtrees =  make_shared< list<shared_ptr<IR::Instruction>> >();
 		}
 
 		int id() const { return _id; }
@@ -196,10 +209,46 @@ namespace IR {
 
 		void firstInstruction(Instruction* first) { this->_firstInstruction = first; }
 
-		InstructionSequence instructions() { return InstructionSequence(this->_firstInstruction); }
+		InstructionSequence instructions() { 
+			return InstructionSequence(this->_firstInstruction); 
+		}
+
+		BasicBlock_list_sptr succs() {
+			return this->_succs;
+		}
+
+		BasicBlock_list_sptr preds() {
+			return this->_preds;
+		}
+
+		void addPredecessor(BasicBlock_sptr pred) {
+			this->_preds->push_back(pred);
+		}	
 
 		void appendInstruction(Instruction_sptr instr) {
 			this->_subtrees->push_back( instr );
+			auto branch = std::dynamic_pointer_cast<IR::BranchInstruction>(instr);
+
+			// If the instruction is a branch we make some checkings and add 
+			// edges of the CFG.
+			if (branch != nullptr) {
+				if (this->succs() != nullptr && this->succs()->size() > 0) {
+					cout << "Error: appending a *second* branch instruction in a basic block." << endl;
+					exit(-1);
+				}
+
+				// all kinds of branches have the first label
+				this->succs()->push_back(branch->lbl1());
+
+				// the target basic block receive a predecessor
+				branch->lbl1()->addPredecessor(this->shared_from_this());
+
+				// When the branch is a goto it does not have the second label
+				if (branch->lbl2() != nullptr) {
+					this->succs()->push_back(branch->lbl2());
+					branch->lbl2()->addPredecessor(this->shared_from_this());
+				}	
+			}
 		}
 
 		/* Used to traverse the IR tree. */
@@ -235,6 +284,14 @@ namespace IR {
 		BasicBlock_sptr _currentBasicBlock;
 
 	public:
+		// This will be used to specify the order in which a client wants to
+		// traverse the nodes of the CFG.
+		enum class CFGBasicBlockOrder {
+			TOPO_SORT,
+			REVERSE_TOPO_SORT
+		}
+
+
 		Function(shared_ptr<SymbolTable> st) :
 			_symbTable(st),
 			_bbs(nullptr)
@@ -247,9 +304,22 @@ namespace IR {
 
 		string name() { return dynamic_cast<STFunctionDeclaration*>(this->_addr.get())->getLabel(); }
 
+		// No order specified. Just return the order of the internal structure.
+		BasicBlock_list_sptr bbs() { 
+			return this->_bbs; 
+		};
 
-		BasicBlock_list_sptr bbs() { return this->_bbs; };
+		BasicBlock_list_sptr bbs(CFGBasicBlockOrder order) {
+			if (order == CFGBasicBlockOrder::TOPO_SORT) {
 
+			}
+			else {
+				cout << "CRITICAL: Invalid CFG node order specified." << endl;
+				exit(1);
+			}
+		}
+		
+		
 
 
 		/* Methods related to setting/getting the function's declaration. */
@@ -867,30 +937,9 @@ namespace IR {
 
 
 
-	/* Base class for all instructions that change control flow. */
-	class BranchInstruction : public Instruction {
-	protected:
-		BasicBlock_sptr _lbl1;
-		BasicBlock_sptr _lbl2;
-
-	public:
-		BranchInstruction(BasicBlock_sptr tgt) : Instruction(nullptr, nullptr, nullptr), _lbl1(tgt), _lbl2(nullptr)
-		{ }
-
-		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr tgt, BasicBlock_sptr chd2) : Instruction(exp, nullptr, nullptr), _lbl1(tgt), _lbl2(chd2)
-		{ }
-
-
-		BasicBlock_sptr lbl1() { return this->_lbl1; }
-		void lbl1(BasicBlock_sptr lbl) { this->_lbl1 = lbl; }
-
-		BasicBlock_sptr lbl2() { return this->_lbl2; }
-		void lbl2(BasicBlock_sptr lbl) { this->_lbl2 = lbl; }
-	};
-
 	class Jump : public BranchInstruction {
 	public:
-		Jump(BasicBlock_sptr tgt) : BranchInstruction(tgt)
+		Jump(BasicBlock_sptr lbl1) : BranchInstruction(lbl1)
 		{ _lbl1->usageCounter()++; }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
@@ -908,7 +957,7 @@ namespace IR {
 
 	class Conditional : public BranchInstruction {
 	public:
-		Conditional(Instruction_sptr exp, BasicBlock_sptr tgt, BasicBlock_sptr chd2) : BranchInstruction(exp, tgt, chd2)
+		Conditional(Instruction_sptr exp, BasicBlock_sptr lbl1, BasicBlock_sptr lbl2) : BranchInstruction(exp, lbl1, lbl2)
 		{ _lbl1->usageCounter()++; _lbl2->usageCounter()++; }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
@@ -929,7 +978,7 @@ namespace IR {
 	/* Represent taking the address of a variable. */
 	class Addr : public Instruction {
 	public:
-		Addr(Instruction_sptr tgt, Instruction_sptr chd2) : Instruction(tgt, chd2, nullptr)
+		Addr(Instruction_sptr tgt, Instruction_sptr lbl2) : Instruction(tgt, lbl2, nullptr)
 		{ }
 
 		/** Used to dump in a "human readable" way the instruction's target operand */
@@ -990,11 +1039,8 @@ namespace IR {
 	/* Represent a return instruction. */
 	class Return : public Instruction {
 	public:
-		Return(Instruction_sptr exp) : Instruction(exp, nullptr, nullptr)
-		{ 
-			if (exp == nullptr) {
-				cout << "Exp on return is nullptr." << endl;
-			}
+		Return(Instruction_sptr exp) : Instruction(exp, nullptr, nullptr) { 
+			assert(exp && "Exp on IR::Return is nullptr.");
 		}
 
 		/** Used to dump in a "human readable" way the instruction's target operand */

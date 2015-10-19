@@ -78,7 +78,6 @@ namespace IR {
 	void FMul::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FDiv::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FMinus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-	//void FPlus::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FInc::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 	void FDec::accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
@@ -254,11 +253,11 @@ namespace IR {
 
 
 	void Jump::dump(stringstream& buffer) {
-//		buffer << "goto " << this->_tgt->getName() << ";" << endl;
+		buffer << "goto BB" << this->lbl1()->id() << ";" << endl;
 	}
 
 	void Conditional::dump(stringstream& buffer) {
-//		buffer << "if " << this->_tgt->getName() << " goto " << this->_src1->getName() << ";" << endl;
+		buffer << "if " << this->tgt()->tgtDataName() << " goto BB" << this->lbl1()->id() << " else goto BB" << this->lbl2()->id() << ";" << endl;
 	}
 
 
@@ -272,26 +271,26 @@ namespace IR {
 	}
 
 	void Call::dump(stringstream& buffer) {
-//		if (this->_tgt != nullptr)
-//			buffer << this->_tgt->getName() << " = " << this->_src1->getName() << "(";
-//		else
-//			buffer << this->_src1->getName() << "(";
-//
-//		auto arguments = this->arguments();
-//
-//		if (arguments != nullptr) {
-//			if (arguments->size() > 0)
-//				buffer << (*arguments)[0]->tgtDataName();
-//
-//			for (int i=1; i<arguments->size(); i++)
-//				buffer << ", " << (*arguments)[i]->tgtDataName();
-//		}
-//
-//		buffer << ");" << endl;
+		if (this->tgt() != nullptr)
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << "(";
+		else
+			buffer << this->chd2()->tgtDataName() << "(";
+
+		auto arguments = this->arguments();
+
+		if (arguments != nullptr) {
+			if (arguments->size() > 0)
+				buffer << (*arguments)[0]->tgtDataName();
+
+			for (int i=1; i<arguments->size(); i++)
+				buffer << ", " << (*arguments)[i]->tgtDataName();
+		}
+
+		buffer << ");" << endl;
 	}
 
 	void Return::dump(stringstream& buffer) {
-//		buffer << "return " << this->_tgt->getName() << ";" << endl;
+		buffer << "ret " << this->tgt()->tgtDataName() << ";" << endl;
 	}
 
 	void Phi::dump(stringstream& buffer) { buffer << "phi();" << endl; }
@@ -308,24 +307,18 @@ namespace IR {
 		}
 	}
 
-	void Function::dump(stringstream& buffer) {
-//		buffer << "function " << this->_addr->getName() << "(...) {" << endl;
-//
-//		for (auto instruction : *this->_subtrees) {
-//			/* Do we have a label here?  */
-//			if (instruction.first != nullptr)
-//				buffer << std::setfill(' ') << std::setw(15) << instruction.first->getName() << ": ";
-//			else
-//				buffer << std::setfill(' ') << std::setw(17) << " ";
-//
-//			/* Is it just a label? */
-//			if (instruction.second != nullptr)
-//				instruction.second->dump(buffer);
-//			else
-//				buffer << endl;
-//		}
-//
-//		buffer << "}";
+	void Function::dump(stringstream& output) {
+		output << endl << "Code for function: " << this->name() << endl;
+
+		for (auto& bb : *this->bbs()) {
+			output << "BB" << bb->id() << ": " << endl;
+			
+			for (auto& instr : bb->instructions()) {
+				instr.dump(output);
+			}
+
+			output << endl;
+		}
 	}
 
 

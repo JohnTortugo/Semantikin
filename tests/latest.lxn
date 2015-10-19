@@ -1,20 +1,15 @@
-void testing00000function() {
-	int x;
-	int y;
+int main() {
+	int a = 10;
+	int b = 20;
 
-	int a = x * y;
-	int b = 2 * 3;
-	int c = x * 3;
-	int d = 2 * y;
-	int e = (x + y) * (x + y);
-	int f = (x + y) * x;
-	int g = (x + y) * 9;
-	int h = x * (x + y);
-	int i = 9 * (x + y);
-	int j = (9 * (x + y)) * (x * (x + y));
 
-	x = y;
-	x = 10;
-	x = 10 * 10;
-	x = x + y;
+	if (a < b) {
+		printStr("aaaaaa");
+	}
+	else {
+		printStr("bbbbb");
+	}
+
+
+	return 10;
 }

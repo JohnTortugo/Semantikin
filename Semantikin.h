@@ -58,10 +58,12 @@ typedef shared_ptr<IR::Function>					Function_sptr;
 typedef shared_ptr<list<Function_sptr>> 			Function_sptr_list_sptr;
 
 typedef shared_ptr<IR::BasicBlock> 					BasicBlock_sptr;
-typedef shared_ptr<list<BasicBlock_sptr>> 			BasicBlock_list_sptr;
+typedef list<BasicBlock_sptr> 						BasicBlock_list;
+typedef shared_ptr<BasicBlock_list> 				BasicBlock_list_sptr;
 
 typedef shared_ptr<IR::Instruction>					Instruction_sptr;
-typedef shared_ptr<list<Instruction_sptr>> 			Instruction_list_sptr;
+typedef list<Instruction_sptr> 						Instruction_list;
+typedef shared_ptr<Instruction_list> 				Instruction_list_sptr;
 
 typedef shared_ptr<Parser::STLabelDef>				STLabelDef_sptr;
 typedef shared_ptr<Parser::STConstantDef>			STConstantDef_sptr;

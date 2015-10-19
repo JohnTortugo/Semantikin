@@ -45,8 +45,12 @@ void TreeCanonicalizer::visit(IR::BasicBlock* bb) {
 	}
 
 	// Now we know which instruction was the first and we also set the next of the last to nullptr
-	bb->firstInstruction(this->firstInstruction);
-	this->prevInstruction->next(nullptr);
+	if (prevInstruction != nullptr) {
+		assert(firstInstruction != nullptr && "First instruction is null in TreeCanonicalizer.");
+
+		bb->firstInstruction(this->firstInstruction);
+		this->prevInstruction->next(nullptr);
+	}	
 }
 
 void TreeCanonicalizer::visit(IR::ScalarCopy* node) {
