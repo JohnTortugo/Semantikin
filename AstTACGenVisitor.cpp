@@ -48,7 +48,7 @@ void AstTACGenVisitor::visit(Parser::Function* astFunction) {
 		return ;
 	}
 
-	/* The IR function must assume the ownership of the symbol table. */
+	/* The IR function should assume the ownership of the symbol table. */
 	this->_currentFunction->symbolTable( astFunction->getSymbTable() );
 
 	/* We need to keep a pointer to the current function definition, right? */
@@ -61,8 +61,8 @@ void AstTACGenVisitor::visit(Parser::Function* astFunction) {
 void AstTACGenVisitor::visit(const Parser::ParamDecl* param)
 { /* Nothing. */ }
 
-void AstTACGenVisitor::visit(const Parser::VarSpec* spec) {
-}
+void AstTACGenVisitor::visit(const Parser::VarSpec* spec) 
+{ /* Nothing. */ }
 
 void AstTACGenVisitor::visit(const Parser::VarDecl* astVarDec) {
 	auto st = this->_currentFunction->symbolTable();

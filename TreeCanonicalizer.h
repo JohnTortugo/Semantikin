@@ -2,6 +2,7 @@
 #define TREE_CANON_H 1
 
 #include "InstructionSelection.h"
+#include "IR.h"
 
 using namespace IR;
 

@@ -2,8 +2,58 @@
 #define IRVISITORS_H_ 1
 
 #include <iostream>
+#include <fstream>
 #include <tuple>
-#include "IR.h"
+#include <vector>
+
+namespace IR {
+	class Module;
+	class Function;
+	class BasicBlock;
+	class ScalarCopy;
+	class CopyFromArray;
+	class CopyToArray;
+	class Register;
+	class Memory;
+	class Immediate;
+	class Func;
+	class IAdd;
+	class ISub;
+	class IMul;
+	class IDiv;
+	class IMod;
+	class IMinus;
+	class IInc;
+	class IDec;
+	class FAdd;
+	class FSub;
+	class FMul;
+	class FDiv;
+	class FMinus;
+	class FInc;
+	class FDec;
+	class BinAnd;
+	class BinOr;
+	class BinXor;
+	class BinNot;
+	class RLesThan;
+	class RLesThanEqual;
+	class RGreaterThan;
+	class RGreaterThanEqual;
+	class REqual;
+	class RNotEqual;
+	class Jump;
+	class Conditional;
+	class Addr;
+	class AddrDispl;
+	class Call;
+	class Return;
+	class Phi;
+	class Instruction;
+}
+
+
+
 
 class IRTreeVisitor {
 public:
@@ -96,22 +146,22 @@ private:
 	 * is necessary because otherwise DOT would not understand the output
 	 * correctly.
 	 */
-	std::vector< std::tuple<int, int, string> > crossEdges;
+	std::vector< std::tuple<int, int, std::string> > crossEdges;
 
 
 public:
-	IRToDotVisitor(string filename) {
+	IRToDotVisitor(std::string filename) {
 		this->dotfile.open(filename);
-		this->dotfile << "digraph IRGraph {" << endl;
-		this->dotfile << "	node [fontsize=10, style=\"rounded,filled\", fillcolor=\"#ffffff\" width=\".2\", height=\".2\", margin=0];" << endl;
-		this->dotfile << "	graph [fontsize=8];" << endl;
-		this->dotfile << "	edge [fontsize=8];" << endl;
-		this->dotfile << "	compound=true;" << endl;
-		this->dotfile << "	label=\"This is the IR Tree for " << filename << " \";" << endl;
+		this->dotfile << "digraph IRGraph {" << std::endl;
+		this->dotfile << "	node [fontsize=10, style=\"rounded,filled\", fillcolor=\"#ffffff\" width=\".2\", height=\".2\", margin=0];" << std::endl;
+		this->dotfile << "	graph [fontsize=8];" << std::endl;
+		this->dotfile << "	edge [fontsize=8];" << std::endl;
+		this->dotfile << "	compound=true;" << std::endl;
+		this->dotfile << "	label=\"This is the IR Tree for " << filename << " \";" << std::endl;
 	}
 
 	~IRToDotVisitor() {
-		this->dotfile << "}" << endl;
+		this->dotfile << "}" << std::endl;
 		this->dotfile.close();
 	}
 

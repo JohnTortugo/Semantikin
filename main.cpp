@@ -128,9 +128,13 @@ int main(int argc, char *argv[]) {
 	/* Just dump the CFG */
 	if (cmdOptionExists(argv, argv+argc, "-dumpCFG")) {
 		for (auto& function : *irModule->functions()) {
-			for (auto& bb : function->bbs(Function::TOPOL_ORDER)) {
-			
+			cout << "Topological Sort: ";
+			auto result = function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER);
+
+			for (auto bb : *result) { 
+				cout << bb->id() << " -> ";			
 			}
+			cout << endl;
 		}		
 	}
 

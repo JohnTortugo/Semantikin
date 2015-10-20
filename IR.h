@@ -3,6 +3,7 @@
 
 #include "Semantikin.h"
 #include "AbstractSyntaxTree.h"
+#include "IRVisitors.h"
 
 #include <string>
 #include <list>
@@ -21,7 +22,6 @@ using std::shared_ptr;
 using std::make_shared;
 using namespace Parser;
 
-class IRTreeVisitor;
 
 namespace IR {
 
@@ -252,7 +252,7 @@ namespace IR {
 		}
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		void dumpToDot(stringstream& buffer);
 	};
@@ -283,13 +283,18 @@ namespace IR {
 		 * IR construction */
 		BasicBlock_sptr _currentBasicBlock;
 
+		/* This points to the function's entry basic block. */
+		BasicBlock_sptr _entryBasicBlock;
+
+		BasicBlock_list_sptr topologicalSort();
+
 	public:
 		// This will be used to specify the order in which a client wants to
 		// traverse the nodes of the CFG.
 		enum class CFGBasicBlockOrder {
-			TOPO_SORT,
-			REVERSE_TOPO_SORT
-		}
+			TOPO_ORDER,
+			REVERSE_TOPO_ORDER
+		};
 
 
 		Function(shared_ptr<SymbolTable> st) :
@@ -298,6 +303,7 @@ namespace IR {
 		{
 			this->_bbs = make_shared< list<shared_ptr<BasicBlock>> >();
 			this->_currentBasicBlock = make_shared<BasicBlock>(0);
+			this->_entryBasicBlock = this->_currentBasicBlock;
 			this->_bbs->push_back( this->_currentBasicBlock );
 		}
 
@@ -310,16 +316,14 @@ namespace IR {
 		};
 
 		BasicBlock_list_sptr bbs(CFGBasicBlockOrder order) {
-			if (order == CFGBasicBlockOrder::TOPO_SORT) {
-
+			if (order == CFGBasicBlockOrder::TOPO_ORDER) {
+				return topologicalSort();
 			}
 			else {
 				cout << "CRITICAL: Invalid CFG node order specified." << endl;
 				exit(1);
 			}
 		}
-		
-		
 
 
 		/* Methods related to setting/getting the function's declaration. */
@@ -329,9 +333,7 @@ namespace IR {
 
 
 		/* Methods related to IR construction. */
-		void appendLabel(shared_ptr<STLabelDef> label);
 		void appendBasicBlock(BasicBlock_sptr bb);
-
 		void appendInstruction(shared_ptr<IR::Instruction> instr);
 
 
@@ -344,10 +346,22 @@ namespace IR {
 
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		/* Mostly debug related methods. */
-		void dump(stringstream& buffer);
+		void dump(stringstream& output)  {
+			output << endl << "Code for function: " << this->name() << endl;
+
+			for (auto& bb : *this->bbs()) {
+				output << "BB" << bb->id() << ": " << endl;
+				
+				for (auto& instr : bb->instructions()) {
+					instr.dump(output);
+				}
+
+				output << endl;
+			}
+		}
 	};
 
 
@@ -370,9 +384,21 @@ namespace IR {
 		shared_ptr<SymbolTable> symbolTable() { return this->_symbTable; }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump();
+		void dump() {
+			std::stringstream buffer;
+
+			buffer << "This is the IR: " << endl;
+			buffer << std::setfill('-') << std::setw(80) << "-" << endl;
+
+			for (auto function : *this->_functions) {
+				function->dump(buffer);
+				buffer << endl << endl;
+			}
+
+			cout << buffer.str();
+		}
 	};
 
 
@@ -410,13 +436,15 @@ namespace IR {
 		{ }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		STConstantDef_sptr value() { return this->_value; }
 
 		string tgtDataName() { return Util::escapeStr(this->_value->getName()); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "Imm;" << endl;
+		}
 	};
 
 	class Register : public Data {
@@ -428,13 +456,13 @@ namespace IR {
 		{ }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		STRegister_sptr value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) { buffer << "Reg;" << endl; }
 	};
 
 	class Memory : public Data {
@@ -446,13 +474,16 @@ namespace IR {
 		{ }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		STVariableDeclaration_sptr value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "Mem;" << endl;
+		}
+
 	};
 
 	class Func : public Data {
@@ -464,13 +495,15 @@ namespace IR {
 		{ }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		STFunctionDecl_sptr value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "Func;" << endl;
+		}
 	};
 
 
@@ -499,9 +532,11 @@ namespace IR {
 		string tgtDataName() { return this->_tgt->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class CopyFromArray : public Copy {
@@ -511,9 +546,11 @@ namespace IR {
 		string tgtDataName() { return this->_tgt->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = *" << this->_chd2->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class CopyToArray : public Copy {
@@ -523,9 +560,11 @@ namespace IR {
 		string tgtDataName() { return this->_tgt->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "*" << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
+		}
 	};
 
 
@@ -562,9 +601,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " + " << this->_chd3->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class ISub : public BinaryIntegerArithmetic {
@@ -575,9 +616,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " - " << this->_chd3->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class IMul : public BinaryIntegerArithmetic {
@@ -588,9 +631,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " * " << this->_chd3->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class IDiv : public BinaryIntegerArithmetic {
@@ -601,9 +646,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " / " << this->_chd3->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class IMod : public BinaryIntegerArithmetic {
@@ -614,9 +661,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " % " << this->_chd3->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class IMinus : public UnaryIntegerArithmetic {
@@ -627,9 +676,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = -" << this->_chd2->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class IInc : public UnaryIntegerArithmetic {
@@ -640,9 +691,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " + 1;" << endl;
+		}
 	};
 
 	class IDec : public UnaryIntegerArithmetic {
@@ -653,9 +706,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " - 1;" << endl;
+		}
 	};
 
 
@@ -693,9 +748,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " + " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class FSub : public BinaryFloatingArithmetic {
@@ -706,9 +763,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " - " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class FMul : public BinaryFloatingArithmetic {
@@ -719,9 +778,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " * " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class FDiv : public BinaryFloatingArithmetic {
@@ -732,9 +793,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " / " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class FMinus : public UnaryFloatingArithmetic {
@@ -745,9 +808,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = -" << this->chd2()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class FInc : public UnaryFloatingArithmetic {
@@ -758,9 +823,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " + 1;" << endl;
+		}
 	};
 
 	class FDec : public UnaryFloatingArithmetic {
@@ -771,9 +838,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " - 1;" << endl;
+		}
 	};
 
 
@@ -797,9 +866,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " & " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class BinOr : public BitArithmetic {
@@ -810,9 +881,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " | " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class BinXor : public BitArithmetic {
@@ -823,9 +896,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " ^ " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class BinNot : public BitArithmetic {
@@ -837,9 +912,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = ~ " << this->chd2()->tgtDataName() << ";" << endl;
+		}
 	};
 
 
@@ -865,9 +942,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->chd2()->tgtDataName() << " < " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class RLesThanEqual : public RelationalArithmetic {
@@ -878,9 +957,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->chd2()->tgtDataName() << " <= " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class RGreaterThan : public RelationalArithmetic {
@@ -891,9 +972,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->chd2()->tgtDataName() << " > " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class RGreaterThanEqual : public RelationalArithmetic {
@@ -904,9 +987,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->chd2()->tgtDataName() << " >= " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class REqual : public RelationalArithmetic {
@@ -917,9 +1002,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->chd2()->tgtDataName() << " == " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	class RNotEqual : public RelationalArithmetic {
@@ -930,9 +1017,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->_tgt->tgtDataName() << " = " << this->chd2()->tgtDataName() << " != " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 
@@ -950,9 +1039,11 @@ namespace IR {
 		}
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "goto BB" << this->lbl1()->id() << ";" << endl;
+		}
 	};
 
 	class Conditional : public BranchInstruction {
@@ -968,9 +1059,11 @@ namespace IR {
 		}
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "if " << this->tgt()->tgtDataName() << " goto BB" << this->lbl1()->id() << " else goto BB" << this->lbl2()->id() << ";" << endl;
+		}
 	};
 
 
@@ -985,9 +1078,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = &" << this->chd2()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	/**
@@ -1003,9 +1098,11 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " ++ " << this->chd3()->tgtDataName() << ";" << endl;
+		}
 	};
 
 
@@ -1031,9 +1128,26 @@ namespace IR {
 		}
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer)  {
+			if (this->tgt() != nullptr)
+				buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << "(";
+			else
+				buffer << this->chd2()->tgtDataName() << "(";
+
+			auto arguments = this->arguments();
+
+			if (arguments != nullptr) {
+				if (arguments->size() > 0)
+					buffer << (*arguments)[0]->tgtDataName();
+
+				for (int i=1; i<arguments->size(); i++)
+					buffer << ", " << (*arguments)[i]->tgtDataName();
+			}
+
+			buffer << ");" << endl;
+		}
 	};
 
 	/* Represent a return instruction. */
@@ -1047,18 +1161,22 @@ namespace IR {
 		string tgtDataName() { return this->tgt()->tgtDataName(); }
 
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) {
+			buffer << "ret " << this->tgt()->tgtDataName() << ";" << endl;
+		}
 	};
 
 	/* Represent SSA phi functions. */
 	class Phi : public Instruction {
 	public:
 		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor);
+		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		void dump(stringstream& buffer);
+		void dump(stringstream& buffer) { 
+			buffer << "phi();" << endl; 
+		}
 	};
 
 

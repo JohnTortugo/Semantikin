@@ -2,6 +2,7 @@
 #define MAXIMAL_MUNCH_H 1
 
 #include "InstructionSelection.h"
+#include "IR.h"
 
 class MaximalMunch : public InstructionSelection {
 private:
