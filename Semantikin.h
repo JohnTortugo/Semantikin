@@ -3,6 +3,8 @@
 
 #include <string>
 #include <list>
+#include <map>
+
 #include <memory>
 #include <cassert>
 
@@ -10,6 +12,7 @@ using std::shared_ptr;
 using std::string;
 using std::list;
 using std::pair;
+using std::map;
 
 /*******************************************************************************
  ** A few forward declarations.		 										  **

@@ -4,6 +4,7 @@
 #include "IRVisitors.h"
 #include "MaximalMunch.h"
 #include "TreeCanonicalizer.h"
+#include "DataFlowAnalysis.h"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -89,6 +90,12 @@ int main(int argc, char *argv[]) {
 	TreeCanonicalizer tc;
 	irModule->accept(&tc);
 
+
+	/* Compute Reaching Definitions and Use-Def / Def-Use Chains */
+	for (auto& function : *irModule->functions()) {
+		DFA::ReachingDefinitions rd(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
+		rd.execute();
+	}
 
 
 	/* Generate code using maximal munch algorithm */
