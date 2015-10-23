@@ -24,6 +24,10 @@ using namespace Parser;
 
 
 namespace IR {
+	bool isADefinition(Instruction_sptr instr);
+	SymbolTableEntry_sp whatIsDefined(Instruction_sptr instr) ;
+
+
 
 	/* This class is the parent of all IR instructions. */
 	class Instruction : public std::enable_shared_from_this<Instruction> {
@@ -417,6 +421,7 @@ namespace IR {
 	 * memory addresses. 									
 	 */
 	class Data : public Instruction {
+	public:
 		void next(Instruction* nxt) { 
 			cout << "IR Error: Operands should not have next ptrs." << endl; 
 		}
@@ -425,6 +430,8 @@ namespace IR {
 			cout << "IR Error: Operands do not have next ptrs." << endl; 
 			return this->_next; 
 		}
+
+		virtual SymbolTableEntry_sp value() = 0;
 	};
 
 	class Immediate : public Data {
@@ -432,13 +439,16 @@ namespace IR {
 		STConstantDef_sptr _value;
 
 	public:
+		Immediate(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STConstantDef>(val) )
+		{ }
+
 		Immediate(STConstantDef_sptr val) : _value(val)
 		{ }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		STConstantDef_sptr value() { return this->_value; }
+		SymbolTableEntry_sp value() { return this->_value; }
 
 		string tgtDataName() { return Util::escapeStr(this->_value->getName()); }
 
@@ -452,13 +462,16 @@ namespace IR {
 		STRegister_sptr _value;
 
 	public:
+		Register(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STRegister>(val) )
+		{ }
+
 		Register(STRegister_sptr val) : _value(val)
 		{ }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		STRegister_sptr value() { return this->_value; }
+		SymbolTableEntry_sp value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
@@ -470,13 +483,16 @@ namespace IR {
 		STVariableDeclaration_sptr _value;
 
 	public:
+		Memory(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STVariableDeclaration>(val) )
+		{ }
+
 		Memory(STVariableDeclaration_sptr val) : _value(val)
 		{ }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		STVariableDeclaration_sptr value() { return this->_value; }
+		SymbolTableEntry_sp value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
@@ -491,13 +507,16 @@ namespace IR {
 		STFunctionDecl_sptr  _value;
 
 	public:
+		Func(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STFunctionDeclaration>(val) )
+		{ }
+
 		Func(STFunctionDecl_sptr val) : _value(val)
 		{ }
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		STFunctionDecl_sptr value() { return this->_value; }
+		SymbolTableEntry_sp value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 

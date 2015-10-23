@@ -4,6 +4,24 @@
 #include <set>
 
 namespace IR {
+	bool isADefinition(Instruction_sptr instr) {
+		if ( std::dynamic_pointer_cast<Copy>(instr) ) 
+			return true;
+		else if ( std::dynamic_pointer_cast<Call>(instr) ) 
+			return true;
+		else
+			return false;
+	}
+
+	SymbolTableEntry_sp whatIsDefined(Instruction_sptr instr) {
+		assert(isADefinition(instr) && "Trying to get a definition from something that is not a definition.");
+
+		if ( auto copy = std::dynamic_pointer_cast<CopyToArray>(instr) ) 
+			return std::dynamic_pointer_cast<Data>(copy->tgt()->tgt())->value();
+		else
+			return std::dynamic_pointer_cast<Data>(instr->tgt())->value();
+	}
+
 
 	BasicBlock_list_sptr Function::topologicalSort() {
 		auto result = make_shared<BasicBlock_list>();

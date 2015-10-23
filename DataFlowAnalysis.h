@@ -2,6 +2,7 @@
 #define __DFA__ 1
 
 #include "Semantikin.h"
+#include "IR.h"
 
 namespace DFA {
 

@@ -33,7 +33,10 @@ rebuild-run: CLEAR clean all
 
 run: CLEAR all
 	./Semantikin -i tests/latest.lxn -dumps -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
-	
+
+tests: all
+	./tests/regression/run_regression.sh
+
 %.png:%.dot
 	dot -Tpng $< -o $@
 

@@ -1,15 +1,6 @@
-int main() {
-	int a = 10;
-	int b = 20;
+void mini() {
+	int v[10];
 
-
-	if (a < b) {
-		printStr("aaaaaa");
-	}
-	else {
-		printStr("bbbbb");
-	}
-
-
-	return 10;
+	v[3] = 50;
 }
+
