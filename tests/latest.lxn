@@ -1,6 +1,16 @@
-void mini() {
-	int v[10];
+void function(int a, int b) {
+	int c = a + b, i = 0;
 
-	v[3] = 50;
+	while (i < 10) {
+		if (a < 100) {
+			c = c * 2;
+		}
+		else {
+			c = c / 2;
+		}
+
+		i++;
+	}
+
+	printInt(c);
 }
-

@@ -99,6 +99,9 @@ namespace IR {
 		BranchInstruction(BasicBlock_sptr lbl) : Instruction(nullptr, nullptr, nullptr), _lbl1(lbl), _lbl2(nullptr)
 		{ }
 
+		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr lbl) : Instruction(exp, nullptr, nullptr), _lbl1(lbl), _lbl2(nullptr)
+		{ }
+
 		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr lbl1, BasicBlock_sptr lbl2) : Instruction(exp, nullptr, nullptr), _lbl1(lbl1), _lbl2(lbl2)
 		{ }
 
@@ -189,6 +192,7 @@ namespace IR {
 		Instruction_list_sptr _subtrees;
 
 		Instruction* _firstInstruction;
+		Instruction* _lastInstruction;
 
 		BasicBlock_list_sptr _preds;
 		BasicBlock_list_sptr _succs;
@@ -198,6 +202,8 @@ namespace IR {
 			_id(id),
 			_usageCounter(0),
 			_subtrees(  make_shared<Instruction_list>() ),
+			_firstInstruction( nullptr ),
+			_lastInstruction( nullptr ),
 			_preds( make_shared<BasicBlock_list>() ),
 			_succs( make_shared<BasicBlock_list>() )
 		{ 
@@ -211,7 +217,14 @@ namespace IR {
 
 		Instruction_list_sptr subtrees() const { return _subtrees; }
 
+		// This is updated here and not in "appendInstruction" because the order of
+		// appended instruction may not necessarily be the order of execution computed
+		// by the tree canonicalizer.
 		void firstInstruction(Instruction* first) { this->_firstInstruction = first; }
+		Instruction* firstInstruction() { return this->_firstInstruction; }
+
+		void lastInstruction(Instruction* last) { this->_lastInstruction = last; }
+		Instruction* lastInstruction() { return this->_lastInstruction; }
 
 		InstructionSequence instructions() { 
 			return InstructionSequence(this->_firstInstruction); 
@@ -230,7 +243,7 @@ namespace IR {
 		}	
 
 		void appendInstruction(Instruction_sptr instr) {
-			this->_subtrees->push_back( instr );
+			this->_subtrees->push_back(instr);
 			auto branch = std::dynamic_pointer_cast<IR::BranchInstruction>(instr);
 
 			// If the instruction is a branch we make some checkings and add 
@@ -247,12 +260,15 @@ namespace IR {
 				// the target basic block receive a predecessor
 				branch->lbl1()->addPredecessor(this->shared_from_this());
 
-				// When the branch is a goto it does not have the second label
+				// When the branch is a goto or a ret it does not have the second label
+				// But when it is a Conditional Branch it has
 				if (branch->lbl2() != nullptr) {
 					this->succs()->push_back(branch->lbl2());
 					branch->lbl2()->addPredecessor(this->shared_from_this());
-				}	
+				}
 			}
+
+			this->_lastInstruction = instr.get();
 		}
 
 		/* Used to traverse the IR tree. */
@@ -1170,10 +1186,10 @@ namespace IR {
 	};
 
 	/* Represent a return instruction. */
-	class Return : public Instruction {
+	class Return : public BranchInstruction {
 	public:
-		Return(Instruction_sptr exp) : Instruction(exp, nullptr, nullptr) { 
-			assert(exp && "Exp on IR::Return is nullptr.");
+		Return(Instruction_sptr exp, BasicBlock_sptr tgt) : BranchInstruction(exp, tgt) { 
+			assert(exp && tgt && "Expression or Target on IR::Return is nullptr.");
 		}
 
 		/** Used to dump in a "human readable" way the instruction's target operand */

@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
 	for (auto& function : *irModule->functions()) {
 		DFA::ReachingDefinitions rd(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
 		rd.execute();
+		rd.dump();
 	}
 
 

@@ -5,12 +5,10 @@
 
 namespace IR {
 	bool isADefinition(Instruction_sptr instr) {
-		if ( std::dynamic_pointer_cast<Copy>(instr) ) 
-			return true;
-		else if ( std::dynamic_pointer_cast<Call>(instr) ) 
-			return true;
-		else
+		if ( std::dynamic_pointer_cast<BranchInstruction>(instr) ) 
 			return false;
+		else
+			return true;
 	}
 
 	SymbolTableEntry_sp whatIsDefined(Instruction_sptr instr) {

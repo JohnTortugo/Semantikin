@@ -29,10 +29,10 @@ Parsin.tab.cc: Parsin.yy
 	bison -d Parsin.yy
 
 rebuild-run: CLEAR clean all
-	./Semantikin -i tests/latest.lxn -dumps -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
+	./Semantikin -i tests/latest.lxn -dumps -dumpAsts -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
 
 run: CLEAR all
-	./Semantikin -i tests/latest.lxn -dumps -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
+	./Semantikin -i tests/latest.lxn -dumps -dumpAsts -dumpIRTree && dot -Tpng tests/latest.lxn.dot > tests/latest.lxn.dot.png
 
 tests: all
 	./tests/regression/run_regression.sh

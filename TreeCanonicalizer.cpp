@@ -49,6 +49,7 @@ void TreeCanonicalizer::visit(IR::BasicBlock* bb) {
 		assert(firstInstruction != nullptr && "First instruction is null in TreeCanonicalizer.");
 
 		bb->firstInstruction(this->firstInstruction);
+		bb->lastInstruction(this->prevInstruction);
 		this->prevInstruction->next(nullptr);
 	}	
 }

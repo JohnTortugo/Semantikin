@@ -149,6 +149,10 @@ private:
 	 */
 	Instruction_sptr _lastInstruction = nullptr;
 
+	/*
+	 * This is the exit basic block of the function.
+	 */
+	BasicBlock_sptr _exitBasicBlock = nullptr;
 
 public:
 	AstTACGenVisitor(int currOffset) : _module(nullptr), _currentOffset(currOffset), constCounter(1), basicBlockCounter(1), tempCounter(1) { }

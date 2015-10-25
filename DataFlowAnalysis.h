@@ -10,14 +10,25 @@ class ReachingDefinitions {
 	private:
 		BasicBlock_list_sptr _bbs;
 
-		std::map<SymbolTableEntry_sp, Instruction_list_sptr> _defs;
-		std::map<Instruction_sptr, Instruction_list_sptr> _gen;
-		std::map<Instruction_sptr, Instruction_list_sptr> _kill;
+		std::map<Instruction_sptr, unsigned int> _identifier;
+
+		std::map<SymbolTableEntry_sp, Instruction_set_sptr> _defs;
+		std::map<Instruction_sptr, Instruction_set_sptr> _gen;
+		std::map<Instruction_sptr, Instruction_set_sptr> _kill;
+
+		std::map<Instruction_sptr, Instruction_set_sptr> _inInstr;
+		std::map<Instruction_sptr, Instruction_set_sptr> _outInstr;
+
+		std::map<BasicBlock_sptr, Instruction_set_sptr> _inBb;
+		std::map<BasicBlock_sptr, Instruction_set_sptr> _outBb;
+
 
 	public:
 		ReachingDefinitions(BasicBlock_list_sptr bbs);
 
 		void execute();
+
+		void dump();
 };
 
 }

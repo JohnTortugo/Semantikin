@@ -32,9 +32,14 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* astModule) {
 		this->constCounter = 1;
 		this->tempCounter = 1;
 		this->_currentOffset = astFunction->currentOffset();
+		this->_exitBasicBlock = this->newBasicBlock();
 
 		/* Produce IR instructions for the components of function. */
 		astFunction->accept(this);
+
+		// If there were any return instruction it points to the exitBasicBlock
+		if (this->_exitBasicBlock->preds()->size() > 0)
+			this->_currentFunction->appendBasicBlock( this->_exitBasicBlock );
 
 		/* Add the function with its IR instructions to the module. */
 		this->_module->addFunction(this->_currentFunction);
@@ -271,7 +276,8 @@ void AstTACGenVisitor::visit(const Parser::ReturnStmt* ret) {
 
 	assert(this->_lastInstruction && "Null instruction at return statement.");
 
-	this->_currentFunction->appendInstruction( make_shared<IR::Return>(this->_lastInstruction) );
+	this->_currentFunction->appendInstruction( make_shared<IR::Return>(this->_lastInstruction, this->_exitBasicBlock) );
+	this->_currentFunction->appendBasicBlock( this->newBasicBlock() );
 
 	this->_lastInstruction = nullptr;
 }
@@ -591,11 +597,11 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 				break;
 
 			case UnaryExpr::INCREMENT:
-				this->_lastInstruction = make_shared<IR::IInc>(rightInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::IInc>(rightInstruction->tgt(), rightInstruction);
 				break;
 
 			case UnaryExpr::DECREMENT:
-				this->_lastInstruction = make_shared<IR::IDec>(rightInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::IDec>(rightInstruction->tgt(), rightInstruction);
 				break;
 		}
 	}
@@ -606,11 +612,11 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 				break;
 
 			case UnaryExpr::INCREMENT:
-				this->_lastInstruction = make_shared<IR::FInc>(rightInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::FInc>(rightInstruction->tgt(), rightInstruction);
 				break;
 
 			case UnaryExpr::DECREMENT:
-				this->_lastInstruction = make_shared<IR::FDec>(rightInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::FDec>(rightInstruction->tgt(), rightInstruction);
 				break;
 		}
 	}
@@ -754,19 +760,19 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 				this->_lastInstruction = make_shared<IR::IMod>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::PLUS_EQUAL:
-				this->_lastInstruction = make_shared<IR::IAdd>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::IAdd>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::MINUS_EQUAL:
-				this->_lastInstruction = make_shared<IR::ISub>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::ISub>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::TIMES_EQUAL:
-				this->_lastInstruction = make_shared<IR::IMul>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::IMul>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::DIV_EQUAL:
-				this->_lastInstruction = make_shared<IR::IDiv>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::IDiv>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::MOD_EQUAL:
-				this->_lastInstruction = make_shared<IR::IMod>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::IMod>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 		}
 	}
@@ -796,16 +802,16 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 				this->_lastInstruction = make_shared<IR::FDiv>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::PLUS_EQUAL:
-				this->_lastInstruction = make_shared<IR::FAdd>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::FAdd>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::MINUS_EQUAL:
-				this->_lastInstruction = make_shared<IR::FSub>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::FSub>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::TIMES_EQUAL:
-				this->_lastInstruction = make_shared<IR::FMul>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::FMul>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 			case BinaryExpr::DIV_EQUAL:
-				this->_lastInstruction = make_shared<IR::FDiv>(leftInstruction, leftInstruction, rightInstruction);
+				this->_lastInstruction = make_shared<IR::FDiv>(leftInstruction->tgt(), leftInstruction, rightInstruction);
 				break;
 		}
 	}

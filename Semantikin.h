@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <set>
 
 #include <memory>
 #include <cassert>
@@ -11,6 +12,7 @@
 using std::shared_ptr;
 using std::string;
 using std::list;
+using std::set;
 using std::pair;
 using std::map;
 
@@ -66,7 +68,9 @@ typedef shared_ptr<BasicBlock_list> 				BasicBlock_list_sptr;
 
 typedef shared_ptr<IR::Instruction>					Instruction_sptr;
 typedef list<Instruction_sptr> 						Instruction_list;
+typedef set<Instruction_sptr> 						Instruction_set;
 typedef shared_ptr<Instruction_list> 				Instruction_list_sptr;
+typedef shared_ptr<Instruction_set> 				Instruction_set_sptr;
 
 typedef shared_ptr<Parser::STLabelDef>				STLabelDef_sptr;
 typedef shared_ptr<Parser::STConstantDef>			STConstantDef_sptr;
