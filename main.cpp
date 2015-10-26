@@ -96,13 +96,14 @@ int main(int argc, char *argv[]) {
 		DFA::ReachingDefinitions rd(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
 		rd.execute();
 		rd.dump();
+
+		DFA::LiveVariables lv(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
 	}
 
 
 	/* Generate code using maximal munch algorithm */
 	MaximalMunch codeGen;
 	irModule->accept(&codeGen);
-
 
 
 

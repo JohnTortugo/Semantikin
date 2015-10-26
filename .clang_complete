@@ -2,7 +2,6 @@
 -include ./ErrorReporting.cpp
 -include ./AstToDotVisitor.cpp
 -include ./TreeCanonicalizer.cpp
--include ./Parsin.tab.cc
 -include ./AstSemaVisitor.cpp
 -include ./AbstractSyntaxTree.cpp
 -include ./lex.yy.cc
