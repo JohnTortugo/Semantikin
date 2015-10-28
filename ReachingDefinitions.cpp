@@ -14,7 +14,7 @@ namespace DFA {
 				auto instr = ins.shared_from_this();
 
 				if ( IR::isADefinition(instr) ) {
-					auto tgt = IR::whatIsDefined(instr);
+					auto tgt = *instr->defs()->begin();
 
 					if (_defs.find(tgt) == _defs.end())
 						_defs[tgt] = make_shared<Instruction_set>();
@@ -43,7 +43,7 @@ namespace DFA {
 
 					_kill[instr] = make_shared<Instruction_set>();
 
-					auto df = _defs[ IR::whatIsDefined(instr) ];
+					auto df = _defs[ *instr->defs()->begin() ];
 
 					std::set_difference(df->begin(), df->end(), 
 										_gen[instr]->begin(), _gen[instr]->end(), 
@@ -128,7 +128,6 @@ namespace DFA {
 				_outBb[bb] = prevOut;
 			}
 		}
-
 	}
 
 

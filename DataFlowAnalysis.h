@@ -12,7 +12,7 @@ class ReachingDefinitions {
 
 		std::map<Instruction_sptr, unsigned int> _identifier;
 
-		std::map<SymbolTableEntry_sp, Instruction_set_sptr> _defs;
+		std::map<STEntry_sptr, Instruction_set_sptr> _defs;
 		std::map<Instruction_sptr, Instruction_set_sptr> _gen;
 		std::map<Instruction_sptr, Instruction_set_sptr> _kill;
 
@@ -38,19 +38,18 @@ class LiveVariables {
 
 		std::map<Instruction_sptr, unsigned int> _identifier;
 
-		std::map<Instruction_sptr, Instruction_set_sptr> _defs;
-		std::map<Instruction_sptr, Instruction_set_sptr> _gen;
-		std::map<Instruction_sptr, Instruction_set_sptr> _kill;
+		std::map<Instruction_sptr, STEntry_set_sptr> _defs;
+		std::map<Instruction_sptr, STEntry_set_sptr> _uses;
 
-		std::map<Instruction_sptr, Instruction_set_sptr> _inInstr;
-		std::map<Instruction_sptr, Instruction_set_sptr> _outInstr;
+		std::map<Instruction_sptr, STEntry_set_sptr> _inInstr;
+		std::map<Instruction_sptr, STEntry_set_sptr> _outInstr;
 
-		std::map<BasicBlock_sptr, Instruction_set_sptr> _inBb;
-		std::map<BasicBlock_sptr, Instruction_set_sptr> _outBb;
+		std::map<BasicBlock_sptr, STEntry_set_sptr> _inBb;
+		std::map<BasicBlock_sptr, STEntry_set_sptr> _outBb;
 
 
 	public:
-		ReachingDefinitions(BasicBlock_list_sptr bbs);
+		LiveVariables(BasicBlock_list_sptr bbs);
 
 		void execute();
 

@@ -8,6 +8,7 @@ void TreeCanonicalizer::updateNext(Instruction* node) {
 		this->firstInstruction = node;
 	}
 
+	node->prev(this->prevInstruction);
 	this->prevInstruction = node;
 }
 
@@ -226,9 +227,5 @@ void TreeCanonicalizer::visit(IR::Call* node) {
 void TreeCanonicalizer::visit(IR::Return* node) { 
 	node->tgt()->accept(this);
 	updateNext(node);
-}
-
-void TreeCanonicalizer::visit(IR::Phi* visitor) { 
-	cout << "Nothing available for IR::Phi in " << __FILE__  << ":" <<__LINE__ << endl; 
 }
 

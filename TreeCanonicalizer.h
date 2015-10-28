@@ -65,7 +65,6 @@ public:
 	void visit(IR::AddrDispl* visitor);
 	void visit(IR::Call* visitor);
 	void visit(IR::Return* visitor);
-	void visit(IR::Phi* visitor);
 };
 
 #endif

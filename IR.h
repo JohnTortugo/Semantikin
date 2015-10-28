@@ -25,7 +25,8 @@ using namespace Parser;
 
 namespace IR {
 	bool isADefinition(Instruction_sptr instr);
-	SymbolTableEntry_sp whatIsDefined(Instruction_sptr instr) ;
+	STEntry_sptr whatIsDefined(Instruction_sptr instr);
+	STEntry_set_sptr instrsUnion(STEntry_set_sptr s1, STEntry_set_sptr s2);
 
 
 
@@ -40,9 +41,9 @@ namespace IR {
 		Instruction_sptr _chd2 = nullptr;
 		Instruction_sptr _chd3 = nullptr;
 
-		/* Pointer to next operation (i.e., really an instruction) 
-		 * that should be executed */
+		/* Pointer to next/prev operation that should be performed */
 		Instruction* _next = nullptr;
+		Instruction* _prev = nullptr;
 
 	public:
 		Instruction()
@@ -72,10 +73,20 @@ namespace IR {
 		virtual void next(Instruction* nxt) { this->_next = nxt; }
 		virtual Instruction* next() { return this->_next; }
 
+		virtual void prev(Instruction* prv) { this->_prev = prv; }
+		virtual Instruction* prev() { return this->_prev; }
 
 
-		virtual const shared_ptr<vector<SymbolTableEntry_sp>> arguments() { return nullptr; }
-		virtual void addArgument(SymbolTableEntry_sp argument) { }
+		// Returns a set of symbol table entries that are used by this instruction
+		virtual STEntry_set_sptr uses() { return make_shared<STEntry_set>(); }
+
+		// Returns a set (usually unitary) of symbol table entries that are defined by this instruction
+		virtual STEntry_set_sptr defs() { return make_shared<STEntry_set>(); }
+
+		virtual bool isADefinition() { return true; }
+
+		virtual const shared_ptr<vector<STEntry_sptr>> arguments() { return nullptr; }
+		virtual void addArgument(STEntry_sptr argument) { }
 
 		/** Used to traverse the IR tree. */
 		virtual void accept(IRTreeVisitor* visitor) = 0;
@@ -105,12 +116,13 @@ namespace IR {
 		BranchInstruction(Instruction_sptr exp, BasicBlock_sptr lbl1, BasicBlock_sptr lbl2) : Instruction(exp, nullptr, nullptr), _lbl1(lbl1), _lbl2(lbl2)
 		{ }
 
-
 		BasicBlock_sptr lbl1() { return this->_lbl1; }
 		void lbl1(BasicBlock_sptr lbl) { this->_lbl1 = lbl; }
 
 		BasicBlock_sptr lbl2() { return this->_lbl2; }
 		void lbl2(BasicBlock_sptr lbl) { this->_lbl2 = lbl; }
+
+		bool isADefinition() { return false; }
 	};
 
 
@@ -131,7 +143,6 @@ namespace IR {
 		Instruction* current() const { 
 			return this->_current; 
 		}
-
 
 
 		InstructionIterator& operator++() {
@@ -162,25 +173,75 @@ namespace IR {
 		}
 	};
 
+	class InstrReverseIterator : public std::iterator<std::bidirectional_iterator_tag, IR::Instruction> {
+	private:
+		Instruction* _current = nullptr;
+
+	public:
+		InstrReverseIterator(Instruction* head) : _current(head) {
+		}
+
+		InstrReverseIterator operator=(const InstrReverseIterator& other) {
+			this->_current = other.current();
+		}
+
+		Instruction* current() const { 
+			return this->_current; 
+		}
+
+
+		InstrReverseIterator& operator++() {
+			this->_current = this->current()->prev();
+			return *this;
+		}
+
+		InstrReverseIterator operator++(int) {
+			InstrReverseIterator clone(*this);
+			this->_current = this->current()->prev();
+			return clone;
+		}
+
+		bool operator==(const InstrReverseIterator& other) {
+			return this->current() == other.current();
+		}
+
+		bool operator!=(const InstrReverseIterator& other) {
+			return !(*this == other);
+		}
+
+		Instruction& operator*() {
+			return *this->current();
+		}
+
+		Instruction& operator->() {
+			return *this->current();
+		}
+	};
+
+
 	class InstructionSequence {
 	private:
 		Instruction* _head;		
+		Instruction* _tail;		
 
 	public:
-		typedef InstructionIterator iterator;
-		typedef ptrdiff_t difference_type;
-		typedef size_t size_type;
-		typedef Instruction value_type;
-		typedef Instruction* pointer;
-		typedef Instruction& reference;
+		typedef InstructionIterator  iterator;
+		typedef InstrReverseIterator reverse_iterator;
+		typedef ptrdiff_t 			 difference_type;
+		typedef size_t 				 size_type;
+		typedef Instruction 		 value_type;
+		typedef Instruction* 		 pointer;
+		typedef Instruction& 		 reference;
 
-		InstructionSequence(Instruction* head) {
-			this->_head = head;
-		}
+		InstructionSequence(Instruction* head, Instruction* tail) : _head(head), _tail(tail) { }
 
 		iterator begin() { return iterator(this->_head); }
 
+		reverse_iterator rbegin() { return reverse_iterator(this->_tail); }
+
 		iterator end() { return iterator(nullptr); }
+
+		reverse_iterator rend() { return reverse_iterator(nullptr); }
 	};
 
 	/** Well, this represents a basic block =) */
@@ -227,7 +288,7 @@ namespace IR {
 		Instruction* lastInstruction() { return this->_lastInstruction; }
 
 		InstructionSequence instructions() { 
-			return InstructionSequence(this->_firstInstruction); 
+			return InstructionSequence(this->_firstInstruction, this->_lastInstruction); 
 		}
 
 		BasicBlock_list_sptr succs() {
@@ -287,7 +348,7 @@ namespace IR {
 	class Function {
 	private:
 		/* Pointer to the symbol table entry describing this function. */
-		SymbolTableEntry_sp _addr;
+		STEntry_sptr _addr;
 
 		/* Pointer to this function's symbol table. */
 		shared_ptr<SymbolTable> _symbTable;
@@ -347,9 +408,9 @@ namespace IR {
 
 
 		/* Methods related to setting/getting the function's declaration. */
-		void addr(SymbolTableEntry_sp addr) { this->_addr = addr; }
+		void addr(STEntry_sptr addr) { this->_addr = addr; }
 
-		SymbolTableEntry_sp addr() { return this->_addr; }
+		STEntry_sptr addr() { return this->_addr; }
 
 
 		/* Methods related to IR construction. */
@@ -447,7 +508,11 @@ namespace IR {
 			return this->_next; 
 		}
 
-		virtual SymbolTableEntry_sp value() = 0;
+		virtual STEntry_sptr value() = 0;
+
+		virtual STEntry_set_sptr uses() { auto tmp = make_shared<STEntry_set>(); tmp->insert(this->value()); return tmp; }
+
+		bool isADefinition() { return false; }
 	};
 
 	class Immediate : public Data {
@@ -455,7 +520,7 @@ namespace IR {
 		STConstantDef_sptr _value;
 
 	public:
-		Immediate(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STConstantDef>(val) )
+		Immediate(STEntry_sptr val) : _value( std::dynamic_pointer_cast<STConstantDef>(val) )
 		{ }
 
 		Immediate(STConstantDef_sptr val) : _value(val)
@@ -464,7 +529,7 @@ namespace IR {
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		SymbolTableEntry_sp value() { return this->_value; }
+		STEntry_sptr value() { return this->_value; }
 
 		string tgtDataName() { return Util::escapeStr(this->_value->getName()); }
 
@@ -478,7 +543,7 @@ namespace IR {
 		STRegister_sptr _value;
 
 	public:
-		Register(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STRegister>(val) )
+		Register(STEntry_sptr val) : _value( std::dynamic_pointer_cast<STRegister>(val) )
 		{ }
 
 		Register(STRegister_sptr val) : _value(val)
@@ -487,7 +552,7 @@ namespace IR {
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		SymbolTableEntry_sp value() { return this->_value; }
+		STEntry_sptr value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
@@ -499,7 +564,7 @@ namespace IR {
 		STVariableDeclaration_sptr _value;
 
 	public:
-		Memory(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STVariableDeclaration>(val) )
+		Memory(STEntry_sptr val) : _value( std::dynamic_pointer_cast<STVariableDeclaration>(val) )
 		{ }
 
 		Memory(STVariableDeclaration_sptr val) : _value(val)
@@ -508,7 +573,7 @@ namespace IR {
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		SymbolTableEntry_sp value() { return this->_value; }
+		STEntry_sptr value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
@@ -518,12 +583,13 @@ namespace IR {
 
 	};
 
+	// Represents the label of a function
 	class Func : public Data {
 	private:
 		STFunctionDecl_sptr  _value;
 
 	public:
-		Func(SymbolTableEntry_sp val) : _value( std::dynamic_pointer_cast<STFunctionDeclaration>(val) )
+		Func(STEntry_sptr val) : _value( std::dynamic_pointer_cast<STFunctionDeclaration>(val) )
 		{ }
 
 		Func(STFunctionDecl_sptr val) : _value(val)
@@ -532,7 +598,7 @@ namespace IR {
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		SymbolTableEntry_sp value() { return this->_value; }
+		STEntry_sptr value() { return this->_value; }
 
 		string tgtDataName() { return this->_value->getName(); }
 
@@ -557,6 +623,14 @@ namespace IR {
 		Copy(Instruction_sptr tgt, Instruction_sptr value) : Instruction(tgt, value, nullptr) {
 			assert(tgt != nullptr && value != nullptr && "A parameter to IR::Copy is null.\n");
 		}
+
+		STEntry_set_sptr uses() { return this->chd2()->uses(); }
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
+		}
 	};
 
 	class ScalarCopy : public Copy {
@@ -568,6 +642,19 @@ namespace IR {
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+		STEntry_set_sptr uses() {
+			auto tmp = make_shared<STEntry_set>();
+			auto vl = std::dynamic_pointer_cast<Data>(this->chd2());
+
+			if (vl == nullptr)
+				vl = std::dynamic_pointer_cast<Data>(this->chd2()->tgt());
+
+			if (std::dynamic_pointer_cast<STConstantDef>(vl->value()) == nullptr) 
+				tmp->insert(vl->value());
+
+			return tmp;
+		}
 
 		void dump(stringstream& buffer) {
 			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
@@ -614,18 +701,36 @@ namespace IR {
 	public:
 		IntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
+		}
 	};
 
 	class BinaryIntegerArithmetic : public IntegerArithmetic {
 	public:
 		BinaryIntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : IntegerArithmetic(tgt, chd2, chd3)
 		{ }
+
+		STEntry_set_sptr uses() {
+			auto us = make_shared<STEntry_set>();
+			auto vl1 = std::dynamic_pointer_cast<Data>(this->chd2()->tgt())->value();
+			auto vl2 = std::dynamic_pointer_cast<Data>(this->chd3()->tgt())->value();
+
+			if (std::dynamic_pointer_cast<STConstantDef>(vl1) == nullptr) us->insert(vl1);
+			if (std::dynamic_pointer_cast<STConstantDef>(vl2) == nullptr) us->insert(vl2);
+
+			return us;
+		}
 	};
 
 	class UnaryIntegerArithmetic : public IntegerArithmetic {
 	public:
-		UnaryIntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) 
-			: IntegerArithmetic(tgt, chd2, nullptr) { }
+		UnaryIntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) : IntegerArithmetic(tgt, chd2, nullptr) { }
+
+		STEntry_set_sptr uses() { return this->chd2()->tgt()->uses(); }
 	};
 
 	class IAdd : public BinaryIntegerArithmetic {
@@ -639,7 +744,7 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		void dump(stringstream& buffer) {
-			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " + " << this->_chd3->tgtDataName() << ";" << endl;
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " + " << this->chd3()->tgtDataName() << ";" << endl;
 		}
 	};
 
@@ -654,7 +759,7 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		void dump(stringstream& buffer) {
-			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " - " << this->_chd3->tgtDataName() << ";" << endl;
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " - " << this->chd3()->tgtDataName() << ";" << endl;
 		}
 	};
 
@@ -669,7 +774,7 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		void dump(stringstream& buffer) {
-			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " * " << this->_chd3->tgtDataName() << ";" << endl;
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " * " << this->chd3()->tgtDataName() << ";" << endl;
 		}
 	};
 
@@ -684,7 +789,7 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		void dump(stringstream& buffer) {
-			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " / " << this->_chd3->tgtDataName() << ";" << endl;
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " / " << this->chd3()->tgtDataName() << ";" << endl;
 		}
 	};
 
@@ -699,7 +804,7 @@ namespace IR {
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
 		void dump(stringstream& buffer) {
-			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " % " << this->_chd3->tgtDataName() << ";" << endl;
+			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << " % " << this->chd3()->tgtDataName() << ";" << endl;
 		}
 	};
 
@@ -761,18 +866,39 @@ namespace IR {
 	public:
 		FloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
+		}
 	};
 
 	class BinaryFloatingArithmetic : public FloatingArithmetic {
 	public:
 		BinaryFloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : FloatingArithmetic(tgt, chd2, chd3)
 		{ }
+
+		STEntry_set_sptr uses() {
+			auto us = make_shared<STEntry_set>();
+			auto vl1 = std::dynamic_pointer_cast<Data>(this->chd2()->tgt())->value();
+			auto vl2 = std::dynamic_pointer_cast<Data>(this->chd3()->tgt())->value();
+
+			if (std::dynamic_pointer_cast<STConstantDef>(vl1) == nullptr) us->insert(vl1);
+			if (std::dynamic_pointer_cast<STConstantDef>(vl2) == nullptr) us->insert(vl2);
+
+			return us;
+		}
 	};
 
 	class UnaryFloatingArithmetic : public FloatingArithmetic {
 	public:
 		UnaryFloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) : FloatingArithmetic(tgt, chd2, nullptr)
 		{ }
+
+		STEntry_set_sptr uses() { 
+			return this->chd2()->tgt()->uses();
+		}
 	};
 
 	class FAdd : public BinaryFloatingArithmetic {
@@ -891,6 +1017,16 @@ namespace IR {
 	public:
 		BitArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
+
+		STEntry_set_sptr uses() { 
+			return instrsUnion(this->chd2()->uses(), this->chd3()->uses());
+		}
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
+		}
 	};
 
 	class BinAnd : public BitArithmetic {
@@ -952,6 +1088,8 @@ namespace IR {
 		void dump(stringstream& buffer) {
 			buffer << this->tgt()->tgtDataName() << " = ~ " << this->chd2()->tgtDataName() << ";" << endl;
 		}
+
+		STEntry_set_sptr uses() { return this->chd2()->uses(); }
 	};
 
 
@@ -967,6 +1105,16 @@ namespace IR {
 	public:
 		RelationalArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
 		{ }
+
+		STEntry_set_sptr uses() { 
+			return instrsUnion(this->chd2()->uses(), this->chd3()->uses());
+		}
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
+		}
 	};
 
 	class RLesThan : public RelationalArithmetic {
@@ -1099,6 +1247,10 @@ namespace IR {
 		void dump(stringstream& buffer) {
 			buffer << "if " << this->tgt()->tgtDataName() << " goto BB" << this->lbl1()->id() << " else goto BB" << this->lbl2()->id() << ";" << endl;
 		}
+
+		STEntry_set_sptr uses() { 
+			return this->tgt()->uses();
+		}
 	};
 
 
@@ -1117,6 +1269,16 @@ namespace IR {
 
 		void dump(stringstream& buffer) {
 			buffer << this->tgt()->tgtDataName() << " = &" << this->chd2()->tgtDataName() << ";" << endl;
+		}
+
+		STEntry_set_sptr uses() { 
+			return this->chd2()->uses();
+		}
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
 		}
 	};
 
@@ -1137,6 +1299,16 @@ namespace IR {
 
 		void dump(stringstream& buffer) {
 			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " ++ " << this->chd3()->tgtDataName() << ";" << endl;
+		}
+
+		STEntry_set_sptr uses() { 
+			return instrsUnion(this->chd2()->uses(), this->chd3()->uses());
+		}
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
 		}
 	};
 
@@ -1183,6 +1355,26 @@ namespace IR {
 
 			buffer << ");" << endl;
 		}
+
+		STEntry_set_sptr uses() { 
+			auto arguments = this->arguments();
+			auto tmp = make_shared<STEntry_set>();
+
+			if (arguments != nullptr) {
+				for (int i=1; i<arguments->size(); i++)
+					tmp = instrsUnion(tmp, (*arguments)[i]->uses());
+			}
+
+			return tmp;
+		}
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
+			return tmp;
+		}
+
+		bool isADefinition() { return this->tgt() != nullptr; }
 	};
 
 	/* Represent a return instruction. */
@@ -1201,22 +1393,13 @@ namespace IR {
 		void dump(stringstream& buffer) {
 			buffer << "ret " << this->tgt()->tgtDataName() << ";" << endl;
 		}
-	};
 
-	/* Represent SSA phi functions. */
-	class Phi : public Instruction {
-	public:
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) { 
-			buffer << "phi();" << endl; 
+		STEntry_set_sptr uses() { 
+			return this->tgt()->uses();
 		}
+
+		bool isADefinition() { return false; }
 	};
-
-
-
-
 
 }
 

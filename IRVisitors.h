@@ -48,7 +48,6 @@ namespace IR {
 	class AddrDispl;
 	class Call;
 	class Return;
-	class Phi;
 	class Instruction;
 }
 
@@ -106,7 +105,6 @@ public:
 	virtual void visit(IR::AddrDispl* visitor) = 0;
 	virtual void visit(IR::Call* visitor) = 0;
 	virtual void visit(IR::Return* visitor) = 0;
-	virtual void visit(IR::Phi* visitor) = 0;
 
 	virtual ~IRTreeVisitor() {};
 };
@@ -214,7 +212,6 @@ public:
 	void visit(IR::AddrDispl* visitor);
 	void visit(IR::Call* visitor);
 	void visit(IR::Return* visitor);
-	void visit(IR::Phi* visitor);
 };
 
 #endif /* IRVISITORS_H_ */

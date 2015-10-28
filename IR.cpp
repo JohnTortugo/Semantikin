@@ -11,15 +11,10 @@ namespace IR {
 			return true;
 	}
 
-	SymbolTableEntry_sp whatIsDefined(Instruction_sptr instr) {
-		assert(isADefinition(instr) && "Trying to get a definition from something that is not a definition.");
-
-		if ( auto copy = std::dynamic_pointer_cast<CopyToArray>(instr) ) 
-			return std::dynamic_pointer_cast<Data>(copy->tgt()->tgt())->value();
-		else
-			return std::dynamic_pointer_cast<Data>(instr->tgt())->value();
+	STEntry_set_sptr instrsUnion(STEntry_set_sptr s1, STEntry_set_sptr s2) {
+		s1->insert(s2->begin(), s2->end()); 
+		return s1;
 	}
-
 
 	BasicBlock_list_sptr Function::topologicalSort() {
 		auto result = make_shared<BasicBlock_list>();

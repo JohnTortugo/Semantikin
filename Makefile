@@ -70,3 +70,9 @@ define print_src
 	@echo -include $(1)
 
 endef
+
+###############################################################################
+######## This is to update the tags file
+CTAGS:
+	ctags -R --exclude=.git/ --c++-kinds=+p --fields=+afikKlmnsSzt --extra=+q .
+

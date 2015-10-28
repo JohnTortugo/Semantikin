@@ -43,6 +43,7 @@ namespace Parser {
 		virtual ~SymbolTableEntry() {};
 	};
 
+
 	/* Represent any kind of variable: parameter, temporary, local. */
 	class STVariableDeclaration : public SymbolTableEntry {
 	protected:

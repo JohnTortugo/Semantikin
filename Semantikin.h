@@ -35,6 +35,7 @@ namespace Parser {
 		STRING
 	};
 
+	class STLValue;
 	class STLabelDef;
 	class STConstantDef;
 	class STRegister;
@@ -78,7 +79,9 @@ typedef shared_ptr<Parser::STVariableDeclaration>	STVariableDeclaration_sptr;
 typedef shared_ptr<Parser::STRegister>				STRegister_sptr;
 typedef shared_ptr<Parser::STFunctionDeclaration>	STFunctionDecl_sptr;
 
-typedef shared_ptr<Parser::SymbolTableEntry>		SymbolTableEntry_sp;
+typedef shared_ptr<Parser::SymbolTableEntry>		STEntry_sptr;
+typedef set<STEntry_sptr>							STEntry_set;
+typedef shared_ptr<STEntry_set>						STEntry_set_sptr;
 
 
 
@@ -129,11 +132,12 @@ namespace Util {
 	 */
 	string escapeStr(string str);
 
-
 	/*
 	 * Return the textual name of a type.
 	 */
 	string typeName(Parser::NativeType type);
+
+
 
 }
 

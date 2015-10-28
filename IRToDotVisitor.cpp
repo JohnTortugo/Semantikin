@@ -272,8 +272,6 @@ void IRToDotVisitor::visit(IR::Return* node) {
 	node->tgt()->accept(this);
 }
 
-void IRToDotVisitor::visit(IR::Phi* visitor) { cout << "Not implemented." << endl; }
-
 
 
 void IRToDotVisitor::binaryDispatcher(IR::Instruction* node, const char* label) {

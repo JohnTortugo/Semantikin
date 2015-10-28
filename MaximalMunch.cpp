@@ -370,7 +370,3 @@ void MaximalMunch::visit(IR::Return* node) {
 	cout << "MaxMuch: Ret " << endl;
 }
 
-void MaximalMunch::visit(IR::Phi* visitor) { 
-	cout << "No codegen available for IR::Phi in " << __FILE__  << ":" <<__LINE__ << endl; 
-}
-

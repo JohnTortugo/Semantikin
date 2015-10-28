@@ -461,7 +461,7 @@ namespace Parser {
 
 		int currentOffset() const { return this->_currentOffset; }
 		void currentOffset(int ofts) { this->_currentOffset = ofts; }
-aaaa
+
 		void accept(AstTreeVisitor* visitor);
 	};
 
