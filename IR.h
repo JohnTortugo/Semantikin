@@ -26,7 +26,7 @@ using namespace Parser;
 namespace IR {
 	bool isADefinition(Instruction_sptr instr);
 	STEntry_sptr whatIsDefined(Instruction_sptr instr);
-	STEntry_set_sptr instrsUnion(STEntry_set_sptr s1, STEntry_set_sptr s2);
+	void getTgtSTEntry(const Instruction_sptr& instr, STEntry_set_sptr& res) ;
 
 
 
@@ -137,7 +137,7 @@ namespace IR {
 		}
 
 		InstructionIterator operator=(const InstructionIterator& other) {
-			this->_current = other.current();
+			return this->_current = other.current();
 		}
 
 		Instruction* current() const { 
@@ -182,7 +182,7 @@ namespace IR {
 		}
 
 		InstrReverseIterator operator=(const InstrReverseIterator& other) {
-			this->_current = other.current();
+			return this->_current = other.current();
 		}
 
 		Instruction* current() const { 
@@ -624,7 +624,11 @@ namespace IR {
 			assert(tgt != nullptr && value != nullptr && "A parameter to IR::Copy is null.\n");
 		}
 
-		STEntry_set_sptr uses() { return this->chd2()->uses(); }
+		STEntry_set_sptr uses() {
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			return tmp;
+		}
 
 		STEntry_set_sptr defs() {  
 			auto tmp = make_shared<STEntry_set>();
@@ -643,19 +647,6 @@ namespace IR {
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
-		STEntry_set_sptr uses() {
-			auto tmp = make_shared<STEntry_set>();
-			auto vl = std::dynamic_pointer_cast<Data>(this->chd2());
-
-			if (vl == nullptr)
-				vl = std::dynamic_pointer_cast<Data>(this->chd2()->tgt());
-
-			if (std::dynamic_pointer_cast<STConstantDef>(vl->value()) == nullptr) 
-				tmp->insert(vl->value());
-
-			return tmp;
-		}
-
 		void dump(stringstream& buffer) {
 			buffer << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
 		}
@@ -670,6 +661,12 @@ namespace IR {
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
 
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->tgt(), tmp);
+			return tmp;
+		}
+
 		void dump(stringstream& buffer) {
 			buffer << this->_tgt->tgtDataName() << " = *" << this->_chd2->tgtDataName() << ";" << endl;
 		}
@@ -683,6 +680,12 @@ namespace IR {
 
 		/* Used to traverse the IR tree. */
 		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
+
+		STEntry_set_sptr defs() {  
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->tgt(), tmp);
+			return tmp;
+		}
 
 		void dump(stringstream& buffer) {
 			buffer << "*" << this->_tgt->tgtDataName() << " = " << this->_chd2->tgtDataName() << ";" << endl;
@@ -715,14 +718,10 @@ namespace IR {
 		{ }
 
 		STEntry_set_sptr uses() {
-			auto us = make_shared<STEntry_set>();
-			auto vl1 = std::dynamic_pointer_cast<Data>(this->chd2()->tgt())->value();
-			auto vl2 = std::dynamic_pointer_cast<Data>(this->chd3()->tgt())->value();
-
-			if (std::dynamic_pointer_cast<STConstantDef>(vl1) == nullptr) us->insert(vl1);
-			if (std::dynamic_pointer_cast<STConstantDef>(vl2) == nullptr) us->insert(vl2);
-
-			return us;
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			getTgtSTEntry(this->chd3(), tmp);
+			return tmp;
 		}
 	};
 
@@ -730,7 +729,11 @@ namespace IR {
 	public:
 		UnaryIntegerArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) : IntegerArithmetic(tgt, chd2, nullptr) { }
 
-		STEntry_set_sptr uses() { return this->chd2()->tgt()->uses(); }
+		STEntry_set_sptr uses() { 
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			return tmp;
+		}
 	};
 
 	class IAdd : public BinaryIntegerArithmetic {
@@ -880,14 +883,10 @@ namespace IR {
 		{ }
 
 		STEntry_set_sptr uses() {
-			auto us = make_shared<STEntry_set>();
-			auto vl1 = std::dynamic_pointer_cast<Data>(this->chd2()->tgt())->value();
-			auto vl2 = std::dynamic_pointer_cast<Data>(this->chd3()->tgt())->value();
-
-			if (std::dynamic_pointer_cast<STConstantDef>(vl1) == nullptr) us->insert(vl1);
-			if (std::dynamic_pointer_cast<STConstantDef>(vl2) == nullptr) us->insert(vl2);
-
-			return us;
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			getTgtSTEntry(this->chd3(), tmp);
+			return tmp;
 		}
 	};
 
@@ -897,7 +896,9 @@ namespace IR {
 		{ }
 
 		STEntry_set_sptr uses() { 
-			return this->chd2()->tgt()->uses();
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			return tmp;
 		}
 	};
 
@@ -1019,7 +1020,10 @@ namespace IR {
 		{ }
 
 		STEntry_set_sptr uses() { 
-			return instrsUnion(this->chd2()->uses(), this->chd3()->uses());
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			getTgtSTEntry(this->chd3(), tmp);
+			return tmp;
 		}
 
 		STEntry_set_sptr defs() {  
@@ -1089,7 +1093,11 @@ namespace IR {
 			buffer << this->tgt()->tgtDataName() << " = ~ " << this->chd2()->tgtDataName() << ";" << endl;
 		}
 
-		STEntry_set_sptr uses() { return this->chd2()->uses(); }
+		STEntry_set_sptr uses() { 
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			return tmp;
+		}
 	};
 
 
@@ -1107,7 +1115,10 @@ namespace IR {
 		{ }
 
 		STEntry_set_sptr uses() { 
-			return instrsUnion(this->chd2()->uses(), this->chd3()->uses());
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			getTgtSTEntry(this->chd3(), tmp);
+			return tmp;
 		}
 
 		STEntry_set_sptr defs() {  
@@ -1227,6 +1238,9 @@ namespace IR {
 		void dump(stringstream& buffer) {
 			buffer << "goto BB" << this->lbl1()->id() << ";" << endl;
 		}
+
+		// "GoTo's" don't have condition
+		STEntry_set_sptr uses() { return make_shared<STEntry_set>(); }
 	};
 
 	class Conditional : public BranchInstruction {
@@ -1248,8 +1262,16 @@ namespace IR {
 			buffer << "if " << this->tgt()->tgtDataName() << " goto BB" << this->lbl1()->id() << " else goto BB" << this->lbl2()->id() << ";" << endl;
 		}
 
+		// Obtain the register that is the output of the condition
 		STEntry_set_sptr uses() { 
-			return this->tgt()->uses();
+			auto tmp = make_shared<STEntry_set>();
+
+			if (auto reg = std::dynamic_pointer_cast<Data>(this->tgt()) != nullptr)
+				tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value() );
+			else
+				tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt()->tgt())->value() );
+
+			return tmp;
 		}
 	};
 
@@ -1272,7 +1294,9 @@ namespace IR {
 		}
 
 		STEntry_set_sptr uses() { 
-			return this->chd2()->uses();
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			return tmp;
 		}
 
 		STEntry_set_sptr defs() {  
@@ -1301,8 +1325,12 @@ namespace IR {
 			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " ++ " << this->chd3()->tgtDataName() << ";" << endl;
 		}
 
+
 		STEntry_set_sptr uses() { 
-			return instrsUnion(this->chd2()->uses(), this->chd3()->uses());
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->chd2(), tmp);
+			getTgtSTEntry(this->chd3(), tmp);
+			return tmp;
 		}
 
 		STEntry_set_sptr defs() {  
@@ -1361,8 +1389,9 @@ namespace IR {
 			auto tmp = make_shared<STEntry_set>();
 
 			if (arguments != nullptr) {
-				for (int i=1; i<arguments->size(); i++)
-					tmp = instrsUnion(tmp, (*arguments)[i]->uses());
+				for (int i=1; i<arguments->size(); i++) {
+					getTgtSTEntry((*arguments)[i], tmp);
+				}
 			}
 
 			return tmp;
@@ -1395,12 +1424,13 @@ namespace IR {
 		}
 
 		STEntry_set_sptr uses() { 
-			return this->tgt()->uses();
+			auto tmp = make_shared<STEntry_set>();
+			getTgtSTEntry(this->tgt(), tmp);
+			return tmp;
 		}
 
 		bool isADefinition() { return false; }
 	};
-
 }
 
 #endif /* IR_H_ */

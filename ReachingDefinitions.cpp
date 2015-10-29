@@ -70,8 +70,6 @@ namespace DFA {
 		while (hadChanges) {
 			hadChanges = false;			
 
-			cout << "ReachingDefinitions iterating." << endl;
-
 			for (auto& bb : *_bbs) {
 				// This represents the UNION of OUT of previous BBs/Instructions
 				auto prevOut = make_shared<Instruction_set>();

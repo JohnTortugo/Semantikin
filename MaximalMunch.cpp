@@ -367,6 +367,5 @@ void MaximalMunch::visit(IR::Call* node) {
 }
 
 void MaximalMunch::visit(IR::Return* node) { 
-	cout << "MaxMuch: Ret " << endl;
 }
 

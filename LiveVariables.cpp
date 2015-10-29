@@ -32,8 +32,6 @@ namespace DFA {
 		while (hadChanges) {
 			hadChanges = false;			
 
-			cout << "LiveVariablesAnalysis iterating." << endl;
-
 			for (auto& bb : *_bbs) {
 				// This represents the UNION of INs of successors BBs/Instructions
 				auto prevIns = make_shared<STEntry_set>();
@@ -111,7 +109,6 @@ namespace DFA {
 			for (auto& ins : bb->instructions()) {
 				auto instr = ins.shared_from_this();
 
-				output << std::setw(3) << _identifier[instr] << ": ";
 				instr->dump(output);
 
 				output << "\t|-> IN {";

@@ -4,16 +4,25 @@
 #include <set>
 
 namespace IR {
+
+	void getTgtSTEntry(const Instruction_sptr& instr, STEntry_set_sptr& res) {
+		auto reg = std::dynamic_pointer_cast<Data>(instr);
+
+		/// If it is a Data "instruction" and if it is not a constant/immediate
+		if (reg != nullptr) {
+			if (std::dynamic_pointer_cast<Immediate>(instr) == nullptr) 
+				res->insert( reg->value() );
+		}
+		else {
+			res->insert( std::dynamic_pointer_cast<Data>(instr->tgt())->value() );
+		}
+	}
+
 	bool isADefinition(Instruction_sptr instr) {
 		if ( std::dynamic_pointer_cast<BranchInstruction>(instr) ) 
 			return false;
 		else
 			return true;
-	}
-
-	STEntry_set_sptr instrsUnion(STEntry_set_sptr s1, STEntry_set_sptr s2) {
-		s1->insert(s2->begin(), s2->end()); 
-		return s1;
 	}
 
 	BasicBlock_list_sptr Function::topologicalSort() {

@@ -93,13 +93,13 @@ int main(int argc, char *argv[]) {
 
 	/* Compute Reaching Definitions and Use-Def / Def-Use Chains */
 	for (auto& function : *irModule->functions()) {
-//		DFA::ReachingDefinitions rd(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
-//		rd.execute();
+		DFA::ReachingDefinitions rd(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
+		rd.execute();
 //		rd.dump();
 
 		DFA::LiveVariables lv(function->bbs(IR::Function::CFGBasicBlockOrder::TOPO_ORDER));
-		//lv.execute();
-		lv.dump();
+		lv.execute();
+//		lv.dump();
 	}
 
 
