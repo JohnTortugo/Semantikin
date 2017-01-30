@@ -1,5 +1,0 @@
-<map id="AstNodeVisitor" name="AstNodeVisitor">
-<area shape="rect" id="node2" href="$class_ast_sema_visitor.html" title="AstSemaVisitor" alt="" coords="5,80,117,107"/>
-<area shape="rect" id="node3" href="$class_ast_t_a_c_gen_visitor.html" title="AstTACGenVisitor" alt="" coords="143,80,272,107"/>
-<area shape="rect" id="node4" href="$class_ast_to_dot_visitor.html" title="AstToDotVisitor" alt="" coords="297,80,412,107"/>
-</map>

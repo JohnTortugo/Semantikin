@@ -1,9 +1,0 @@
-<map id="IR::UnaryIntegerArithmetic" name="IR::UnaryIntegerArithmetic">
-<area shape="rect" id="node5" href="$class_i_r_1_1_i_dec.html" title="IR::IDec" alt="" coords="5,304,77,331"/>
-<area shape="rect" id="node6" href="$class_i_r_1_1_i_inc.html" title="IR::IInc" alt="" coords="101,304,168,331"/>
-<area shape="rect" id="node7" href="$class_i_r_1_1_i_minus.html" title="IR::IMinus" alt="" coords="192,304,273,331"/>
-<area shape="rect" id="node8" href="$class_i_r_1_1_i_plus.html" title="IR::IPlus" alt="" coords="299,304,372,331"/>
-<area shape="rect" id="node2" href="$class_i_r_1_1_integer_arithmetic.html" title="IR::IntegerArithmetic" alt="" coords="113,155,255,181"/>
-<area shape="rect" id="node3" href="$class_i_r_1_1_instruction.html" title="IR::Instruction" alt="" coords="131,80,236,107"/>
-<area shape="rect" id="node4" href="$class_parser_1_1_r_value.html" title="Parser::RValue" alt="" coords="129,5,239,32"/>
-</map>

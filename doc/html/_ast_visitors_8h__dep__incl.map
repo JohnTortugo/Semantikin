@@ -1,7 +1,0 @@
-<map id="AstVisitors.h" name="AstVisitors.h">
-<area shape="rect" id="node2" href="$_abstract_syntax_tree_8cpp.html" title="AbstractSyntaxTree.cpp" alt="" coords="5,80,168,107"/>
-<area shape="rect" id="node3" href="$_ast_sema_visitor_8cpp.html" title="AstSemaVisitor.cpp" alt="" coords="192,80,331,107"/>
-<area shape="rect" id="node4" href="$_ast_t_a_c_gen_visitor_8cpp.html" title="AstTACGenVisitor.cpp" alt="" coords="355,80,508,107"/>
-<area shape="rect" id="node5" href="$_ast_to_dot_visitor_8cpp.html" title="AstToDotVisitor.cpp" alt="" coords="534,80,673,107"/>
-<area shape="rect" id="node6" href="$main_8cpp.html" title="main.cpp" alt="" coords="699,80,772,107"/>
-</map>
