@@ -7,22 +7,18 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+
 	#include "FlexScanner.h"
 	#include "Parsin.tab.hh"
 	#include "ErrorReporting.h"
-
 %}
 
 %{
-    
 	#define YY_USER_ACTION  {													\
 		_currentLine += yytext;													\
 		location->columns(yyleng);												\
 	}
 %}
-
-
-
 
 %%				/*** Regular Expressions Part 					 ***/
 
@@ -57,7 +53,6 @@
 "[" 			{ return Parser::BisonParser::token::TK_L_SQBRACE; }
 "]" 			{ return Parser::BisonParser::token::TK_R_SQBRACE; }
 
-
 "&&"			{ return Parser::BisonParser::token::TK_AND; }
 "||"			{ return Parser::BisonParser::token::TK_OR; }
 "!"				{ return Parser::BisonParser::token::TK_NOT; }
@@ -82,13 +77,10 @@
 "/="			{ return Parser::BisonParser::token::TK_DIV_EQUAL; }
 "%="			{ return Parser::BisonParser::token::TK_MOD_EQUAL; }
 
-\"[^\"]*\"		{ tokenValue->str = strdup(yytext); 	return Parser::BisonParser::token::TK_STRING;	}
 [0-9][0-9]*		{ tokenValue->integer = atoi(yytext); 	return Parser::BisonParser::token::TK_INTEGER; }
-[0-9]+\.[0-9]*	{ tokenValue->floating = atof(yytext); 	return Parser::BisonParser::token::TK_FLOAT; 	}
 [0-9a-zA-Z]*	{ tokenValue->str = strdup(yytext); 	return Parser::BisonParser::token::TK_ID; 		}
 
 .				{ ParsingError::printParsingError(currentLine(), "Unrecognized token `" + string(yytext) + "`", location->begin.line, location->begin.column, location->end.line, location->end.column); exit(0); }
 <<EOF>>			{ return 0; }
-
 
 %%

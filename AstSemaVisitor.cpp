@@ -1,6 +1,7 @@
 #include "Semantikin.h"
 #include "AstVisitors.h"
 #include "SymbolTable.h"
+
 #include <memory>
 #include <list>
 
@@ -33,65 +34,61 @@ using namespace Parser;
 									(tp1 <= tp2)))
 #endif
 
+/// Validate a compilation unit. 
+/// Allocate a new symbol table and add to it all default symbols to the language and
+/// then go to validate the semantic of each function in the module.
 void AstSemaVisitor::visit(Parser::CompilationUnit* module) {
 	if (module->getSymbTable() != nullptr) {
 		cout << "The SymbolTable for this module has already been computed. " << endl;
-		return ;
+		cout << "Semantic analysis cannot proceed." << endl;
+		exit(1);
 	}
 
-	/* Create new symbol table for this scope. */
+	/// Create new symbol table for this scope
 	shared_ptr<SymbolTable> table(new SymbolTable(nullptr));
 
-	/* Set the symbol table in the module. */
+	/// Set the symbol table in the module
 	module->setSymbTable(table);
 
-	/* Add all native global variables and functions. */
+	/// Add all native global variables and functions
 	addNativeFunctions(table);
 
-	/* Update pointer to new current symbol table. */
-	this->currentSymbTable = table;
+	/// Update pointer to new current symbol table
+	this->currentSymbolTable = table;
 
-	/* Continue visiting children. */
-	list<shared_ptr<Parser::Function>>::iterator it = module->getFunctions()->begin();
-	while (it != module->getFunctions()->end()) {
-		(*it)->accept(this);
-		it++;
+	/// Visit each function declared inside this compilation unit
+	for (auto it : *module->getFunctions()) {
+		it->accept(this);
 	}
 
-	/* Reset pointer to previous symbol table. */
-	this->currentSymbTable = table->getParent();
+	/// Reset pointer to previous symbol table
+	this->currentSymbolTable = table->getParent();
 }
 
+/// Check the semantic of a Function definition.
 void AstSemaVisitor::visit(Parser::Function* function) {
 	if (function->getSymbTable() != nullptr) {
 		cout << "The SymbolTable for this function has already been computed. " << endl;
-		return ;
+		cout << "Semantic analysis cannot proceed." << endl;
+		exit(1);
 	}
 
 	string type = function->getReturnType();
 	string name = function->getName();
 
-	/* Check if there isn't already a symbol table entry with this name. */
-	shared_ptr<SymbolTableEntry> prev = this->currentSymbTable->lookup(name);
-
-	if (prev != nullptr) {
+	/// Check if there isn't already a symbol table entry with this name
+	if (this->currentSymbolTable->lookup(name) != nullptr) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tRedefinition of the symbol \"" << name << "\"." << endl;
-		exit(-1);
+		exit(1);
 	}
 
-	if (translateType(type) == Parser::NOT_A_TYPE) {
-		cout << "Error in semantic analysis." << endl;
-		cout << "\t The function \"" << name << "\" has a invalid return type (\"" << type << "\")." << endl;
-		exit(-1);
-	}
-
-	/* Insert the function definition in the symbol table. */
+	/// Insert the function definition into its own symbol table, therefore
+	/// providing the basis for recursive calls.
 	shared_ptr<Parser::STFunctionDeclaration> funDecl(new Parser::STFunctionDeclaration(name, name, translateType(type)));
-	this->currentSymbTable->add(funDecl);
+	this->currentSymbolTable->add(funDecl);
 
-	/* Save pointer to declaration of current function.
-	 * This will be handy for debugging. */
+	/// Save pointer to declaration of current function. This will be handy for debugging
 	this->_curFunDecl = funDecl;
 
 	/* Offset is always relative to the function frame,
@@ -107,13 +104,13 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 	this->currentFunRetType = translateType(type);
 
 	/* Create new symbol table for this scope. */
-	shared_ptr<SymbolTable> table(new SymbolTable(currentSymbTable));
+	shared_ptr<SymbolTable> table(new SymbolTable(currentSymbolTable));
 
 	/* Set the symbol table in the function. */
 	function->setSymbTable(table);
 
 	/* Update pointer to new current symbol table. */
-	this->currentSymbTable = table;
+	this->currentSymbolTable = table;
 
 	/* Add the node of parameters if actually there is parameters. */
 	list<shared_ptr<ParamDecl>>::iterator itt = function->getParams()->begin();
@@ -122,7 +119,7 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 		(*itt)->accept(this);
 
 		/* Now set set in the Function entry in the ST a pointer to its parameter entry in the ST. */
-		funDecl->addParam( this->currentSymbTable->lookup((*itt)->getName()) );
+		funDecl->addParam( this->currentSymbolTable->lookup((*itt)->getName()) );
 	}
 
 	/* Continue the visiting. */
@@ -132,7 +129,7 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 	if (this->currentFunRetType != Parser::VOID && this->currentFunReturns == 0) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tMissing return statement in function (\"" << name << "\") returning non-void." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* We save this because when we will emit temporaries we want their indices continue
@@ -140,7 +137,7 @@ void AstSemaVisitor::visit(Parser::Function* function) {
 	function->currentOffset(this->_currentOffset);
 
 	/* Reset pointer to previous symbol table. */
-	this->currentSymbTable = table->getParent();
+	this->currentSymbolTable = table->getParent();
 }
 
 void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
@@ -152,15 +149,13 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 	if (!isValidType(type)) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\t\"" << type << "\" is not a valid type." << endl;
-		exit(-1);
+		exit(1);
 	}
 
-	shared_ptr<SymbolTableEntry> prev = this->currentSymbTable->lookup(name);
-
-	if (prev != nullptr) {
+	if (this->currentSymbolTable->lookup(name) != nullptr) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tThere is a previous definition of the symbol \"" << name << "\"." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Calculate the size of the variable and check if the array
@@ -170,7 +165,7 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 	if (varSize == 0) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tThe size of array dimensions should be integer constants." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Multidimentional parameters are passed only as pointers, so we just need a pointer.*/
@@ -187,7 +182,7 @@ void AstSemaVisitor::visit(const Parser::ParamDecl* param) {
 	}
 
 	/* Include the parameter definition in the ST. */
-	this->currentSymbTable->add(parDecl);
+	this->currentSymbolTable->add(parDecl);
 
 	this->_currentOffset += varSize;
 }
@@ -202,18 +197,18 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 
 	while (it != specs->end()) {
 		string name = (*it)->getName();
-		shared_ptr<SymbolTableEntry> prev = this->currentSymbTable->lookup(name);
+		shared_ptr<SymbolTableEntry> prev = this->currentSymbolTable->lookup(name);
 
 		if (!isValidType(type)) {
 			cout << "Error in semantic analysis." << endl;
 			cout << "\t\"" << type << "\" is not a valid type." << endl;
-			exit(-1);
+			exit(1);
 		}
 
 		if (prev != nullptr) {
 			cout << "Error in semantic analysis." << endl;
 			cout << "\tThere is a previous definition of the symbol \"" << name << "\"." << endl;
-			exit(-1);
+			exit(1);
 		}
 
 		int dims = 0, varSize = typeWidth(translateType(type));
@@ -231,7 +226,7 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 			if ( !IS_SUBTYPE(initializer->type(), translateType(type)) ) {
 				cout << "Error in semantic analysis." << endl;
 				cout << "\tThe initializer of the variable \"" << name << "\" is not a subtype of \"" << type << "\"." << endl;
-				exit(-1);
+				exit(1);
 			}
 		}
 
@@ -246,7 +241,7 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 				if (expr == nullptr) {
 					cout << "Error in semantic analysis." << endl;
 					cout << "\tDimensions size must be integer constants." << endl;
-					exit(-1);
+					exit(1);
 				}
 
 				param->addDim(expr->value());
@@ -254,7 +249,7 @@ void AstSemaVisitor::visit(const Parser::VarDecl* varDec) {
 		}
 
 		/* Add the parameter to the current ST. */
-		this->currentSymbTable->add(param);
+		this->currentSymbolTable->add(param);
 
 		this->_currentOffset += varSize;
 
@@ -306,7 +301,7 @@ void AstSemaVisitor::visit(const Parser::ReturnStmt* ret) {
 	if (this->currentFunRetType == Parser::VOID) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tReturn statement present in function with void return type." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Continue visiting */
@@ -316,7 +311,7 @@ void AstSemaVisitor::visit(const Parser::ReturnStmt* ret) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tA return-statement's expression in function (\"" << this->_curFunDecl->getName()
 				<< "\") is not a subtype of the function return type." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Increment number of valid return statements. */
@@ -330,13 +325,13 @@ void AstSemaVisitor::visit(Parser::CodeBlock* block) {
 	}
 
 	/* Create new symbol table for this scope. */
-	shared_ptr<SymbolTable> table(new SymbolTable(this->currentSymbTable));
+	shared_ptr<SymbolTable> table(new SymbolTable(this->currentSymbolTable));
 
 	/* Set the symbol table in the function. */
 	block->setSymbTable(table);
 
 	/* Update pointer to new current symbol table. */
-	this->currentSymbTable = table;
+	this->currentSymbolTable = table;
 
 	/* Continue the visiting. */
 	list<shared_ptr<Parser::Statement>>* statements = block->getStatements();
@@ -350,7 +345,7 @@ void AstSemaVisitor::visit(Parser::CodeBlock* block) {
 	}
 
 	/* Reset pointer to previous symbol table. */
-	this->currentSymbTable = table->getParent();
+	this->currentSymbolTable = table->getParent();
 }
 
 void AstSemaVisitor::visit(Parser::StringExpr* str) {
@@ -367,21 +362,21 @@ void AstSemaVisitor::visit(Parser::IntegerExpr* integer) {
 
 void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 	string name = id->value();
-	shared_ptr<SymbolTableEntry> decl = this->currentSymbTable->lookup(name);
+	shared_ptr<SymbolTableEntry> decl = this->currentSymbolTable->lookup(name);
 	list<shared_ptr<Parser::Expression>>* dims = id->dimsExprs();
 
 	/* If the symbol was not declared is a error. */
 	if (decl == nullptr) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tThere is not a definition of the symbol \"" << name << "\"." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* If the symbol is of the wrong type is not a variable is a error. */
 	if (dynamic_cast<STFunctionDeclaration*>(decl.get())) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tThe symbol \"" << name << "\" is a function, a variable was expected." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Begin: Check matrix and variables indexing constraints. */
@@ -391,14 +386,14 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 	if (varDecl->getNumDims() == 0 && dims != nullptr && dims->size() > 0) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tVariable \"" << name << "\" cannot be indexed as an array." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* It was specified more dimensions than necessary. */
 	if (varDecl->getNumDims() < dims->size()) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tMismatch in the number of dimensions used to access the symbol \"" << name << "\"." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Just the initial indices were specified, fill the remainder wit [0]. */
@@ -422,7 +417,7 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 			if ( ! CHECK_TYPE((*it), INT) ) {
 				cout << "Error in semantic analysis." << endl;
 				cout << "\tYou must index arrays using integer values.." << endl;
-				exit(-1);
+				exit(1);
 			}
 		}
 	}
@@ -437,7 +432,7 @@ void AstSemaVisitor::visit(Parser::IdentifierExpr* id) {
 
 void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 	string name = funCall->name();
-	shared_ptr<SymbolTableEntry> decl 					= this->currentSymbTable->lookup(name);
+	shared_ptr<SymbolTableEntry> decl 					= this->currentSymbolTable->lookup(name);
 	list<shared_ptr<Parser::Expression>>* arguments 	= funCall->arguments();
 	list<shared_ptr<Parser::Expression>>::iterator it 	= arguments->begin();
 
@@ -445,7 +440,7 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 	if (decl == nullptr) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tThere is not a definition of the symbol \"" << name << "\"." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Check if there is a *function* definition. */
@@ -453,7 +448,7 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 	if (funDecl == nullptr) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tThere is an attempt to use the symbol \"" << name << "\" as a function but it's declared type is variable." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Check number of parameters. */
@@ -461,7 +456,7 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tIncorrect number of parameters were passed to function \"" << name << "\"." << endl;
 		cout << "\t" << funDecl->params().size() << " were expected, but " << arguments->size() << " was passed." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Continue visiting. */
@@ -487,7 +482,7 @@ void AstSemaVisitor::visit(Parser::FunctionCall* funCall) {
 				cout << "Error in semantic analysis." << endl;
 				cout << "\tThe " << (i+1) << "'th parameter of the function \"" << funDecl->getName() << "\" is a \"" << Util::typeName(param->type()) << "\"";
 				cout << " but an \"" << Util::typeName(exp->type()) << "\" was informed." << endl;
-				exit(-1);
+				exit(1);
 			}
 		}
 	}
@@ -508,21 +503,21 @@ void AstSemaVisitor::visit(Parser::UnaryExpr* unary) {
 	if (unary->exp()->type() == Parser::STRING) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* We can only take the address of left-hand operands. */
 	if (unary->opr() == UnaryExpr::ADDR && !dynamic_cast<Parser::IdentifierExpr*>(unary->exp())) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tIt is only allowed to take the address of variables." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 	/* Currently we assume we can't negate anything that isn't a integer.*/
 	if (unary->opr() == UnaryExpr::BIT_NOT && unary->exp()->type() != Parser::INT) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tIt is only allowed to negate integer expressions." << endl;
-		exit(-1);
+		exit(1);
 	}
 
 
@@ -544,7 +539,7 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 		if (binop->opr() != BinaryExpr::ASSIGN || exp2->type() != Parser::STRING || decl == NULL || decl->type() != Parser::STRING) {
 			cout << "Error in semantic analysis." << endl;
 			cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
-			exit(-1);
+			exit(1);
 		}
 
 		binop->type(Parser::STRING);
@@ -553,12 +548,12 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 			(exp1->type() != Parser::INT || exp2->type() != Parser::INT)) {
 			cout << "Error in semantic analysis." << endl;
 			cout << "\tBinary expressions currently are only allowed only between integer types." << endl;
-			exit(-1);
+			exit(1);
 	}
 	else if (binop->opr() == BinaryExpr::MOD && (exp1->type() != Parser::INT || exp2->type() != Parser::INT)) {
 		cout << "Error in semantic analysis." << endl;
 		cout << "\tWe don't support module for floating expressions." << endl;
-		exit(-1);
+		exit(1);
 	}
 	else if (exp1->type() == exp2->type()) {
 		binop->type(exp1->type());
@@ -621,32 +616,24 @@ void AstSemaVisitor::addNativeFunctions(shared_ptr<Parser::SymbolTable> table) {
 
 bool AstSemaVisitor::isValidType(string name) {
 	if (name == "int") return true;
-	else if (name == "float") return true;
-	else if (name == "string") return true;
 	else if (name == "void") return true;
 	else return false;
 }
 
 string Util::typeName(Parser::NativeType type) {
 	if (type == Parser::INT) return "int";
-	else if (type == Parser::FLOAT) return "float";
-	else if (type == Parser::STRING) return "string";
 	else if (type == Parser::VOID) return "void";
 	else throw -1;
 }
 
 NativeType AstSemaVisitor::translateType(string name) {
 	if (name == "int") return Parser::INT;
-	else if (name == "float") return Parser::FLOAT;
-	else if (name == "string") return Parser::STRING;
 	else if (name == "void") return Parser::VOID;
 	else return Parser::NOT_A_TYPE;
 }
 
 TypeWidth AstSemaVisitor::typeWidth(NativeType name) {
 	if (name == Parser::INT) return Parser::INT_WIDTH;
-	else if (name == Parser::FLOAT) return Parser::FLOAT_WIDTH;
-	else if (name == Parser::STRING) return Parser::STRING_WIDTH;
 	else if (name == Parser::VOID) return Parser::VOID_WIDTH;
 	else throw -1;
 }

@@ -43,53 +43,49 @@ void printHelp() {
 }
 
 int main(int argc, char *argv[]) {
+	Parser::Driver driver;
+	Parser::CompilationUnit* astTree = nullptr;
+	char* inputFileName = nullptr;
+
+    /// Check if the user just want to see the help message
 	if (cmdOptionExists(argv, argv+argc, "-h")) {
 		printHelp();
 		exit(0);
 	}
 
+    /// Check if the user specified an input file
 	if (!cmdOptionExists(argv, argv+argc, "-i")) {
 		fprintf(stderr, "You need to specify an input file.\n");
 		exit(1);
 	}
 
-	Parser::Driver driver;
-	Parser::CompilationUnit* astModule = nullptr;
+	inputFileName = getCmdOption(argv, argv+argc, "-i");
 
-	char* inputFileName = getCmdOption(argv, argv+argc, "-i");
-
-
-
-	/** Start parsing */
+	/// Start parsing
 	if (access(inputFileName, F_OK | R_OK)) {
 		fprintf(stderr, "Could not access the specified input file.\n");
 		exit(1);
 	}
 
-	if (!driver.parse(inputFileName, astModule))
+    /// Check if parsing succeeded. The inline actions of the parser
+    /// will allocate and initialize the astTree variable.
+	if (!driver.parse(inputFileName, astTree) || astTree == nullptr)
 		exit(1);
 
-
-
-	/* Do semantic analyzis. */
+	/// Execute semantic analysis
 	AstSemaVisitor semantic;
-	astModule->accept(&semantic);
+	astTree->accept(&semantic);
 
-
-
-
-	/* Generate the intermediate representation */
+	/// Generate the intermediate representation
 	AstTACGenVisitor irgen(semantic.currentOffset());
-	astModule->accept(&irgen);
+	astTree->accept(&irgen);
 
-	/* Obtain pointer to the IR generated module. */
+	/// Obtain pointer to the IR generated module
 	auto irModule = irgen.module();
 
-	
-	/* Call tree canonicalizer */
+	/// Call tree canonicalizer
 	TreeCanonicalizer tc;
 	irModule->accept(&tc);
-
 
 	/* Compute Reaching Definitions and Use-Def / Def-Use Chains */
 //	for (auto& function : *irModule->functions()) {
@@ -102,17 +98,13 @@ int main(int argc, char *argv[]) {
 //		lv.dump();
 //	}
 
-
 	/* Generate code using maximal munch algorithm */
 	MaximalMunch codeGen;
 	irModule->accept(&codeGen);
 
-
-
-
 	/* Just print out the AST of the function */
 	if (cmdOptionExists(argv, argv+argc, "-dumpAsts")) {
-		for (auto& func : *astModule->getFunctions()) {
+		for (auto& func : *astTree->getFunctions()) {
 			AstToDotVisitor ast("ast_" + func->getName() + ".dot");
 			func->accept(&ast);
 		}

@@ -47,7 +47,6 @@
 
 %union {
 	int integer;
-	float floating;
 	char* str;
 	Expression* expr;
 	list<std::shared_ptr<Expression>>* listExpr;
@@ -88,9 +87,7 @@
 %token TK_WHILE						"while keyword"
 %token TK_RETURN					"return keyword"
 
-%token <str> TK_STRING				"string literal"
 %token <integer> TK_INTEGER			"integer literal"
-%token <floating> TK_FLOAT			"floating literal"
 %token <str> TK_ID					"identifier"
 
 %token TK_SEMICOLON					"semicolon"
@@ -251,12 +248,9 @@ EXPR			: EXPR TK_COMPARE EXPR														{ $$ = new BinaryExpr(BinaryExpr::COM
 				| EXPR TK_DPLUS																{ $$ = new UnaryExpr(UnaryExpr::INCREMENT, @2, $1); }
 				| EXPR TK_DMINUS															{ $$ = new UnaryExpr(UnaryExpr::DECREMENT, @2, $1); }
 				| TK_INTEGER																{ $$ = new IntegerExpr(@1, $1); }
-				| TK_FLOAT																	{ $$ = new FloatExpr(@1, $1); }
-				| TK_STRING																	{ $$ = new StringExpr(@1, $1); }
 				| TK_ID MAT_DIMS															{ $$ = new IdentifierExpr(@1, $1, $2); }
 				| FUN_CALL																	{ $$ = $1; }
 				;
 
 %%
-
 

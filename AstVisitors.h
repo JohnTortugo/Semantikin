@@ -1,10 +1,10 @@
-#ifndef ASTVISITORS_H_
-#define ASTVISITORS_H_
-
+#pragma once
 #include <iostream>
 #include "AbstractSyntaxTree.h"
 #include "IR.h"
 
+/// This class represents the base class for any visitor that
+/// should be used to traverse the Abstract Syntax Tree
 class AstTreeVisitor {
 public:
 	virtual void visit(Parser::CompilationUnit* module) = 0;
@@ -83,7 +83,7 @@ private:
 
 	/* This is the symbol table for the current scope. A pointer to
 	 * the enclosing scope symbol table is keept. 				 */
-	std::shared_ptr<Parser::SymbolTable> currentSymbTable;
+	std::shared_ptr<Parser::SymbolTable> currentSymbolTable;
 
 	/* Pointer to the STentry for declaration of current function. */
 	shared_ptr<Parser::STFunctionDeclaration> _curFunDecl;
@@ -194,5 +194,3 @@ public:
 
 	BasicBlock_sptr newBasicBlock() { return make_shared<IR::BasicBlock>(0); }
 };
-
-#endif /* ASTVISITORS_H_ */
