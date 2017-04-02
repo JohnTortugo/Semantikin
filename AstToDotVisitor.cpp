@@ -266,20 +266,6 @@ void AstToDotVisitor::visit(Parser::CodeBlock* block) {
 	}
 }
 
-void AstToDotVisitor::visit(Parser::StringExpr* str) {
-	/* The main node information. */
-	string value = escapeStr(str->value());
-	value = (value.length() > 10) ? value.substr(0, 10)  + "...\\\"" : value;
-
-	this->dotfile << "\t\"" << str << "\" [shape=rect, label=\"" << value<< "\"];" << endl;
-
-}
-
-void AstToDotVisitor::visit(Parser::FloatExpr* flt) {
-	/* The main node information. */
-	this->dotfile << "\t\"" << flt << "\" [shape=rect, label=\"" << flt->value() << "\"];" << endl;
-}
-
 void AstToDotVisitor::visit(Parser::IntegerExpr* integer) {
 	/* The main node information. */
 	this->dotfile << "\t\"" << integer << "\" [shape=rect, label=\"" << integer->value() << "\"];" << endl;

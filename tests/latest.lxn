@@ -1,3 +1,5 @@
-void funcao1(int a, int b, int c) {
+void funcao1() {
+    int a;
+    
     a = 3 + 3;
 }

@@ -145,16 +145,14 @@ namespace Parser {
 
 	public:
 		/* TODO: Change this	*/
-		STConstantDef(string nm, string s) : SymbolTableEntry(nm, Parser::STRING), _str(s), _integer(0), _floating(0) {}
 		STConstantDef(string nm, int i)    : SymbolTableEntry(nm, Parser::INT), _str(""), _integer(i), _floating(0) {}
-		STConstantDef(string nm, float f)  : SymbolTableEntry(nm, Parser::FLOAT), _str(""), _integer(0), _floating(f) {}
 
 		string getName() {
 			switch (this->_type) {
-				case Parser::STRING: return this->_str;
 				case Parser::INT: return std::to_string(this->_integer);
-				case Parser::FLOAT: return std::to_string(this->_floating);
-				case Parser::NOT_A_TYPE: throw System::EXCEPTION_UNEXPECTED_TYPE;
+                case Parser::VOID: return "void";
+				case Parser::NOT_A_TYPE: 
+                    throw System::EXCEPTION_UNEXPECTED_TYPE;
 			}
 		}
 

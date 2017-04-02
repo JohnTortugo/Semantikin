@@ -231,30 +231,6 @@ namespace Parser {
 		int value() const { return this->_value; }
 	};
 
-	class FloatExpr : public Expression {
-	private:
-		float _value;
-
-	public:
-		FloatExpr(location loc, float _value) : Expression(loc), _value(_value) {}
-
-		void accept(AstTreeVisitor* visitor);
-
-		float value() const { return this->_value; }
-	};
-
-	class StringExpr : public Expression {
-	private:
-		string _value;
-
-	public:
-		StringExpr(location loc, string _value) : Expression(loc), _value(_value) {}
-
-		void accept(AstTreeVisitor* visitor);
-
-		string value() const { return this->_value; }
-	};
-
 	class CodeBlock : public Statement {
 	private:
 		shared_ptr<SymbolTable> _symbTable;

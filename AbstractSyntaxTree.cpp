@@ -16,10 +16,6 @@ namespace Parser {
 
 	void IntegerExpr::accept(AstTreeVisitor* visitor) { visitor->visit(this); }
 
-	void FloatExpr::accept(AstTreeVisitor* visitor) { visitor->visit(this); }
-
-	void StringExpr::accept(AstTreeVisitor* visitor) { visitor->visit(this); }
-
 	void CodeBlock::accept(AstTreeVisitor* visitor) { visitor->visit(this); }
 
 	void ReturnStmt::accept(AstTreeVisitor* visitor) { visitor->visit(this); }

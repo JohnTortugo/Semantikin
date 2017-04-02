@@ -22,17 +22,13 @@ using std::map;
 namespace Parser {
 	enum TypeWidth {
 		VOID_WIDTH = 0,
-		INT_WIDTH = 8,
-		FLOAT_WIDTH = 8,
-		STRING_WIDTH = 8
+		INT_WIDTH = 8
 	};
 
 	enum NativeType {
 		NOT_A_TYPE,
 		VOID,
 		INT,
-		FLOAT,
-		STRING
 	};
 
 	class STLValue;

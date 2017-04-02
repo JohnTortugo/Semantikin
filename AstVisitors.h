@@ -17,8 +17,6 @@ public:
 	virtual void visit(Parser::ElseIfStmt* module) = 0;
 	virtual void visit(const Parser::ReturnStmt* module) = 0;
 	virtual void visit(Parser::CodeBlock* module) = 0;
-	virtual void visit(Parser::StringExpr* module) = 0;
-	virtual void visit(Parser::FloatExpr* module) = 0;
 	virtual void visit(Parser::IntegerExpr* module) = 0;
 	virtual void visit(Parser::IdentifierExpr* module) = 0;
 	virtual void visit(Parser::FunctionCall* module) = 0;
@@ -61,8 +59,6 @@ public:
 	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
 	void visit(Parser::CodeBlock* module);
-	void visit(Parser::StringExpr* module);
-	void visit(Parser::FloatExpr* module);
 	void visit(Parser::IntegerExpr* module);
 	void visit(Parser::IdentifierExpr* module);
 	void visit(Parser::FunctionCall* node);
@@ -101,8 +97,6 @@ public:
 	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
 	void visit(Parser::CodeBlock* module);
-	void visit(Parser::StringExpr* module);
-	void visit(Parser::FloatExpr* module);
 	void visit(Parser::IntegerExpr* module);
 	void visit(Parser::IdentifierExpr* module);
 	void visit(Parser::FunctionCall* node);
@@ -124,14 +118,13 @@ public:
 
 class AstTACGenVisitor : public AstTreeVisitor {
 private:
-	/* Pointer to the module currently being IR generated. */
+	/// Pointer to the module currently being IR generated.
 	shared_ptr<IR::Module> _module;
 
-	/* Pointer to the function currently being IR generated. */
+	/// Pointer to the function currently being IR generated.
 	shared_ptr<IR::Function> _currentFunction;
 
-	/* Count the number of constants/basicblocks/tmps found/added to the symbol table of
-	 * a function. 													 			 */
+	/// Count the number of constants/basicblocks/tmps found/added to the symbol table of a function.
 	unsigned int constCounter = 1;
 	unsigned int basicBlockCounter = 1;
 	unsigned int tempCounter = 1;
@@ -167,8 +160,6 @@ public:
 	void visit(Parser::ElseIfStmt* module);
 	void visit(const Parser::ReturnStmt* module);
 	void visit(Parser::CodeBlock* module);
-	void visit(Parser::StringExpr* module);
-	void visit(Parser::FloatExpr* module);
 	void visit(Parser::IntegerExpr* module);
 	void visit(Parser::IdentifierExpr* module);
 	void visit(Parser::FunctionCall* node);
@@ -185,8 +176,7 @@ public:
 
 	void emitBranchesBasedOnExpValue(Instruction_sptr, BasicBlock_sptr lTrue, BasicBlock_sptr lFalse);
 
-	template<typename T>
-	shared_ptr<STConstantDef> newConstant(T value);
+	shared_ptr<STConstantDef> newConstant(int value);
 
 	shared_ptr<STLabelDef> newLabel(string scope, string suffix="");
 

@@ -29,8 +29,7 @@ using namespace Parser;
 
 #ifndef IS_SUBTYPE
 	#define IS_SUBTYPE(tp1, tp2)	((tp1 == tp2) ||										\
-									((tp1 != Parser::STRING && tp2 != Parser::STRING) && 	\
-									(tp1 != Parser::VOID && tp2 != Parser::VOID) && 		\
+									((tp1 != Parser::VOID && tp2 != Parser::VOID) && 		\
 									(tp1 <= tp2)))
 #endif
 
@@ -348,14 +347,6 @@ void AstSemaVisitor::visit(Parser::CodeBlock* block) {
 	this->currentSymbolTable = table->getParent();
 }
 
-void AstSemaVisitor::visit(Parser::StringExpr* str) {
-	str->type(Parser::STRING);
-}
-
-void AstSemaVisitor::visit(Parser::FloatExpr* flt) {
-	flt->type(Parser::FLOAT);
-}
-
 void AstSemaVisitor::visit(Parser::IntegerExpr* integer) {
 	integer->type(Parser::INT);
 }
@@ -499,13 +490,6 @@ void AstSemaVisitor::visit(Parser::UnaryExpr* unary) {
 	/* Continue visiting */
 	unary->exp()->accept(this);
 
-	/* Arithmetic expressions are allowed only between numerical types. */
-	if (unary->exp()->type() == Parser::STRING) {
-		cout << "Error in semantic analysis." << endl;
-		cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
-		exit(1);
-	}
-
 	/* We can only take the address of left-hand operands. */
 	if (unary->opr() == UnaryExpr::ADDR && !dynamic_cast<Parser::IdentifierExpr*>(unary->exp())) {
 		cout << "Error in semantic analysis." << endl;
@@ -533,18 +517,7 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 	Expression* exp2 = binop->getExp2();
 
 	/* Arithmetic expressions are allowed only between numerical types. */
-	if (exp1->type() == Parser::STRING || exp2->type() == Parser::STRING) {
-		auto decl  = exp1->addr();
-
-		if (binop->opr() != BinaryExpr::ASSIGN || exp2->type() != Parser::STRING || decl == NULL || decl->type() != Parser::STRING) {
-			cout << "Error in semantic analysis." << endl;
-			cout << "\tArithmetic expressions are allowed only between numerical types." << endl;
-			exit(1);
-		}
-
-		binop->type(Parser::STRING);
-	}
-	else if ((binop->opr() == BinaryExpr::BIT_AND || binop->opr() == BinaryExpr::BIT_OR || binop->opr() == BinaryExpr::BIT_XOR) &&
+    if ((binop->opr() == BinaryExpr::BIT_AND || binop->opr() == BinaryExpr::BIT_OR || binop->opr() == BinaryExpr::BIT_XOR) &&
 			(exp1->type() != Parser::INT || exp2->type() != Parser::INT)) {
 			cout << "Error in semantic analysis." << endl;
 			cout << "\tBinary expressions currently are only allowed only between integer types." << endl;
@@ -558,60 +531,23 @@ void AstSemaVisitor::visit(Parser::BinaryExpr* binop) {
 	else if (exp1->type() == exp2->type()) {
 		binop->type(exp1->type());
 	}
-	else if ((CHECK_TYPE(exp1, INT) && CHECK_TYPE(exp2, FLOAT)) || (CHECK_TYPE(exp1, FLOAT) && CHECK_TYPE(exp2, INT))) {
-		binop->type(Parser::FLOAT);
-	}
 }
 
 void AstSemaVisitor::addNativeFunctions(shared_ptr<Parser::SymbolTable> table) {
 	/* Global functions for outputing data. */
 	shared_ptr<STFunctionDeclaration> printInt(new STFunctionDeclaration("printInt", "_printInt", Parser::VOID));
-	shared_ptr<STFunctionDeclaration> printFlt(new STFunctionDeclaration("printFlt", "_printFlt", Parser::VOID));
-	shared_ptr<STFunctionDeclaration> printStr(new STFunctionDeclaration("printStr", "_printStr", Parser::VOID));
 
 	/* We need to add the function_formal parameters. */
 	shared_ptr<STParamDecl> printIntParam = shared_ptr<STParamDecl>( new STParamDecl("_printInt_1", Parser::INT, typeWidth(Parser::INT), this->_currentOffset+=typeWidth(Parser::INT)));
-	shared_ptr<STParamDecl> printFltParam = shared_ptr<STParamDecl>( new STParamDecl("_printFlt_1", Parser::FLOAT, typeWidth(Parser::FLOAT), this->_currentOffset+=typeWidth(Parser::FLOAT)));
-	shared_ptr<STParamDecl> printStrParam = shared_ptr<STParamDecl>( new STParamDecl("_printStr_1", Parser::STRING, typeWidth(Parser::STRING), this->_currentOffset+=typeWidth(Parser::STRING)));
 
 	table->add(printIntParam);
+
 	printInt->addParam(printIntParam);
 
-	table->add(printFltParam);
-	printFlt->addParam(printFltParam);
-
-	table->add(printStrParam);
-	printStr->addParam(printStrParam);
-
 	table->add(printInt);
-	table->add(printFlt);
-	table->add(printStr);
-
-
 
 	/* Global functions for reading data. */
 	shared_ptr<STFunctionDeclaration> readInt(new STFunctionDeclaration("readInt", "_readInt", Parser::INT));
-	shared_ptr<STFunctionDeclaration> readFlt(new STFunctionDeclaration("readFlt", "_readFlt", Parser::FLOAT));
-	shared_ptr<STFunctionDeclaration> readStr(new STFunctionDeclaration("readStr", "_readStr", Parser::STRING));
-
-	table->add(readInt);
-	table->add(readFlt);
-	table->add(readStr);
-
-
-
-	/* Global functions for copying strings. */
-	shared_ptr<STFunctionDeclaration> fstrcpy(new STFunctionDeclaration(System::NAT_FUN_STRCPY, "_" + System::NAT_FUN_STRCPY, Parser::INT));
-	shared_ptr<STParamDecl> fstrcpyPar1 = shared_ptr<STParamDecl>( new STParamDecl("_" + System::NAT_FUN_STRCPY + "_1", Parser::STRING, typeWidth(Parser::STRING), this->_currentOffset+=typeWidth(Parser::STRING)));
-	shared_ptr<STParamDecl> fstrcpyPar2 = shared_ptr<STParamDecl>( new STParamDecl("_" + System::NAT_FUN_STRCPY + "_2", Parser::STRING, typeWidth(Parser::STRING), this->_currentOffset+=typeWidth(Parser::STRING)));
-
-	table->add(fstrcpyPar1);
-	table->add(fstrcpyPar2);
-
-	fstrcpy->addParam(fstrcpyPar1);
-	fstrcpy->addParam(fstrcpyPar2);
-
-	table->add(fstrcpy);
 }
 
 bool AstSemaVisitor::isValidType(string name) {

@@ -1,10 +1,6 @@
-/**
- * What still require some work:
- *		- Operations on strings.
- *
- */
 #include "AstVisitors.h"
 #include "SymbolTable.h"
+
 #include <memory>
 #include <list>
 
@@ -23,6 +19,8 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* astModule) {
 	/* The IR module owns the symbol table. */
 	this->_module->symbolTable(astModule->getSymbTable());
 
+    cout << "Creating IR for module " << endl;
+
 	/* Continue visiting children. */
 	for (auto& astFunction : *astModule->getFunctions()) {
 		/* An object representing the function that we are currently generating code for. */
@@ -34,7 +32,7 @@ void AstTACGenVisitor::visit(Parser::CompilationUnit* astModule) {
 		this->_currentOffset = astFunction->currentOffset();
 		this->_exitBasicBlock = this->newBasicBlock();
 
-		/* Produce IR instructions for the components of function. */
+		/// Produce IR instructions for the function's components.
 		astFunction->accept(this);
 
 		// If there were any return instruction it points to the exitBasicBlock
@@ -58,6 +56,8 @@ void AstTACGenVisitor::visit(Parser::Function* astFunction) {
 
 	/* We need to keep a pointer to the current function definition, right? */
 	this->_currentFunction->addr( astFunction->getSymbTable()->getParent()->lookup(astFunction->getName()) );
+
+    cout << "Creating IR for function " << astFunction->getName() << endl;
 
 	/* Produce IR instructions for the statements in the function's code block. */
 	astFunction->getBody()->accept(this);
@@ -84,19 +84,8 @@ void AstTACGenVisitor::visit(const Parser::VarDecl* astVarDec) {
 
 			assert(this->_lastInstruction != nullptr && "Empty initializer for variable.");
 
-			if (initializer->type() == Parser::INT || initializer->type() == Parser::FLOAT) {
+			if (initializer->type() == Parser::INT) {
 				this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(memInstr, this->_lastInstruction) );
-				this->_lastInstruction = nullptr;
-			}
-			else if (initializer->type() == Parser::STRING) {
-				auto funCopyRaw 	= dynamic_cast<STFunctionDeclaration*>( st->lookup(System::NAT_FUN_STRCPY).get() );
-				auto lblFunCopy 	= make_shared<IR::Func>( shared_ptr<STFunctionDeclaration>( funCopyRaw ) );
-				auto newInstruction = make_shared<IR::Call>( lblFunCopy, this->newTemporary(Parser::INT));
-
-				newInstruction->addArgument( memInstr );
-				newInstruction->addArgument( this->_lastInstruction );
-
-				this->_currentFunction->appendInstruction(newInstruction);
 				this->_lastInstruction = nullptr;
 			}
 			else {
@@ -292,6 +281,8 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* astCodeBlock) {
 	// The IR function symbol table has all definitions of the function's blocks.
 	this->_currentFunction->addSymbolTable(astCodeBlock->getSymbTable());
 
+    cout << "Creating IR for codeblock " << endl;
+
 	// Produce IR for each statement in the code block.
 	for (auto& statement : *astCodeBlock->getStatements()) {
 		// This label is used in situations that is necessary to jump directoy to the 
@@ -311,46 +302,6 @@ void AstTACGenVisitor::visit(Parser::CodeBlock* astCodeBlock) {
 		// If some instruction branch to statement->next() then we append it. 
 		if (statement->next()->usageCounter() > 0)
 			this->_currentFunction->appendBasicBlock( statement->next() );
-	}
-}
-
-void AstTACGenVisitor::visit(Parser::StringExpr* str) {
-	/* If we are not inside a conditional expression. */
-	if ( str->tLabel() == nullptr || str->fLabel() == nullptr ) {
-		auto cttEntry = newConstant(str->value());
-
-		this->_currentFunction->symbolTable()->add(cttEntry);
-
-		this->_lastInstruction = make_shared<IR::Immediate>(cttEntry);
-	}
-	else {
-		/* We are inside conditional expression. We evaluate the parameters
-		 * and goes to the correct direction. */
-		if (str->value() == "") {
-			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(str->fLabel()) );
-		}
-		else {
-			this->_currentFunction->appendInstruction( make_shared<IR::Jump>(str->tLabel()) );
-		}
-
-		this->_lastInstruction = nullptr;
-	}
-}
-
-void AstTACGenVisitor::visit(Parser::FloatExpr* flt) {
-	/* If we are not inside a conditional expression. */
-	if ( flt->tLabel() == nullptr || flt->fLabel() == nullptr ) {
-		auto immInst = make_shared<IR::Immediate>( newConstant(flt->value()) );
-		auto regDest = newTemporary(flt->type());
-
-		this->_lastInstruction = make_shared<IR::ScalarCopy>(regDest, immInst);
-	}
-	else {
-		auto cttEntry = newConstant(flt->value());
-		auto immInstr = make_shared<IR::Immediate>(cttEntry);
-
-		this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(immInstr, flt->tLabel(), flt->fLabel()) );
-		this->_lastInstruction = nullptr;
 	}
 }
 
@@ -489,7 +440,7 @@ void AstTACGenVisitor::visit(Parser::IdentifierExpr* id) {
 		auto type 	= entry->type();
 
 		/* Only numerical values are acceptable in boolean comparissons. */
-		if (type == Parser::INT || type == Parser::FLOAT) {
+		if (type == Parser::INT) {
 			this->emitBranchesBasedOnExpValue(this->_lastInstruction, id->tLabel(), id->fLabel());
 		}
 		else {
@@ -568,8 +519,8 @@ void AstTACGenVisitor::translateBooleanExp(Parser::UnaryExpr* unary) {
 		auto regResT = this->newTemporary(Parser::INT);
 		auto regResF = make_shared<IR::Register>( regResT->value() );
 		auto regResE = make_shared<IR::Register>( regResT->value() );
-		auto zero 	 = make_shared<IR::Immediate>( this->newConstant<int>(0) );
-		auto one 	 = make_shared<IR::Immediate>( this->newConstant<int>(1) );
+		auto zero 	 = make_shared<IR::Immediate>( this->newConstant(0) );
+		auto one 	 = make_shared<IR::Immediate>( this->newConstant(1) );
 
 		this->_currentFunction->appendBasicBlock(unary->tLabel());
 		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regResT, one) );
@@ -602,21 +553,6 @@ void AstTACGenVisitor::translateArithmeticExpr(Parser::UnaryExpr* unary) {
 
 			case UnaryExpr::DECREMENT:
 				this->_lastInstruction = make_shared<IR::IDec>(rightInstruction->tgt(), rightInstruction);
-				break;
-		}
-	}
-	else if (tgtType == Parser::FLOAT) {
-		switch (unary->opr()) {
-			case UnaryExpr::MINUS:
-				this->_lastInstruction = make_shared<IR::FMinus>(this->newTemporary(tgtType), rightInstruction);
-				break;
-
-			case UnaryExpr::INCREMENT:
-				this->_lastInstruction = make_shared<IR::FInc>(rightInstruction->tgt(), rightInstruction);
-				break;
-
-			case UnaryExpr::DECREMENT:
-				this->_lastInstruction = make_shared<IR::FDec>(rightInstruction->tgt(), rightInstruction);
 				break;
 		}
 	}
@@ -691,8 +627,8 @@ void AstTACGenVisitor::translateBooleanExp(Parser::BinaryExpr* binop) {
 		auto resT  = this->newTemporary(Parser::INT);
 		auto resF  = make_shared<IR::Register>( resT->value() );
 		auto resE  = make_shared<IR::Register>( resT->value() );
-		auto zero = make_shared<IR::Immediate>( this->newConstant<int>(0) );
-		auto one  = make_shared<IR::Immediate>( this->newConstant<int>(1) );
+		auto zero = make_shared<IR::Immediate>( this->newConstant(0) );
+		auto one  = make_shared<IR::Immediate>( this->newConstant(1) );
 
 		this->_currentFunction->appendBasicBlock(binop->tLabel());
 		this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(resT, one) );
@@ -776,59 +712,6 @@ void AstTACGenVisitor::translateArithmeticExp(Parser::BinaryExpr* binop) {
 				break;
 		}
 	}
-	else if (tgtType == Parser::FLOAT) {
-		switch (binop->opr()) {
-			case BinaryExpr::ASSIGN: {
-				if (exp1->isArrayAccess()) {
-					this->_currentFunction->appendInstruction( make_shared<IR::CopyToArray>(leftInstruction, rightInstruction) );
-					this->_lastInstruction = nullptr;
-				}
-				else {
-					this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(leftInstruction, rightInstruction) );
-					this->_lastInstruction = nullptr;
-				}
-				break;
-			}
-			case BinaryExpr::ADDITION:
-				this->_lastInstruction = make_shared<IR::FAdd>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::SUBTRACTION:
-				this->_lastInstruction = make_shared<IR::FSub>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::TIMES:
-				this->_lastInstruction = make_shared<IR::FMul>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::DIV:
-				this->_lastInstruction = make_shared<IR::FDiv>(this->newTemporary(tgtType), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::PLUS_EQUAL:
-				this->_lastInstruction = make_shared<IR::FAdd>(leftInstruction->tgt(), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::MINUS_EQUAL:
-				this->_lastInstruction = make_shared<IR::FSub>(leftInstruction->tgt(), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::TIMES_EQUAL:
-				this->_lastInstruction = make_shared<IR::FMul>(leftInstruction->tgt(), leftInstruction, rightInstruction);
-				break;
-			case BinaryExpr::DIV_EQUAL:
-				this->_lastInstruction = make_shared<IR::FDiv>(leftInstruction->tgt(), leftInstruction, rightInstruction);
-				break;
-		}
-	}
-	else if (tgtType == Parser::STRING) {
-		if (binop->opr() == BinaryExpr::ASSIGN) {
-			auto st 			= this->_currentFunction->symbolTable();
-			auto funCopyRaw 	= dynamic_cast<STFunctionDeclaration*>( st->lookup(System::NAT_FUN_STRCPY).get() );
-			auto lblFunCopy 	= make_shared<IR::Func>( shared_ptr<STFunctionDeclaration>( funCopyRaw ) );
-			auto newInstruction = make_shared<IR::Call>( lblFunCopy, this->newTemporary(Parser::INT));
-
-			newInstruction->addArgument( leftInstruction );
-			newInstruction->addArgument( rightInstruction );
-
-			this->_currentFunction->appendInstruction(newInstruction);
-			this->_lastInstruction = nullptr;
-		}
-	}
 
 	/* If we are inside a conditional we need to use the result
 	 * of this expression to consider the jump targets. */
@@ -895,14 +778,13 @@ void AstTACGenVisitor::translateRelationalExp(Parser::BinaryExpr* binop) {
 
 
 void AstTACGenVisitor::emitBranchesBasedOnExpValue(Instruction_sptr result, BasicBlock_sptr lTrue, BasicBlock_sptr lFalse) {
-	auto immediate = make_shared<IR::Immediate>( this->newConstant<int>(0) );
+	auto immediate = make_shared<IR::Immediate>( this->newConstant(0) );
 	auto cmpInstr = make_shared<IR::RNotEqual>(this->newTemporary(Parser::INT), result, immediate);
 
 	this->_currentFunction->appendInstruction( make_shared<IR::Conditional>(cmpInstr, lTrue, lFalse) );
 }
 
-template<typename T>
-shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(T value) {
+shared_ptr<STConstantDef> AstTACGenVisitor::newConstant(int value) {
 	shared_ptr<Parser::STConstantDef> cttEntry(new Parser::STConstantDef("_ct" + std::to_string(this->constCounter), value));
 
 	this->_currentFunction->symbolTable()->add(cttEntry);

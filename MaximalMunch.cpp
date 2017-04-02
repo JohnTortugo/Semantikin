@@ -109,14 +109,14 @@ void MaximalMunch::visit(IR::Func* func) {
 
 void MaximalMunch::visit(IR::IAdd* node) {
 
-	if (nodeType(node->chd2(), IR::Register) && nodeType(node->chd3(), IR::Register)) {
-        setColor(node->chd2(), node->myColor());
-        setColor(node->chd3(), node->myColor());
-    }
-    else {
-        cout << "MMunch [" << __FILE__ << ":" << __LINE__ << "] - Did not match case." << endl;
-        exit(1);
-    }
+//	if (nodeType(node->chd2(), IR::Register) && nodeType(node->chd3(), IR::Register)) {
+//        setColor(node->chd2(), node->myColor());
+//        setColor(node->chd3(), node->myColor());
+//    }
+//    else {
+//        cout << "MMunch [" << __FILE__ << ":" << __LINE__ << "] - Did not match case." << endl;
+//        exit(1);
+//    }
 
 //	if (isMemoryLoad(node->chd2()) && isMemoryLoad(node->chd3()) ) {
 //		setColor(node->chd2(), node->myColor());
