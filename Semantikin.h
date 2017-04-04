@@ -1,5 +1,4 @@
-#ifndef SEMANTIKIN_H_
-#define SEMANTIKIN_H_
+#pragma once
 
 #include <string>
 #include <list>
@@ -51,6 +50,9 @@ namespace IR {
 	class Function;
 }
 
+namespace Backend {
+    class MachineInstruction;
+}
 
 
 /*******************************************************************************
@@ -62,6 +64,8 @@ typedef shared_ptr<list<Function_sptr>> 			Function_sptr_list_sptr;
 typedef shared_ptr<IR::BasicBlock> 					BasicBlock_sptr;
 typedef list<BasicBlock_sptr> 						BasicBlock_list;
 typedef shared_ptr<BasicBlock_list> 				BasicBlock_list_sptr;
+
+typedef shared_ptr<Backend::MachineInstruction>	    MachineInstruction_sptr;
 
 typedef shared_ptr<IR::Instruction>					Instruction_sptr;
 typedef list<Instruction_sptr> 						Instruction_list;
@@ -137,9 +141,3 @@ namespace Util {
 
 }
 
-
-
-
-
-
-#endif /* SEMANTIKIN_H_ */

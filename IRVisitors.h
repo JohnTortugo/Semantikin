@@ -78,14 +78,6 @@ public:
 	virtual void visit(IR::IInc* visitor) = 0;
 	virtual void visit(IR::IDec* visitor) = 0;
 
-	virtual void visit(IR::FAdd* visitor) = 0;
-	virtual void visit(IR::FSub* visitor) = 0;
-	virtual void visit(IR::FMul* visitor) = 0;
-	virtual void visit(IR::FDiv* visitor) = 0;
-	virtual void visit(IR::FMinus* visitor) = 0;
-	virtual void visit(IR::FInc* visitor) = 0;
-	virtual void visit(IR::FDec* visitor) = 0;
-
 	virtual void visit(IR::BinAnd* visitor) = 0;
 	virtual void visit(IR::BinOr* visitor) = 0;
 	virtual void visit(IR::BinXor* visitor) = 0;
@@ -184,14 +176,6 @@ public:
 	void visit(IR::IMinus* visitor);
 	void visit(IR::IInc* visitor);
 	void visit(IR::IDec* visitor);
-
-	void visit(IR::FAdd* visitor);
-	void visit(IR::FSub* visitor);
-	void visit(IR::FMul* visitor);
-	void visit(IR::FDiv* visitor);
-	void visit(IR::FMinus* visitor);
-	void visit(IR::FInc* visitor);
-	void visit(IR::FDec* visitor);
 
 	void visit(IR::BinAnd* visitor);
 	void visit(IR::BinOr* visitor);

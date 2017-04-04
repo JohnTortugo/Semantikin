@@ -1,46 +1,59 @@
 ## Control Flow
 
-### Function call
+        ### Function call
 
-	call ptr
+            call ptr
 
-### Function return
 
-	ret				// return to the address located in the top of the stack
-					// for Linux the return value should be stored in EAX
+
+
+        ### Function return
+
+            ret				// return to the address located in the top of the stack
+                            // for Linux the return value should be stored in EAX
+
+
 
 
 ## Data Movement
 
-### MOV
+        ### MOV
 
-	mov r/m32, r32
-	mov r32, r/m32
-	mov r32, imm32
-	mov r/m32, imm32
+            mov r/m32, r32
+            mov r32, r/m32
+            mov r32, imm32
+            mov r/m32, imm32
 
 
-### PUSH
 
-	push r/m32
-	push r32
-	push imm32
+        ### PUSH
+
+            push r/m32
+            push r32
+            push imm32
+
 
 
 
 ## Arithmetic 
 
-### ADD
+        ### ADD
 
-	add r/m32, imm32
-	add r/m32, r32
-	add r32, r/m32
+            ADD r64, r/m64
+            ADD r/m64, r64
 
-### SUB
 
-### MULT
 
-	mul r/m32		// Unsigned multiply (edx:eax = eax * r/m32)
+        ### SUB
 
-### DIV
+
+
+
+        ### MULT
+
+            mul r/m32		// Unsigned multiply (edx:eax = eax * r/m32)
+
+
+
+        ### DIV
 

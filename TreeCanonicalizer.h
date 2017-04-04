@@ -1,5 +1,4 @@
-#ifndef TREE_CANON_H
-#define TREE_CANON_H 1
+#pragma once
 
 #include "InstructionSelection.h"
 #include "IR.h"
@@ -38,14 +37,6 @@ public:
 	void visit(IR::IInc* visitor);
 	void visit(IR::IDec* visitor);
 
-	void visit(IR::FAdd* visitor);
-	void visit(IR::FSub* visitor);
-	void visit(IR::FMul* visitor);
-	void visit(IR::FDiv* visitor);
-	void visit(IR::FMinus* visitor);
-	void visit(IR::FInc* visitor);
-	void visit(IR::FDec* visitor);
-
 	void visit(IR::BinAnd* visitor);
 	void visit(IR::BinOr* visitor);
 	void visit(IR::BinXor* visitor);
@@ -66,5 +57,3 @@ public:
 	void visit(IR::Call* visitor);
 	void visit(IR::Return* visitor);
 };
-
-#endif

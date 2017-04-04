@@ -1,5 +1,4 @@
-#ifndef IR_H_
-#define IR_H_
+#pragma once
 
 #include "Semantikin.h"
 #include "AbstractSyntaxTree.h"
@@ -41,6 +40,10 @@ namespace IR {
 		Instruction_sptr _chd2 = nullptr;
 		Instruction_sptr _chd3 = nullptr;
 
+		/// This will point to an instance of MachineInstruction once the
+		/// instruction selection pass is executed.
+		MachineInstruction_sptr _macInstr = nullptr;
+
 		/* Pointer to next/prev operation that should be performed */
 		Instruction* _next = nullptr;
 		Instruction* _prev = nullptr;
@@ -76,6 +79,9 @@ namespace IR {
 		virtual void prev(Instruction* prv) { this->_prev = prv; }
 		virtual Instruction* prev() { return this->_prev; }
 
+        /// Set the MachineInstruction that implement the this IR instruction
+		void macInstr(MachineInstruction_sptr macInstr) { this->_macInstr = macInstr; };
+		MachineInstruction_sptr macInstr(void) { return this->_macInstr; };
 
 		// Returns a set of symbol table entries that are used by this instruction
 		virtual STEntry_set_sptr uses() { return make_shared<STEntry_set>(); }
@@ -860,152 +866,9 @@ namespace IR {
 
 
 
-	/********************************************************/
-	/********************************************************/
-	/********************************************************/
-	/********************************************************/
-	/* Parent class of all floating point arithmetic instructions. */
-	class FloatingArithmetic : public Instruction {
-	public:
-		FloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : Instruction(tgt, chd2, chd3)
-		{ }
 
-		STEntry_set_sptr defs() {  
-			auto tmp = make_shared<STEntry_set>();
-			tmp->insert( std::dynamic_pointer_cast<Data>(this->tgt())->value());
-			return tmp;
-		}
-	};
 
-	class BinaryFloatingArithmetic : public FloatingArithmetic {
-	public:
-		BinaryFloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2, Instruction_sptr chd3) : FloatingArithmetic(tgt, chd2, chd3)
-		{ }
 
-		STEntry_set_sptr uses() {
-			auto tmp = make_shared<STEntry_set>();
-			getTgtSTEntry(this->chd2(), tmp);
-			getTgtSTEntry(this->chd3(), tmp);
-			return tmp;
-		}
-	};
-
-	class UnaryFloatingArithmetic : public FloatingArithmetic {
-	public:
-		UnaryFloatingArithmetic(Instruction_sptr tgt, Instruction_sptr chd2) : FloatingArithmetic(tgt, chd2, nullptr)
-		{ }
-
-		STEntry_set_sptr uses() { 
-			auto tmp = make_shared<STEntry_set>();
-			getTgtSTEntry(this->chd2(), tmp);
-			return tmp;
-		}
-	};
-
-	class FAdd : public BinaryFloatingArithmetic {
-	public:
-		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " + " << this->chd3()->tgtDataName() << ";" << endl;
-		}
-	};
-
-	class FSub : public BinaryFloatingArithmetic {
-	public:
-		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " - " << this->chd3()->tgtDataName() << ";" << endl;
-		}
-	};
-
-	class FMul : public BinaryFloatingArithmetic {
-	public:
-		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " * " << this->chd3()->tgtDataName() << ";" << endl;
-		}
-	};
-
-	class FDiv : public BinaryFloatingArithmetic {
-	public:
-		using BinaryFloatingArithmetic::BinaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " / " << this->chd3()->tgtDataName() << ";" << endl;
-		}
-	};
-
-	class FMinus : public UnaryFloatingArithmetic {
-	public:
-		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = -" << this->chd2()->tgtDataName() << ";" << endl;
-		}
-	};
-
-	class FInc : public UnaryFloatingArithmetic {
-	public:
-		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " + 1;" << endl;
-		}
-	};
-
-	class FDec : public UnaryFloatingArithmetic {
-	public:
-		using UnaryFloatingArithmetic::UnaryFloatingArithmetic;
-
-		/** Used to dump in a "human readable" way the instruction's target operand */
-		string tgtDataName() { return this->tgt()->tgtDataName(); }
-
-		/* Used to traverse the IR tree. */
-		void accept(IRTreeVisitor* visitor) { visitor->visit(this); }
-
-		void dump(stringstream& buffer) {
-			buffer << this->tgt()->tgtDataName() << " = " << this->chd2()->tgtDataName() << " - 1;" << endl;
-		}
-	};
 
 
 
@@ -1432,5 +1295,3 @@ namespace IR {
 		bool isADefinition() { return false; }
 	};
 }
-
-#endif /* IR_H_ */

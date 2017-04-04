@@ -116,34 +116,6 @@ void TreeCanonicalizer::visit(IR::IDec* node) {
 
 
 
-void TreeCanonicalizer::visit(IR::FAdd* node) {
-	binaryDispatcher(node);
-}
-
-void TreeCanonicalizer::visit(IR::FSub* node) {
-	binaryDispatcher(node);
-}
-
-void TreeCanonicalizer::visit(IR::FMul* node) {
-	binaryDispatcher(node);
-}
-
-void TreeCanonicalizer::visit(IR::FDiv* node) {
-	binaryDispatcher(node);
-}
-
-void TreeCanonicalizer::visit(IR::FMinus* node) {
-	unaryDispatcher(node);
-}
-
-void TreeCanonicalizer::visit(IR::FInc* node) {
-	unaryDispatcher(node);
-}
-
-void TreeCanonicalizer::visit(IR::FDec* node) {
-	unaryDispatcher(node);
-}
-
 
 
 

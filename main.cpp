@@ -3,6 +3,7 @@
 #include "AstVisitors.h"
 #include "IRVisitors.h"
 #include "MaximalMunch.h"
+#include "MachineInstructionPrinter.h"
 #include "TreeCanonicalizer.h"
 #include "DataFlowAnalysis.h"
 #include <iostream>
@@ -102,6 +103,9 @@ int main(int argc, char *argv[]) {
 	MaximalMunch codeGen;
 	irModule->accept(&codeGen);
 
+	MachineInstructionPrinter macPrinter;
+	irModule->accept(&macPrinter);
+
 	/* Just print out the AST of the function */
 	if (cmdOptionExists(argv, argv+argc, "-dumpAsts")) {
 		for (auto& func : *astTree->getFunctions()) {
@@ -112,7 +116,6 @@ int main(int argc, char *argv[]) {
 
 	/* Check if we need to print the IR-Tree */
 	if (cmdOptionExists(argv, argv+argc, "-dumpIRTree")) {
-	    cout << "Going to dumpIRTree: " << endl;
 		string dotFileName(inputFileName);
 
 		IRToDotVisitor itdVisitor(dotFileName + ".dot");
@@ -121,7 +124,6 @@ int main(int argc, char *argv[]) {
 
 	/* Just dump the IR */
 	if (cmdOptionExists(argv, argv+argc, "-dumpIR")) {
-	    cout << "Going to dumpIR: " << endl;
 		stringstream output;
 
 		for (auto& f : *irModule->functions())  

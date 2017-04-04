@@ -1,18 +1,11 @@
-#ifndef MAXIMAL_MUNCH_H
-#define MAXIMAL_MUNCH_H 1
+#pragma once
 
-#include "InstructionSelection.h"
 #include "IR.h"
+#include "InstructionSelection.h"
 
-class MaximalMunch : public InstructionSelection {
+class MachineInstructionPrinter : public InstructionSelection {
 private:
-	const string _fillcolors[6] = {"96847e", "3ade45", "3a6bde", "f20a3c", "eaf20a", "5b5c50"};
-
-	unsigned int otherColor(unsigned int myColor) const { 
-		return ++myColor % 6;
-	}
-
-	const string& fillColor(unsigned int c) const { return _fillcolors[c]; }
+    stringstream output;
 
 public:
 	void visit(IR::Module*);
@@ -57,5 +50,3 @@ public:
 	void visit(IR::Call* visitor);
 	void visit(IR::Return* visitor);
 };
-
-#endif

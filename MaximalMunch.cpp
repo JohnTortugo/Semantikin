@@ -1,4 +1,5 @@
 #include "MaximalMunch.h"
+#include "MachineInstruction.h"
 
 using namespace IR;
 
@@ -34,6 +35,8 @@ void MaximalMunch::visit(IR::Module* module) {
 }
 
 void MaximalMunch::visit(IR::Function* func) {
+    cout << "MM) Calling function " << __LINE__ << endl;
+
     /// Generate code for each basic block
 	for (auto& bb : *(func->bbs())) {
 		bb->accept(this);
@@ -41,8 +44,10 @@ void MaximalMunch::visit(IR::Function* func) {
 }
 
 void MaximalMunch::visit(IR::BasicBlock* bb) {
-    /// For each subtree, which as far as I remember is equivalent to each
-    /// instruction
+    cout << "MM) Calling basic block " << __LINE__ << endl;
+
+    /// For each subtree, which is equivalent to each instruction in the
+    /// source of the program
 	for (auto& tree : *(bb->subtrees())) {
 		setColor(tree, 0);
 		tree->accept(this);
@@ -50,15 +55,21 @@ void MaximalMunch::visit(IR::BasicBlock* bb) {
 }
 
 void MaximalMunch::visit(IR::ScalarCopy* node) {
-    cout << "Calling scalar copy " << __LINE__ << endl;
+    cout << "MM) Calling scalar copy " << __LINE__ << endl;
 
 	if (nodeType(node->tgt(), IR::Memory) && nodeType(node->chd2()->tgt(), IR::Register)) {
+        cout << "MM) copy to memory at " << __LINE__ << endl;
+
+        node->macInstr(make_shared<Backend::X64Instruction>(Backend::X64Instruction::SCopy_M_R, node->shared_from_this()));
+
 		setColor(node->tgt(), node->myColor());
 
 		setColor(node->chd2(), this->otherColor(node->myColor()));
 		node->chd2()->accept(this);
 	}
     else if (nodeType(node->tgt(), IR::Register)) {
+        cout << "MM) copy to register at " << __LINE__ << endl;
+
         if (nodeType(node->chd2(), IR::Immediate)) {
             setColor(node->tgt(), node->myColor());
             setColor(node->chd2(), node->myColor());
@@ -108,98 +119,25 @@ void MaximalMunch::visit(IR::Func* func) {
 }
 
 void MaximalMunch::visit(IR::IAdd* node) {
+    cout << "MM) Calling IAdd " << __LINE__ << endl;
 
-//	if (nodeType(node->chd2(), IR::Register) && nodeType(node->chd3(), IR::Register)) {
-//        setColor(node->chd2(), node->myColor());
-//        setColor(node->chd3(), node->myColor());
-//    }
-//    else {
-//        cout << "MMunch [" << __FILE__ << ":" << __LINE__ << "] - Did not match case." << endl;
-//        exit(1);
-//    }
+	if (nodeType(node->chd2()->tgt(), IR::Register) && nodeType(node->chd3()->tgt(), IR::Register)) {
+        cout << "MM) Matched Reg + Reg on " << __LINE__ << endl;
+	    
+        node->macInstr(make_shared<Backend::X64Instruction>(Backend::X64Instruction::IAdd_R_R, node->shared_from_this()));
 
-//	if (isMemoryLoad(node->chd2()) && isMemoryLoad(node->chd3()) ) {
-//		setColor(node->chd2(), node->myColor());
-//		setColor(node->chd2()->tgt(), node->myColor());
-//		setColor(node->chd2()->chd2(), node->myColor());
-//
-//		setColor(node->chd3(), this->otherColor(node->myColor()));
-//
-//		node->chd3()->accept(this);
-//	}
-//	else if ( isMemoryLoad(node->chd2()) && isImmediateLoad(node->chd3()) ) {
-//		setColor(node->chd2(), node->myColor());
-//		setColor(node->chd2()->tgt(), node->myColor());
-//		setColor(node->chd2()->chd2(), node->myColor());
-//
-//		setColor(node->chd3(), node->myColor());
-//		setColor(node->chd3()->tgt(), node->myColor());
-//		setColor(node->chd3()->chd2(), node->myColor());
-//	}
-//	else if ( isImmediateLoad(node->chd2())	&& isMemoryLoad(node->chd3()) ) {
-//		setColor(node->chd2(), node->myColor());
-//		setColor(node->chd2()->tgt(), node->myColor());
-//		setColor(node->chd2()->chd2(), node->myColor());
-//
-//		setColor(node->chd3(), node->myColor());
-//		setColor(node->chd3()->tgt(), node->myColor());
-//		setColor(node->chd3()->chd2(), node->myColor());
-//	}
-//	else if ( nodeType(node->chd2()->tgt(), IR::Register) && isMemoryLoad(node->chd3()) ) {
-//		setColor(node->chd2(), this->otherColor(node->myColor()));
-//
-//		setColor(node->chd3(), node->myColor());
-//		setColor(node->chd3()->tgt(), node->myColor());
-//		setColor(node->chd3()->chd2(), node->myColor());
-//
-//		node->chd2()->accept(this);
-//	}
-//	else if ( isMemoryLoad(node->chd2()) && nodeType(node->chd3()->tgt(), IR::Register) ) {
-//		setColor(node->chd2(), node->myColor());
-//		setColor(node->chd2()->tgt(), node->myColor());
-//		setColor(node->chd2()->chd2(), node->myColor());
-//
-//		setColor(node->chd3(), this->otherColor(node->myColor()));
-//
-//		node->chd3()->accept(this);
-//	}
-//	else if ( isImmediateLoad(node->chd2())	&& isImmediateLoad(node->chd3()) ) {
-//		setColor(node->chd2(), node->myColor());
-//		setColor(node->chd2()->tgt(), node->myColor());
-//		setColor(node->chd2()->chd2(), node->myColor());
-//
-//		setColor(node->chd3(), this->otherColor(node->myColor()));
-//
-//		node->chd3()->accept(this);
-//	}
-//	else if ( nodeType(node->chd2()->tgt(), IR::Register) && nodeType(node->chd3()->tgt(), IR::Register) ) {
-//		setColor(node->chd2(), this->otherColor(node->myColor()));
-//		setColor(node->chd3(), this->otherColor(node->myColor()));
-//
-//		node->chd2()->accept(this);
-//		node->chd3()->accept(this);
-//	}
-//	else if ( nodeType(node->chd2()->tgt(), IR::Register) && isImmediateLoad(node->chd3()) ) {
-//		setColor(node->chd2(), this->otherColor(node->myColor()));
-//
-//		setColor(node->chd3(), node->myColor());
-//		setColor(node->chd3()->tgt(), node->myColor());
-//		setColor(node->chd3()->chd2(), node->myColor());
-//
-//		node->chd2()->accept(this);
-//	}
-//	else if ( isImmediateLoad(node->chd2())	&& nodeType(node->chd3()->tgt(), IR::Register) ) {
-//		setColor(node->chd2(), node->myColor());
-//		setColor(node->chd2()->tgt(), node->myColor());
-//		setColor(node->chd2()->chd2(), node->myColor());
-//
-//		setColor(node->chd3(), this->otherColor(node->myColor()));
-//
-//		node->chd3()->accept(this);
-//	}
-//	else {
-//		cout << "ERROR:: Unmatched IMul." << endl;
-//	}
+		setColor(node->tgt(), node->myColor());
+
+		setColor(node->chd2(), this->otherColor(node->myColor()));
+        node->chd2()->accept(this);
+
+		setColor(node->chd3(), this->otherColor(node->myColor()));
+		node->chd3()->accept(this);
+    }
+    else {
+        cout << "MMunch [" << __FILE__ << ":" << __LINE__ << "] - Did not match case." << endl;
+        exit(1);
+    }
 }
 
 void MaximalMunch::visit(IR::ISub* node) {
@@ -286,33 +224,6 @@ void MaximalMunch::visit(IR::IDec* node) {
 
 
 
-void MaximalMunch::visit(IR::FAdd* node) {
-	NOT_IMPLEMENTED
-}
-
-void MaximalMunch::visit(IR::FSub* node) {
-	NOT_IMPLEMENTED
-}
-
-void MaximalMunch::visit(IR::FMul* node) {
-	NOT_IMPLEMENTED
-}
-
-void MaximalMunch::visit(IR::FDiv* node) {
-	NOT_IMPLEMENTED
-}
-
-void MaximalMunch::visit(IR::FMinus* node) {
-	NOT_IMPLEMENTED
-}
-
-void MaximalMunch::visit(IR::FInc* node) {
-	NOT_IMPLEMENTED
-}
-
-void MaximalMunch::visit(IR::FDec* node) {
-	NOT_IMPLEMENTED
-}
 
 
 

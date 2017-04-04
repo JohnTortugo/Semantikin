@@ -147,38 +147,6 @@ void IRToDotVisitor::visit(IR::IDec* node) {
 
 
 
-void IRToDotVisitor::visit(IR::FAdd* node) {
-	binaryDispatcher(node, "+");
-}
-
-void IRToDotVisitor::visit(IR::FSub* node) {
-	binaryDispatcher(node, "-");
-}
-
-void IRToDotVisitor::visit(IR::FMul* node) {
-	binaryDispatcher(node, "*");
-}
-
-void IRToDotVisitor::visit(IR::FDiv* node) {
-	binaryDispatcher(node, "/");
-}
-
-void IRToDotVisitor::visit(IR::FMinus* node) {
-	unaryDispatcher(node, "-");
-}
-
-void IRToDotVisitor::visit(IR::FInc* node) {
-	unaryDispatcher(node, "++");
-}
-
-void IRToDotVisitor::visit(IR::FDec* node) {
-	unaryDispatcher(node, "--");
-}
-
-
-
-
-
 
 void IRToDotVisitor::visit(IR::BinAnd* node) {
 	binaryDispatcher(node, "&");
@@ -251,7 +219,10 @@ void IRToDotVisitor::visit(IR::AddrDispl* node) {
 }
 
 void IRToDotVisitor::visit(IR::Call* node) { 
-	this->newline() << DOT_NEW_NODE_WITH_TGT(node, "call", node->tgt()->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, "call") << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, node->tgt()->tgtDataName()) << endl;
+
+	this->newline() << DOT_EDGE(node, node->tgt()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
 	if (node->arguments() != nullptr) {
@@ -272,10 +243,11 @@ void IRToDotVisitor::visit(IR::Return* node) {
 	node->tgt()->accept(this);
 }
 
-
-
 void IRToDotVisitor::binaryDispatcher(IR::Instruction* node, const char* label) {
-	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->tgt()->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, label) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node->tgt(), node->tgt()->tgtDataName()) << endl;
+
+	this->newline() << DOT_EDGE(node, node->tgt()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd3()) << endl;
 
@@ -284,7 +256,10 @@ void IRToDotVisitor::binaryDispatcher(IR::Instruction* node, const char* label) 
 }
 
 void IRToDotVisitor::unaryDispatcher(IR::Instruction* node, const char* label) {
-	this->newline() << DOT_NEW_NODE_WITH_TGT(node, label, node->tgt()->tgtDataName()) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node, label) << endl;
+	this->newline() << DOT_NEW_NODE_NO_TGT(node->tgt(), node->tgt()->tgtDataName()) << endl;
+
+	this->newline() << DOT_EDGE(node, node->tgt()) << endl;
 	this->newline() << DOT_EDGE(node, node->chd2()) << endl;
 
 	node->chd2()->accept(this);
