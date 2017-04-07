@@ -48,6 +48,8 @@ namespace IR {
 		Instruction* _next = nullptr;
 		Instruction* _prev = nullptr;
 
+		BasicBlock_sptr _parent = nullptr;
+
 	public:
 		Instruction()
 		{ }
@@ -76,8 +78,11 @@ namespace IR {
 		virtual void next(Instruction* nxt) { this->_next = nxt; }
 		virtual Instruction* next() { return this->_next; }
 
-		virtual void prev(Instruction* prv) { this->_prev = prv; }
-		virtual Instruction* prev() { return this->_prev; }
+		void prev(Instruction* prv) { this->_prev = prv; }
+		Instruction* prev() { return this->_prev; }
+
+		void parent(BasicBlock_sptr parent) { this->_parent = parent; }
+		BasicBlock_sptr parent() { return this->_parent; }
 
         /// Set the MachineInstruction that implement the this IR instruction
 		void macInstr(MachineInstruction_sptr macInstr) { this->_macInstr = macInstr; };
@@ -310,7 +315,15 @@ namespace IR {
 		}	
 
 		void appendInstruction(Instruction_sptr instr) {
+		    /// Instructions can reference their parent (i.e., the basic block they are in)
+		    /// using this member field.
+		    instr->parent( this->shared_from_this() );
+
+		    /// Add the instruction to the BB's list of instructions
 			this->_subtrees->push_back(instr);
+
+            /// Lets check if the current instruction is a branch, i.e., ends the 
+            /// current basic block
 			auto branch = std::dynamic_pointer_cast<IR::BranchInstruction>(instr);
 
 			// If the instruction is a branch we make some checkings and add 
@@ -336,6 +349,43 @@ namespace IR {
 			}
 
 			this->_lastInstruction = instr.get();
+		}
+
+        /// Insert instruction <instr> just before the instruction <nextInstr>.
+		void insertInstruction(Instruction_sptr newInstr, Instruction_sptr nextInstr) {
+		    assert(newInstr->parent() != this->shared_from_this() && "Trying to insert re-insert an instruction into a basic block.");
+
+		    assert(newInstr->parent() == nullptr && "Trying to insert an instruction into a basic block A that is already member of another basic block 'B'.");
+
+		    assert((newInstr->prev() == nullptr && newInstr->next() == nullptr) && "Trying to insert an instruction that already has prev/next pointers set.");
+
+            assert((std::dynamic_pointer_cast<IR::BranchInstruction>(newInstr) == nullptr) && "Trying to insert a branch instruction in a basic block. Not supported yet." );
+
+		    /// Instructions can reference their parent (i.e., the basic block they are in)
+		    /// using this member field.
+		    newInstr->parent( this->shared_from_this() );
+
+            Instruction_sptr prev = nullptr;
+            for (auto it = _subtrees->begin(), end = _subtrees->end(); it != end; it++) {
+                /// Which linking should I respect here? The next and prev pointers or 
+                /// just the order of instructions in the _subtrees. Sadly I don't recall now
+                /// why I added this prev-next pointers.
+                if (*it == nextInstr) {
+                    this->_subtrees->insert(it, newInstr);
+                    
+                    if (prev != nullptr) {
+                        newInstr->next( prev->next() );
+                        newInstr->prev( prev.get() );
+
+                        prev->next( newInstr.get() );
+                    }
+
+                    nextInstr->prev( newInstr.get() );
+
+                    break;
+                }
+                prev = *it;
+            }
 		}
 
 		/* Used to traverse the IR tree. */

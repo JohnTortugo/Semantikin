@@ -4,7 +4,6 @@
 #include "IRVisitors.h"
 #include "MaximalMunch.h"
 #include "MachineInstructionPrinter.h"
-#include "TreeCanonicalizer.h"
 #include "DataFlowAnalysis.h"
 #include <iostream>
 #include <fstream>
@@ -83,10 +82,6 @@ int main(int argc, char *argv[]) {
 
 	/// Obtain pointer to the IR generated module
 	auto irModule = irgen.module();
-
-	/// Call tree canonicalizer
-	TreeCanonicalizer tc;
-	irModule->accept(&tc);
 
 	/* Compute Reaching Definitions and Use-Def / Def-Use Chains */
 //	for (auto& function : *irModule->functions()) {

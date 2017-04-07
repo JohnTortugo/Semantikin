@@ -126,6 +126,8 @@ void MaximalMunch::visit(IR::IAdd* node) {
 	    
         node->macInstr(make_shared<Backend::X64Instruction>(Backend::X64Instruction::IAdd_R_R, node->shared_from_this()));
 
+		//this->_currentFunction->appendInstruction( make_shared<IR::ScalarCopy>(regResT, one) );
+
 		setColor(node->tgt(), node->myColor());
 
 		setColor(node->chd2(), this->otherColor(node->myColor()));
