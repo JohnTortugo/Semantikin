@@ -29,16 +29,10 @@ void fun4() {
 }
 
 void fun5() {
-	string a, b, c;
 
-	a = b;
-	b = a;
-	a = "divino";
-	b = "cesar";	
 }
 
 void fun6() {
-	string a = "first variable", b = a, c = b;
 }
 
 void fun7() {

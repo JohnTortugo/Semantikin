@@ -12,26 +12,10 @@ int fun2() {
 	return aa[20][30][4];
 }
 
-float fun3() {
+int fun3() {
 	int k=0, j=30, i=k, ja=k, kjj = k;
 
-	return 2.67;
-}
-
-int fun4(float p[10][20][30], int c[10], string u[303]) {
-	int a[20][20][20][20][20];
-	int b[10][20][30];
-	int v[10];
-
-	v[3] = 50; //"asdf";
-
-	return 3030303;
-}
-
-void fun5() {
-	int a, b[20], c[20][30][40], d[1][2][3];
-	float fff, ffffff, ff, fsdf[10][20], foiw[50][30];
-	string s[30], name[100], more[30][2][4];
+	return 267;
 }
 
 int main() {

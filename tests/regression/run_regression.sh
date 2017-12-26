@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ROOT=~/Workspace/Semantikin/
+ROOT=`pwd`
 
-echo $ROOT
+echo "This is root = " $ROOT
 
 exp_succ=`find $ROOT/tests/regression/yes-compile/ -name '*.lxn'`
 exp_errs=`find $ROOT/tests/regression/no-compile/ -name '*.lxn'`

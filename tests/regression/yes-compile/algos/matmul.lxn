@@ -65,10 +65,10 @@ int main() {
 		j = 0;
 		while (j < N) {
 			printInt(C[i][j]);
-			printStr(" ");
+//			printStr(" ");
 			j++;
 		}
-		printStr("\n");
+//		printStr("\n");
 
 		i++;
 	}

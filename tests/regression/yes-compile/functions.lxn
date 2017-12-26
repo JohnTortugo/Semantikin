@@ -2,56 +2,28 @@ int fun1() { return 1985; }
 
 void fun2() { }
 
-string fun3() { return "divcesar"; }
 
-float fun4() { return 3.1415; }
+int fun4() { return 1415; }
 
 int fun5(int a, int b, int c, int d) { return a + b + c + d; }
 
-int fun6(int a, float b, int c, float d, string e) { 
-	return a + c;
-}
 
-string fun7(string param1, string param2, string p3, string p4) {
-
-	return "divcesar";
-	
-}
-
-float fun8(float a, float b, float c, float d, float e) {
+int fun8(int a, int b, int c, int d, int e) {
 
 	return a + b + c + d + e;
 
 }
 
-string fun9(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
-	
-	return p1;
-
-}
-
-string fun10(string p1, string p2, int p3, int p4, float p5, float p6, string p7) { return p7; }
-
-
-string fun11(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
-	
-	return p2;
-
-}
-
-string fun12(string p1, string p2, int p3, int p4, float p5, float p6, string p7) {
-	return p7;
-}
 
 int main() {
 
 	return 0;
 }
 
-int arithm1(int a, int b, float c) {
+int arithm1(int a, int b, int c) {
 	int d, e, f;
 	
-	while (c < 3.3) {
+	while (c < 3) {
 	
 		if (c > 3) {
 	
@@ -89,7 +61,7 @@ void arithm2(int b, int c) {
 	arithm1(a[3][2][c+2][c*2+3], b, c);
 }
 
-int arithm3(int x[2][3], float vf[10]) {
+int arithm3(int x[2][3], int vf[10]) {
 	int a = 10, b = 3;
 	
 	if (a > 10) {
@@ -129,7 +101,7 @@ int arithm3(int x[2][3], float vf[10]) {
 		}	
 	}
 	elseif (a == 10) {
-		printStr("Divino pai\n");
+		return 10;
 	}
 
 	return 0;

@@ -1,7 +1,7 @@
-int arithm1(int a, int b, float c) {
+int arithm1(int a, int b, int c) {
 	int d, e, f;
 	
-	while (c < 3.3) {
+	while (c < 3) {
 	
 		if (c > 3) {
 	
@@ -39,7 +39,7 @@ void arithm2(int b, int c) {
 	arithm1(a[3][2][c+2][c*2+3], b, c);
 }
 
-int arithm3(int x[2][3], float vf[10]) {
+int arithm3(int x[2][3], int vf[10]) {
 	int a = 10, b = 3;
 	
 	if (a > 10) {
@@ -79,7 +79,7 @@ int arithm3(int x[2][3], float vf[10]) {
 		}	
 	}
 	elseif (a == 10) {
-		printStr("Divino pai\n");
+		return 10;
 	}
 
 	return 0;
@@ -92,19 +92,19 @@ int main() {
 
 void function0() {
 	if (3 < 4) {
-		printStr("primeiro");
+//		printStr("primeiro");
 	}
 	elseif (3 < 4) {
-		printStr("segundo");
+//		printStr("segundo");
 	}
 	elseif (3 < 4) {
-		printStr("terceiro");
+//		printStr("terceiro");
 	}
 	elseif (3 < 4) {
-		printStr("quarto");
+//		printStr("quarto");
 	}
 	else {
-		printStr("finally.\n");
+//		printStr("finally.\n");
 	}
 }
 
@@ -114,7 +114,7 @@ void function2(int a, int b) {
 		
 		if (30 < &b) {
 		
-			printStr("Infinito e avante!\n");
+//			printStr("Infinito e avante!\n");
 		
 		}
 		
@@ -126,7 +126,7 @@ void function3(int x, int y) {
 
 		if (x < 100 || x > 200 && x != y) {
 		
-			printStr("Infinito e avante!\n");
+//			printStr("Infinito e avante!\n");
 		
 		}
 

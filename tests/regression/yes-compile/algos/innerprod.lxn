@@ -7,9 +7,9 @@ int main() {
 		i++;
 	}
 
-	printStr("Inner-prod = ");
+//	printStr("Inner-prod = ");
 	printInt(sum);
-	printStr("\n");
+//	printStr("\n");
 
 	return 0;
 }
