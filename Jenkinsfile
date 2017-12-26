@@ -18,7 +18,7 @@ pipeline {
         stage('Deploy') {
             steps {
 			echo 'Deploying....'
-			sh 'cp Semantiking ~/'
+			sh 'cp Semantikin ~/'
 
 		}            
         }
