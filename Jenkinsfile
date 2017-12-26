@@ -17,11 +17,10 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-		steps {
 			echo 'Deploying....'
 			sh 'cp Semantiking ~/'
-		}
-            }
+
+		}            
         }
     }
 }
